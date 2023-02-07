@@ -20,7 +20,9 @@ lsd_slam_print_status("Welcome! Closure version \n${LsdSlam_WORLD_VERSION}.${Lsd
 set(LsdSlam_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LsdSlam_LIB_PREFIX closure_)
 set(LsdSlam_CXX_FLAGS)
-
+find_package(Ceres REQUIRED)
+message( "Ceres found CERES_VERSION ${CERES_VERSION}") 
+#include_directories(/usr/local/ceres_210/include/)
 add_definitions(-DLsdSlam_DIR="${LsdSlam_DIR}")
 
 # common settings ==============================================================
@@ -116,7 +118,8 @@ if(WIN32)
   # Direct API
   include_directories("${LSD_SLAM_DIR}/thirdparty/dirent-1.20.1/include")
 endif()
-
+message("FABMAP_LIB >> ${FABMAP_LIB}")
+message("LsdSlam_EXTERNAL_LIBS >> ${LsdSlam_EXTERNAL_LIBS}")
 set(LsdSlam_ALL_LIBRARIES ${FABMAP_LIB} ${LsdSlam_EXTERNAL_LIBS})
 lsd_slam_print_status("LsdSlam_ALL_LIBRARIES:${LsdSlam_ALL_LIBRARIES}")
 

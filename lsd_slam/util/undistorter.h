@@ -68,6 +68,7 @@ public:
      * configuration file. If the format is not recognized, returns nullptr.
      */
     static Undistorter* getUndistorterForFile(const std::string &configFilename);
+    static Undistorter* getOpenCVUndistorterForFile(const std::string &configFilename);
 };
 
 class UndistorterPTAM : public Undistorter

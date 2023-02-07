@@ -1557,8 +1557,8 @@ int DepthMap::debugPlotDepthMap()
 
     cv::Mat keyFrameImage(activeKeyFrame->height(), activeKeyFrame->width(),
                           CV_32F, const_cast<float*>(activeKeyFrameImageData));
-    keyFrameImage.convertTo(debugImageDepth, CV_8UC1);
-    cv::cvtColor(debugImageDepth, debugImageDepth, cv::COLOR_GRAY2RGB);
+    keyFrameImage.convertTo(debugImageDepth, CV_8UC3);
+    //cv::cvtColor(debugImageDepth, debugImageDepth, cv::COLOR_GRAY2RGB);
 
     // debug plot & publish sparse version?
     int refID = referenceFrameByID_offset;

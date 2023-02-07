@@ -49,11 +49,11 @@ void printMessageOnCVImage(cv::Mat &image, std::string line1,std::string line2)
         for(int y=image.rows-30; y<image.rows; y++)
             image.at<cv::Vec3b>(y,x) *= 0.5;
 
-    cv::putText(image, line2, cv::Point(10,image.rows-5),
-                cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
-
-    cv::putText(image, line1, cv::Point(10,image.rows-18),
-                cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
+//    cv::putText(image, line2, cv::Point(10,image.rows-5),
+//                cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
+//
+//    cv::putText(image, line1, cv::Point(10,image.rows-18),
+//                cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
 }
 
 

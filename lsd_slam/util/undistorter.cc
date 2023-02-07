@@ -69,6 +69,39 @@ Undistorter* Undistorter::getUndistorterForFile(const std::string
     return u;
 }
 
+Undistorter* Undistorter::getOpenCVUndistorterForFile(const std::string &configFilename)
+{
+    printf("Reading Calibration from file %s",configFilename.c_str());
+
+
+    std::ifstream f(configFilename.c_str());
+    if (!f.good())
+    {
+        f.close();
+
+        f.open(configFilename.c_str());
+
+        if (!f.good())
+        {
+            printf(" ... not found. Cannot operate without calibration, shutting down.\n");
+            f.close();
+            return 0;
+        }
+    }
+
+    printf(" ... found!\n");
+
+    std::string l1;
+    std::string l2;
+    std::getline(f,l1);
+    std::getline(f,l2);
+    f.close();
+
+    printf("found openCV camera model, building rectifier.\n");
+    Undistorter* u = new UndistorterOpenCV(configFilename.c_str());
+    if(!u->isValid()) return 0;
+    return u;
+}
 
 UndistorterPTAM::UndistorterPTAM(const char* configFileName)
 {
@@ -445,7 +478,15 @@ UndistorterOpenCV::UndistorterOpenCV(const char* configFileName)
     cv::Mat camera_matrix;
     cv::Mat distortion_coefficients;
     int img_width, img_height;
-
+    /**
+     * Creates an Undistorter by reading the distortion parameters from a file.
+     *
+     * The file format is as follows:
+     * fx fy cx cy d1 d2 d3 d4 d5 d6
+     * inputWidth inputHeight
+     * crop / full / none
+     * outputWidth outputHeight
+     */
     cv::FileStorage fs(configFileName, cv::FileStorage::READ);
     fs["Camera_Matrix"] >> camera_matrix;
     fs["Distortion_Coefficients"] >> distortion_coefficients;

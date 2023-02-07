@@ -60,7 +60,7 @@ SlamSystem::SlamSystem(int w, int h, Eigen::Matrix3f K, bool enableSLAM)
     if(w%16 != 0 || h%16!=0)
     {
         printf("image dimensions must be multiples of 16! Please crop your images / video accordingly.\n");
-        assert(false);
+//        assert(false);
     }
 
     this->width = w;

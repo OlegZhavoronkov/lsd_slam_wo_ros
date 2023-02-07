@@ -34,29 +34,61 @@ lsd_slam_print_status("OpenCV libs:${OpenCV_LIBRARIES}")
 find_package(G2O REQUIRED )
 set(G2O_BINARY_DIR ${G2O_ROOT}/bin)
 message(STATUS "G2O_ROOT \"${G2O_ROOT}\"")
-set(G2O_LIBRARIES optimized ${G2O_CORE_LIBRARY} debug ${G2O_CORE_LIBRARY_DEBUG}
-                  optimized ${G2O_STUFF_LIBRARY} debug ${G2O_STUFF_LIBRARY_DEBUG}
-                  optimized ${G2O_SOLVER_DENSE} debug ${G2O_SOLVER_DENSE_DEBUG}
-                  optimized ${G2O_TYPES_SLAM3D} debug ${G2O_TYPES_SLAM3D_DEBUG}
-                  optimized ${G2O_SIMULATOR} debug ${G2O_SIMULATOR_DEBUG}
-                  )
-if(G2O_SOLVER_CSPARSE AND NOT APPLE)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(G2O_LIBRARIES   ${G2O_CORE_LIBRARY_DEBUG}
+                        ${G2O_STUFF_LIBRARY_DEBUG}
+                        ${G2O_SOLVER_DENSE_DEBUG}
+                        ${G2O_TYPES_SLAM3D_DEBUG}
+                        ${G2O_SIMULATOR_DEBUG}
+    )
+else()
+    set(G2O_LIBRARIES   ${G2O_CORE_LIBRARY}   
+                        ${G2O_STUFF_LIBRARY}  
+                        ${G2O_SOLVER_DENSE}   
+                        ${G2O_TYPES_SLAM3D}   
+                        ${G2O_SIMULATOR}      
+    )
+endif()
+#set(G2O_LIBRARIES optimized ${G2O_CORE_LIBRARY} debug ${G2O_CORE_LIBRARY_DEBUG}
+#                  optimized ${G2O_STUFF_LIBRARY} debug ${G2O_STUFF_LIBRARY_DEBUG}
+#                  optimized ${G2O_SOLVER_DENSE} debug ${G2O_SOLVER_DENSE_DEBUG}
+#                  optimized ${G2O_TYPES_SLAM3D} debug ${G2O_TYPES_SLAM3D_DEBUG}
+#                  optimized ${G2O_SIMULATOR} debug ${G2O_SIMULATOR_DEBUG}
+#
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+else()
+endif()
+if((G2O_SOLVER_CSPARSE OR G2O_SOLVER_CSPARSE_DEBUG) AND NOT APPLE)
   if(WIN32)
     list(APPEND G2O_INCLUDE_DIR "${G2O_ROOT}/include/EXTERNAL/csparse")
     list(APPEND G2O_INCLUDE_DIR "$ENV{G2O_ROOT}/include/EXTERNAL/csparse")
   else()
     list(APPEND G2O_INCLUDE_DIR "/usr/include/suitesparse")
   endif()
-  list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CSPARSE}
-                            ${G2O_SOLVER_CSPARSE_EXTENSION})
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CSPARSE_DEBUG}
+        ${G2O_SOLVER_CSPARSE_EXTENSION_DEBUG})    
+    else()
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CSPARSE}
+                                ${G2O_SOLVER_CSPARSE_EXTENSION})
+    endif()
   add_definitions(-DHAVE_SOLVER_CSPARSE)
 endif()
-if(G2O_SOLVER_CHOLMOD)
-  list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CHOLMOD})
+if(G2O_SOLVER_CHOLMOD OR G2O_SOLVER_CHOLMOD_DEBUG)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CHOLMOD_DEBUG})
+    else()
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_CHOLMOD})
+    endif()
   add_definitions(-DHAVE_SOLVER_CHOLMOD)
 endif()
-if(G2O_SOLVER_EIGEN)
-  list(APPEND G2O_LIBRARIES ${G2O_SOLVER_EIGEN})
+if(G2O_SOLVER_EIGEN OR G2O_SOLVER_EIGEN_DEBUG)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_EIGEN_DEBUG})
+    else()
+        list(APPEND G2O_LIBRARIES ${G2O_SOLVER_EIGEN})
+    endif()
+  
   add_definitions(-DHAVE_SOLVER_EIGEN)
 endif()
 
@@ -68,7 +100,8 @@ else()
   link_directories(${G2O_ROOT}/lib)
 endif()
 include_directories(${G2O_INCLUDE_DIR})
-cull_library_paths(G2O_LIBRARIES)
+message("G2O_LIBRARIES >> ${G2O_LIBRARIES}")
+#cull_library_paths(G2O_LIBRARIES)
 list(APPEND LsdSlam_EXTERNAL_LIBS ${G2O_LIBRARIES})
 
 ##==============================================================================

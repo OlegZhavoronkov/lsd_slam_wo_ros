@@ -109,10 +109,14 @@ macro(lsd_slam_common_build_setting)
     if(LsdSlam_ENABLE_SSE)
       add_definitions(-DENABLE_SSE)   # SSE code
     endif()
-    set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} "${SSE_FLAGS}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} "${SSE_FLAGS}")
+    if(NOT "X${SSE_FLAGS}"  STREQUAL "X")
+        set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} "${SSE_FLAGS}")
+        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} "${SSE_FLAGS}")
+    else()
+        message(STATUS "no SSE_FLAGS")
+    endif()
+    
   endif()
-
   if(WIN32)
     add_definitions(-DNOMINMAX)  # resolve conflicts of std::min()/std::max() on Windows MSVC
     add_definitions(-D_USE_MATH_DEFINES)

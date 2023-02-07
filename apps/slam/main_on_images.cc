@@ -181,19 +181,32 @@ int getFile (std::string source, std::vector<std::string> &files)
 using namespace lsd_slam;
 int main(int argc, char* argv[])
 {
-
-    if(argc < 2) {
-        std::cout << "Usage: $./bin/main_on_images data/sequence_${sequence_number}/"
-                  << std::endl;
-        exit(-1);
-    }
-
-    const std::string dataset_root = append_slash_to_dirname(std::string(argv[1]));
-    const std::string calib_file = dataset_root + "camera.txt";
-    const std::string source = dataset_root + "images/";
+    /*{
+        double img_width=2336;
+        double img_height=1080;
+        cv::Mat cameraMatrix = (cv::Mat1d(3, 3) << 4.874579411987812e+03, 0, 1.218702611045240e+03, 0, 4.868022119695004e+03, 4.323682692998559e+02, 0, 0, 1);
+        cv::Mat distortionCoefficients = (cv::Mat1d(1, 5) << 0.352,-5.0058,-0.0053,0.0098,107.0626);
+        cv::FileStorage fs("calibration.yml", cv::FileStorage::WRITE);
+        fs<<"Camera_Matrix" << cameraMatrix;
+        fs<<"Distortion_Coefficients" << distortionCoefficients;
+        fs<<"image_Width" <<    img_width;
+        fs<<"image_Height" <<   img_height;
+        fs.release();
+    }*/
+    //if(argc < 2) {
+    //    std::cout << "Usage: $./bin/main_on_images data/sequence_${sequence_number}/"
+    //              << std::endl;
+    //    exit(-1);
+    //}
+//
+    //const std::string dataset_root = append_slash_to_dirname(std::string(argv[1]));
+    //const std::string calib_file = dataset_root + "camera.txt";
+    //const std::string source = dataset_root + "images/";
+    const std::string calib_file = "calibration1.yml";
+    const std::string source="/media/skylark/Новый том1/colmap_dataset/huawei_calibration/2/data/";
     Undistorter* undistorter = 0;
 
-    undistorter = Undistorter::getUndistorterForFile(calib_file);
+    undistorter = Undistorter::getOpenCVUndistorterForFile(calib_file);
 
     if(undistorter == 0)
     {
@@ -209,7 +222,9 @@ int main(int argc, char* argv[])
     float cy = undistorter->getK().at<double>(2, 1);
     Sophus::Matrix3f K;
     K << fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0;
-
+    auto neww= w - (w % 16 == 0 ? 0 : (w%16));
+    
+    auto newh= h - (h % 16 == 0 ? 0 : (h%16));
 
     // make output wrapper. just set to zero if no output is required.
     Output3DWrapper* outputWrapper = (Output3DWrapper*)nullptr; // new ROSOutput3DWrapper(w,h);
@@ -238,17 +253,27 @@ int main(int argc, char* argv[])
     {
         std::cout << "reading " << files[i] << std::endl;
 
-        cv::Mat imageDist = cv::imread(files[i], cv::IMREAD_GRAYSCALE);
-
+        cv::Mat imageDist1 = cv::imread(files[i], cv::IMREAD_GRAYSCALE);
+        auto imageDist1Size = imageDist1.size();
+        cv::Mat imageDist = imageDist1(cv::Range(4,4+1072),cv::Range(0,imageDist1.size[1]));
+//        printf("imageDist1 size [%d %d] imageDist size [%d %d]",
+//                imageDist1.size[0],imageDist1.size[1],
+//                imageDist.size[0],imageDist.size[1]
+//                );
+        std::cout << "imageDist1 size " << imageDist1.size() << " imageDist size " << imageDist.size() << std::endl; 
         assert(imageDist.type() == CV_8U);
 
         undistorter->undistort(imageDist, image);
         assert(image.type() == CV_8U);
 
         if(runningIDX == 0)
+        {
             system->randomInit(image.data, fakeTimeStamp, runningIDX);
+        }
         else
+        {
             system->trackFrame(image.data, runningIDX, false,fakeTimeStamp);
+        }
         runningIDX++;
         fakeTimeStamp+=0.03;
 

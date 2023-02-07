@@ -21,9 +21,10 @@ list(APPEND lsd_slam_srcs ${other_srcs})
 ## the library
 set(lib_target lsd_slam)
 message(STATUS "LsdSlam_LIB_TYPE \"${LsdSlam_LIB_TYPE}\"")
+
 add_library(${lib_target} ${LsdSlam_LIB_TYPE} ${lsd_slam_srcs})
 set_property(TARGET ${lib_target} PROPERTY FOLDER "lsd_slam/libs")
 
-target_link_libraries(${lib_target} ${LsdSlam_ALL_LIBRARIES} glog::glog)
+target_link_libraries(${lib_target} ${LsdSlam_ALL_LIBRARIES} glog::glog Ceres::ceres)
 list(APPEND LsdSlam_ALL_LIBRARIES ${lib_target})
 lsd_slam_print_status("LsdSlam_ALL_LIBRARIES slam:${LsdSlam_ALL_LIBRARIES}")
