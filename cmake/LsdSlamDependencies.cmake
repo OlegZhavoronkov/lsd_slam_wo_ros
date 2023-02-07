@@ -30,9 +30,10 @@ lsd_slam_print_status("OpenCV libs:${OpenCV_LIBRARIES}")
 
 ##==============================================================================
 # G2O
-find_package(G2O REQUIRED)
+#find_package(G2O REQUIRED PATHS "/usr/local/g2o/lib/cmake/g2o/")
+find_package(G2O REQUIRED )
 set(G2O_BINARY_DIR ${G2O_ROOT}/bin)
-
+message(STATUS "G2O_ROOT \"${G2O_ROOT}\"")
 set(G2O_LIBRARIES optimized ${G2O_CORE_LIBRARY} debug ${G2O_CORE_LIBRARY_DEBUG}
                   optimized ${G2O_STUFF_LIBRARY} debug ${G2O_STUFF_LIBRARY_DEBUG}
                   optimized ${G2O_SOLVER_DENSE} debug ${G2O_SOLVER_DENSE_DEBUG}
@@ -100,3 +101,5 @@ if(GLEW_FOUND)
   include_directories(${GLEW_INCLUDE_DIR})
   list(APPEND LsdSlam_EXTERNAL_LIBS ${GLEW_LIBRARIES})
 endif()
+
+find_package(glog REQUIRED)

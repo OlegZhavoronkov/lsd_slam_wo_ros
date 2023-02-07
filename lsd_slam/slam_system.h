@@ -33,7 +33,7 @@
 #include "util/sophus_util.h"
 #include "tracking/relocalizer.h"
 
-
+using namespace boost::placeholders;
 
 namespace lsd_slam
 {

@@ -152,7 +152,8 @@ void DepthMap::observeDepthRow(int yMin, int yMax, RunningStats* stats)
 void DepthMap::observeDepth()
 {
 
-    threadReducer.reduce(boost::bind(&DepthMap::observeDepthRow, this, _1, _2, _3),
+    threadReducer.reduce(boost::bind(&DepthMap::observeDepthRow, this, 
+    boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3),
                          3, height-3, 10);
 
     if(enablePrintDebugInfo && printObserveStatistics)
@@ -757,7 +758,10 @@ void DepthMap::regularizeDepthMapFillHoles()
     memcpy(otherDepthMap,currentDepthMap,
            width*height*sizeof(DepthMapPixelHypothesis));
     threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapFillHolesRow,
-                                     this, _1, _2, _3), 3, height-2, 10);
+                                     this, 
+                                     boost::placeholders::_1, 
+                                     boost::placeholders::_2, 
+                                     boost::placeholders::_3), 3, height-2, 10);
     if(enablePrintDebugInfo && printFillHolesStatistics)
         printf("FillHoles (discreteDepth): %d created\n",
                runningStats.num_reg_created);
@@ -790,7 +794,9 @@ void DepthMap::buildRegIntegralBufferRow1(int yMin, int yMax,
 void DepthMap::buildRegIntegralBuffer()
 {
     threadReducer.reduce(boost::bind(&DepthMap::buildRegIntegralBufferRow1, this,
-                                     _1, _2,_3), 0, height);
+                                     boost::placeholders::_1, 
+                                     boost::placeholders::_2,
+                                     boost::placeholders::_3), 0, height);
 
     int* validityIntegralBufferPT = validityIntegralBuffer;
     int* validityIntegralBufferPT_T = validityIntegralBuffer+width;
@@ -916,10 +922,16 @@ void DepthMap::regularizeDepthMap(bool removeOcclusions, int validityTH)
 
     if(removeOcclusions)
         threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<true>, this,
-                                         validityTH, _1, _2, _3), 2, height-2, 10);
+                                         validityTH, 
+                                         boost::placeholders::_1, 
+                                         boost::placeholders::_2, 
+                                         boost::placeholders::_3), 2, height-2, 10);
     else
         threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<false>, this,
-                                         validityTH, _1, _2, _3), 2, height-2, 10);
+                                         validityTH, 
+                                         boost::placeholders::_1, 
+                                         boost::placeholders::_2, 
+                                         boost::placeholders::_3), 2, height-2, 10);
 
 
     if(enablePrintDebugInfo && printRegularizeStatistics)
@@ -1172,7 +1184,7 @@ void DepthMap::updateKeyframe(std::deque< std::shared_ptr<Frame> >
                               CV_32F, const_cast<float*>(activeKeyFrameImageData));
         keyFrameImage.convertTo(debugImageHypothesisHandling, CV_8UC1);
         cv::cvtColor(debugImageHypothesisHandling, debugImageHypothesisHandling,
-                     CV_GRAY2RGB);
+                     cv::COLOR_GRAY2RGB);
 
         cv::Mat oldest_refImage(oldest_referenceFrame->height(),
                                 oldest_referenceFrame->width(), CV_32F,
@@ -1182,7 +1194,7 @@ void DepthMap::updateKeyframe(std::deque< std::shared_ptr<Frame> >
                                 const_cast<float*>(newest_referenceFrame->image(0)));
         cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
         rfimg.convertTo(debugImageStereoLines, CV_8UC1);
-        cv::cvtColor(debugImageStereoLines, debugImageStereoLines, CV_GRAY2RGB);
+        cv::cvtColor(debugImageStereoLines, debugImageStereoLines, cv::COLOR_GRAY2RGB);
     }
 
     timepoint_t tv_start, tv_end;
@@ -1327,7 +1339,7 @@ void DepthMap::createKeyFrame(Frame* new_keyframe)
                               const_cast<float*>(new_keyframe->image(0)));
         keyFrameImage.convertTo(debugImageHypothesisPropagation, CV_8UC1);
         cv::cvtColor(debugImageHypothesisPropagation, debugImageHypothesisPropagation,
-                     CV_GRAY2RGB);
+                     cv::COLOR_GRAY2RGB);
     }
 
 
@@ -1546,7 +1558,7 @@ int DepthMap::debugPlotDepthMap()
     cv::Mat keyFrameImage(activeKeyFrame->height(), activeKeyFrame->width(),
                           CV_32F, const_cast<float*>(activeKeyFrameImageData));
     keyFrameImage.convertTo(debugImageDepth, CV_8UC1);
-    cv::cvtColor(debugImageDepth, debugImageDepth, CV_GRAY2RGB);
+    cv::cvtColor(debugImageDepth, debugImageDepth, cv::COLOR_GRAY2RGB);
 
     // debug plot & publish sparse version?
     int refID = referenceFrameByID_offset;

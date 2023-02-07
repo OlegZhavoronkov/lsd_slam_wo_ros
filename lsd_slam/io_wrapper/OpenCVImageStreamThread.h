@@ -31,8 +31,8 @@
 //#include <geometry_msgs/PoseStamped.h>
 
 #include "util/undistorter.h"
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
 
 namespace lsd_slam
 {
@@ -55,7 +55,7 @@ public:
 
     void setCalibration(std::string file);
 
-    void setCameraCapture(CvCapture* cap);
+    void setCameraCapture(cv::VideoCapture* cap);
     /**
      * Thread main function.
      */
@@ -77,7 +77,7 @@ private:
 
     int lastSEQ;
 
-    CvCapture* capture;
+    cv::VideoCapture * capture;
 };
 
 }

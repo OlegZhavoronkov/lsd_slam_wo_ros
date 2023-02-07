@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 
 
     // make output wrapper. just set to zero if no output is required.
-    Output3DWrapper* outputWrapper = nullptr; // new ROSOutput3DWrapper(w,h);
+    Output3DWrapper* outputWrapper = (Output3DWrapper*)nullptr; // new ROSOutput3DWrapper(w,h);
 
     // make slam system
     SlamSystem* system = new SlamSystem(w, h, K, doSlam);
@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
     {
         std::cout << "reading " << files[i] << std::endl;
 
-        cv::Mat imageDist = cv::imread(files[i], CV_LOAD_IMAGE_GRAYSCALE);
+        cv::Mat imageDist = cv::imread(files[i], cv::IMREAD_GRAYSCALE);
 
         assert(imageDist.type() == CV_8U);
 
@@ -278,6 +278,6 @@ int main(int argc, char* argv[])
 
     delete system;
     delete undistorter;
-    delete outputWrapper;
+    //delete outputWrapper;
     return 0;
 }

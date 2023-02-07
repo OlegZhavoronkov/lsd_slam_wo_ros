@@ -37,7 +37,7 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/src OPENFABMAP_FILES)
 file(GLOB OPENFABMAP_INCS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 
 # tell cmake about the library
-add_library(openFABMAP STATIC ${OPENFABMAP_FILES} ${OPENFABMAP_INCS})
+add_library(openFABMAP ${LsdSlam_LIB_TYPE} ${OPENFABMAP_FILES} ${OPENFABMAP_INCS})
 set_property(TARGET openFABMAP PROPERTY FOLDER "lsd_slam/thirdparty")
 ############ end openFABMAP library ##################
 
@@ -69,7 +69,9 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(openFABMAP opencv_highgui opencv_core opencv_features2d opencv_imgproc opencv_nonfree)
+TARGET_LINK_LIBRARIES(openFABMAP opencv_highgui opencv_core opencv_features2d opencv_imgproc 
+#opencv_nonfree
+)
 
 
 ############ openFABMAPcli executable ##################

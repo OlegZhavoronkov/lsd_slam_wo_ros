@@ -19,12 +19,16 @@
 */
 
 #pragma once
+#include <utility>
 #include "util/sophus_util.h"
 
 #include "g2o/core/base_vertex.h"
 #include "g2o/core/base_binary_edge.h"
-#include "g2o/types/sba/types_six_dof_expmap.h"
 
+namespace g2o
+{
+    using Sophus::Vector7d;
+}
 
 namespace lsd_slam
 {

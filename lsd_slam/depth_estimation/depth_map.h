@@ -27,7 +27,7 @@
 #include "util/index_thread_reduce.h"
 #include "util/sophus_util.h"
 
-
+using namespace boost::placeholders;
 
 namespace lsd_slam
 {

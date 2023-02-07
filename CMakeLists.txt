@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.9)
+set(G2O_ROOT "/usr/local/g2o/")
 set(LsdSlam_PROJECT_NAME lsd_slam_and_apps)
 project(${LsdSlam_PROJECT_NAME})
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)  # for organizing code to folders
@@ -8,12 +9,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake
                               ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules
                               ${CMAKE_CURRENT_BINARY_DIR})
 include(LsdSlamUtil)  # include useful macros
-lsd_slam_print_status("Closure cmake modules: ${LsdSlam_COLOR_BLUE}${CMAKE_MODULE_PATH}${LsdSlam_COLOR_RESET}")
+lsd_slam_print_status("Closure cmake modules: \n${CMAKE_MODULE_PATH}")
 
 set(LsdSlam_WORLD_VERSION 1)
 set(LsdSlam_MAJOR_VERSION 0)
 set(LsdSlam_MINOR_VERSION 0)
-lsd_slam_print_status("Welcome! Closure version ${LsdSlam_COLOR_BLUE}${LsdSlam_WORLD_VERSION}.${LsdSlam_MAJOR_VERSION}.${LsdSlam_MINOR_VERSION}${LsdSlam_COLOR_RESET}")
+lsd_slam_print_status("Welcome! Closure version \n${LsdSlam_WORLD_VERSION}.${LsdSlam_MAJOR_VERSION}.${LsdSlam_MINOR_VERSION}")
 
 # common settings
 set(LsdSlam_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -79,7 +80,7 @@ else()
 endif(WIN32)
 
 if(ANDROID OR UNIX OR APPLE)
-  add_definitions(-std=c++11)
+  add_definitions(-std=c++14)
 endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -90,7 +91,7 @@ set(CMAKE_CXX_FLAGS ${LsdSlam_CXX_FLAGS})
 lsd_slam_common_build_setting()
 
 # Allow the developer to select if Dynamic or Static libraries are built
-option(LsdSlam_BUILD_SHARED_LIBS "Build Shared Libraries (preferred and required for the g2o plugin system)" OFF)
+option(LsdSlam_BUILD_SHARED_LIBS "Build Shared Libraries (preferred and required for the g2o plugin system)" ON)
 set(LsdSlam_LIB_TYPE STATIC)
 if(LsdSlam_BUILD_SHARED_LIBS)
   set(LsdSlam_LIB_TYPE SHARED)

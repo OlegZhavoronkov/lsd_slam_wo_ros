@@ -17,7 +17,8 @@
 * You should have received a copy of the GNU General Public License
 * along with LSD-SLAM. If not, see <http://www.gnu.org/licenses/>.
 */
-
+#include <g2o/types/sba/types_six_dof_expmap.h>
+#include <g2o/types/sim3/sim3.h>
 #include "global_mapping/g2o_type_sim3_sophus.h"
 
 #include <g2o/core/factory.h>

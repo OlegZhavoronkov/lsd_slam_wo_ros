@@ -26,10 +26,10 @@ namespace of2 {
 class FabMap;
 }
 namespace cv {
-class FeatureDetector;
+class Feature2D ;
+using FeatureDetector=Feature2D;
 class BOWImgDescriptorExtractor;
 }
-
 
 namespace lsd_slam
 {

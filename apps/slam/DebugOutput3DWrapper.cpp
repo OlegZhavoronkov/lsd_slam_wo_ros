@@ -29,15 +29,15 @@
 #include "lsd_slam/global_mapping/key_frame_graph.h"
 #include "sophus/sim3.hpp"
 #include "lsd_slam/global_mapping/g2o_type_sim3_sophus.h"
-#include <opencv/highgui.h>
-
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 namespace lsd_slam
 {
 
 
 DebugOutput3DWrapper::DebugOutput3DWrapper(int width, int height)
 {
-	cvNamedWindow("Tracking_output", 1); //Create window
+	cv::namedWindow("Tracking_output", 1); //Create window
 	this->width = width;
 	this->height = height;
 
@@ -59,7 +59,7 @@ DebugOutput3DWrapper::DebugOutput3DWrapper(int width, int height)
 	tracker_display = cv::Mat::ones(640, 480, CV_8UC1);
 	cv::circle(tracker_display, cv::Point(100,100), 20, cv::Scalar(0, 255, 0));
 	cv::imshow("Tracking_output", tracker_display);
-	cvWaitKey(10);
+    cv::waitKey(10);
 	publishLvl=0;
 }
 
