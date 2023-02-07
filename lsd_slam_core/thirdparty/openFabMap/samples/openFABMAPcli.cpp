@@ -32,6 +32,7 @@
 #include <fstream>
 #ifdef OPENCV2P4
 #include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/imgproc/types_c.h>
 #endif
 
 /*

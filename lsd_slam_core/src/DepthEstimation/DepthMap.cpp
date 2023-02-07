@@ -24,14 +24,13 @@
 #include <fstream>
 #include <iostream>
 #include <opencv2/imgproc/imgproc.hpp>
-
+#include <opencv2/imgproc/types_c.h>
 #include "util/settings.h"
 #include "DepthEstimation/DepthMapPixelHypothesis.h"
 #include "DataStructures/Frame.h"
 #include "util/globalFuncs.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "GlobalMapping/KeyFrameGraph.h"
-
 
 namespace lsd_slam
 {
@@ -147,7 +146,7 @@ void DepthMap::observeDepthRow(int yMin, int yMax, RunningStats* stats)
 void DepthMap::observeDepth()
 {
 
-	threadReducer.reduce(boost::bind(&DepthMap::observeDepthRow, this, _1, _2, _3), 3, height-3, 10);
+	threadReducer.reduce(boost::bind(&DepthMap::observeDepthRow, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 3, height-3, 10);
 
 	if(enablePrintDebugInfo && printObserveStatistics)
 	{
@@ -711,7 +710,7 @@ void DepthMap::regularizeDepthMapFillHoles()
 	runningStats.num_reg_created=0;
 
 	memcpy(otherDepthMap,currentDepthMap,width*height*sizeof(DepthMapPixelHypothesis));
-	threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapFillHolesRow, this, _1, _2, _3), 3, height-2, 10);
+	threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapFillHolesRow, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 3, height-2, 10);
 	if(enablePrintDebugInfo && printFillHolesStatistics)
 		printf("FillHoles (discreteDepth): %d created\n",
 				runningStats.num_reg_created);
@@ -742,7 +741,7 @@ void DepthMap::buildRegIntegralBufferRow1(int yMin, int yMax, RunningStats* stat
 
 void DepthMap::buildRegIntegralBuffer()
 {
-	threadReducer.reduce(boost::bind(&DepthMap::buildRegIntegralBufferRow1, this, _1, _2,_3), 0, height);
+	threadReducer.reduce(boost::bind(&DepthMap::buildRegIntegralBufferRow1, this, boost::placeholders::_1, boost::placeholders::_2,boost::placeholders::_3), 0, height);
 
 	int* validityIntegralBufferPT = validityIntegralBuffer;
 	int* validityIntegralBufferPT_T = validityIntegralBuffer+width;
@@ -863,9 +862,9 @@ void DepthMap::regularizeDepthMap(bool removeOcclusions, int validityTH)
 
 
 	if(removeOcclusions)
-		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<true>, this, validityTH, _1, _2, _3), 2, height-2, 10);
+		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<true>, this, validityTH, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 2, height-2, 10);
 	else
-		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<false>, this, validityTH, _1, _2, _3), 2, height-2, 10);
+		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<false>, this, validityTH, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 2, height-2, 10);
 
 
 	if(enablePrintDebugInfo && printRegularizeStatistics)

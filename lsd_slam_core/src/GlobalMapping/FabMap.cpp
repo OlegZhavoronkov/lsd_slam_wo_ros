@@ -24,6 +24,7 @@
 #include <fstream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/imgproc/types_c.h>
 #include "openfabmap.hpp"
 
 #include "util/settings.h"

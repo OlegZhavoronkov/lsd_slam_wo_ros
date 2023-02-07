@@ -22,7 +22,8 @@
 #include "util/SophusUtil.h"
 #include "opencv2/opencv.hpp"
 #include "DataStructures/Frame.h"
-
+#include <opencv2/imgproc/types_c.h>
+#include <opencv2/imgproc/imgproc_c.h>
 namespace lsd_slam
 {
 

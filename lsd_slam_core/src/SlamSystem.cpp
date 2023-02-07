@@ -1238,7 +1238,7 @@ int SlamSystem::findConstraintsForNewKeyFrames(Frame* newKeyFrame, bool forcePar
 	Frame* fabMapResult = 0;
 	std::unordered_set<Frame*, std::hash<Frame*>, std::equal_to<Frame*>,
 		Eigen::aligned_allocator< Frame* > > candidates = trackableKeyFrameSearch->findCandidates(newKeyFrame, fabMapResult, useFABMAP, closeCandidatesTH);
-	std::map< Frame*, Sim3, std::less<Frame*>, Eigen::aligned_allocator<std::pair<Frame*, Sim3> > > candidateToFrame_initialEstimateMap;
+	std::map< Frame*, Sim3, std::less<Frame*>, Eigen::aligned_allocator<std::pair<Frame* const, Sim3> > > candidateToFrame_initialEstimateMap;
 
 
 	// erase the ones that are already neighbours.
