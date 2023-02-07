@@ -81,9 +81,9 @@ else()
   lsd_slam_print_error("We don't support this platform!!!")
 endif(WIN32)
 
-if(ANDROID OR UNIX OR APPLE)
-  add_definitions(-std=c++14)
-endif()
+#if(ANDROID OR UNIX OR APPLE)
+#  add_definitions(-std=c++14)
+#endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
   add_definitions(-stdlib=libstdc++)  # prevent default libc++ on new mac

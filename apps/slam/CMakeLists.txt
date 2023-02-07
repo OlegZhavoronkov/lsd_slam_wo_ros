@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(slam_app)
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(LIB_CXSPARSE  /usr/lib/x86_64-linux-gnu/libcxsparse.so)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 message("configuring libraries for ${CMAKE_BUILD_TYPE}:6")

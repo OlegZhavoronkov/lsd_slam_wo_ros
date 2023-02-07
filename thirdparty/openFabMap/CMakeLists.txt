@@ -3,7 +3,8 @@
 # Last updated 17/05/12
 
 PROJECT(openFABMAP)
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 cmake_minimum_required(VERSION 2.6)
 
 ############ Cmake setup ##################
