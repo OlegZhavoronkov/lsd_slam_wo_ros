@@ -1,3 +1,6 @@
+.vscode/
+lib/
+bin/
 lsd_slam_core/bin/
 lsd_slam_core/build/
 lsd_slam_core/cfg/cpp/
