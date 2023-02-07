@@ -21,7 +21,7 @@
 #include "OpenCVImageStreamThread.h"
 //#include <ros/callback_queue.h>
 
-#include <boost/thread.hpp>
+#include <thread>
 #include <opencv2/highgui/highgui.hpp>
 
 //#include "cv_bridge/cv_bridge.h"

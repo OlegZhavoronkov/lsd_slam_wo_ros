@@ -20,7 +20,7 @@
 
 #include "live_slam_wrapper.h"
 
-#include <boost/thread.hpp>
+#include <thread>
 #include "util/settings.h"
 #include "util/global_funcs.h"
 #include "slam_system.h"

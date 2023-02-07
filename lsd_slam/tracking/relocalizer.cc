@@ -22,7 +22,9 @@
 #include "model/frame.h"
 #include "tracking/se3_tracker.h"
 #include "io_wrapper/image_display.h"
+#include <chrono>
 
+namespace ch = std::chrono;
 namespace lsd_slam
 {
 
@@ -71,7 +73,7 @@ void Relocalizer::stop()
 
 void Relocalizer::updateCurrentFrame(std::shared_ptr<Frame> currentFrame)
 {
-    boost::unique_lock<boost::mutex> lock(exMutex);
+    std::unique_lock<std::mutex> lock(exMutex);
 
     if(hasResult) return;
 
@@ -118,24 +120,23 @@ void Relocalizer::start(std::vector<Frame*> &allKeyframesList)
     // start threads
     for(int i=0; i<RELOCALIZE_THREADS; i++)
     {
-        relocThreads[i] = boost::thread(&Relocalizer::threadLoop, this, i);
+        relocThreads[i] = std::thread(&Relocalizer::threadLoop, this, i);
         running[i] = true;
     }
 }
 
 bool Relocalizer::waitResult(int milliseconds)
 {
-    boost::unique_lock<boost::mutex> lock(exMutex);
+    std::unique_lock<std::mutex> lock(exMutex);
     if(hasResult) return true;
-    resultReadySignal.timed_wait(lock,
-                                 boost::posix_time::milliseconds(milliseconds));
+    resultReadySignal.wait_for(lock,ch::milliseconds(milliseconds));
     return hasResult;
 }
 void Relocalizer::getResult(Frame* &out_keyframe,
                             std::shared_ptr<Frame> &frame, int &out_successfulFrameID,
                             SE3 &out_frameToKeyframe)
 {
-    boost::unique_lock<boost::mutex> lock(exMutex);
+    std::unique_lock<std::mutex> lock(exMutex);
     if(hasResult)
     {
         out_keyframe = resultKF;
@@ -159,7 +160,7 @@ void Relocalizer::threadLoop(int idx)
 
     SE3Tracker* tracker = new SE3Tracker(w,h,K);
 
-    boost::unique_lock<boost::mutex> lock(exMutex);
+    std::unique_lock<std::mutex> lock(exMutex);
     while(continueRunning)
     {
         // if got something: do it (unlock in the meantime)

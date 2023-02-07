@@ -20,7 +20,7 @@
 
 #pragma once
 #include "util/settings.h"
-#include "boost/thread.hpp"
+#include <thread>
 #include <stdio.h>
 #include <iostream>
 

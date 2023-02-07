@@ -22,10 +22,11 @@
 #include <chrono>
 #include <deque>
 #include <vector>
-#include <boost/thread.hpp>
-#include <boost/thread/shared_mutex.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/locks.hpp>
+#include <thread>
+//#include <boost/thread.hpp>
+//#include <boost/thread/shared_mutex.hpp>
+//#include <boost/thread/condition_variable.hpp>
+//#include <boost/thread/locks.hpp>
 #include "util/settings.h"
 #include "io_wrapper/timestamp.h"
 #include "opencv2/core/core.hpp"

@@ -28,4 +28,5 @@ set_property(TARGET ${lib_target} PROPERTY FOLDER "lsd_slam/libs")
 
 target_link_libraries(${lib_target} ${LsdSlam_ALL_LIBRARIES} glog::glog Ceres::ceres)
 list(APPEND LsdSlam_ALL_LIBRARIES ${lib_target})
+target_compile_definitions(${lib_target} PRIVATE EIGEN_NO_DEPRECATED_WARNING)
 lsd_slam_print_status("LsdSlam_ALL_LIBRARIES slam:${LsdSlam_ALL_LIBRARIES}")

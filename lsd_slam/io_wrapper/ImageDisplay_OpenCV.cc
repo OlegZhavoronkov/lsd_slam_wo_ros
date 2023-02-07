@@ -25,7 +25,7 @@
 #include <string>
 #include <unordered_set>
 
-#include <boost/thread.hpp>
+#include <thread>
 
 namespace lsd_slam
 {
