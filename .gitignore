@@ -6,3 +6,5 @@ config.rb
 .fips-*
 .wercker/
 bench_results/
+**/.vscode/*
+**/build/*
