@@ -26,7 +26,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 
-#include <g3log/g3log.hpp>
+#include <glog/logging.h>
 
 #include "DataStructures/Frame.h"
 #include "DataStructures/KeyFrame.h"

@@ -28,7 +28,7 @@
 #include "DataStructures/FramePoseStruct.h"
 #include "DepthEstimation/DepthMap.h"
 
-#include <g3log/g3log.hpp>
+#include <glog/logging.h>
 
 
 namespace lsd_slam
@@ -89,8 +89,11 @@ Frame::Frame(int frameId, const Camera &cam, const ImageSize &sz,
 
 Frame::~Frame()
 {
-
-	LOGF_IF(INFO, Conf().print.frameBuildDebugInfo,"DELETING frame %d", id());
+    if(Conf().print.frameBuildDebugInfo)
+    {
+        LOG(INFO)<< "DELETING frame %d", id();
+    }
+	
 
 	FrameMemory::getInstance().deactivateFrame(this);
 

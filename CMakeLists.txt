@@ -30,6 +30,7 @@ find_package(SuiteSparse REQUIRED)
 find_package(Ceres)
 find_package( TinyXML2 REQUIRED )
 find_package(OpenGL)
+find_package(glog REQUIRED)
 # FabMap
 # uncomment this part to enable fabmap
 #add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap)
@@ -144,6 +145,15 @@ else()
             g2o_types_sim3 
             g2o_types_sba)
 endif()
+set(INITIAL_LIBVIDEOIO-TYPES_INCLUDE "LIBVIDEOIO-TYPES_INCLUDE_NOT_SET")
+
+if(NOT LIBVIDEOIO-TYPES_INCLUDE)
+    set(LIBVIDEOIO-TYPES_INCLUDE ${INITIAL_LIBVIDEOIO-TYPES_INCLUDE} )
+endif()
+add_subdirectory(thirdparty/g3log/)
+add_subdirectory(thirdparty/libvideoio-types/)
+add_subdirectory(thirdparty/libactiveobject/)
+message(STATUS "\"root LIBVIDEOIO-TYPES_INCLUDE\" \"${LIBVIDEOIO-TYPES_INCLUDE}\"")
 #if(g2o_libraries)
 #    set(G2O_LIBRARIES ${g2o_libraries})
 #endif()
