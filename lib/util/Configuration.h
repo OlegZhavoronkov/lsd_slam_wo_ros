@@ -1,7 +1,7 @@
 
 #include <opencv2/core/core.hpp>
 
-#include <glog/logging.h>            // Provides CHECK() macros
+#include <g3log/g3log.hpp>            // Provides CHECK() macros
 #include <opencv2/core.hpp>
 #ifdef USE_ZED
 #include <zed/Camera.hpp>

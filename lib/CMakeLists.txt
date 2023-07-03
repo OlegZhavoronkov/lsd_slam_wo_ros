@@ -47,7 +47,7 @@ endif()
 message(STATUS "\${G2O_LIBRARIES} \"${G2O_LIBRARIES}\"")
   # build shared library.
 target_link_libraries(lsdslam
-    PRIVATE
+    PUBLIC
   #fips_libs(
     ${FABMAP_LIB}
     ${Boost_LIBRARIES}
@@ -56,8 +56,9 @@ target_link_libraries(lsdslam
     #)
 
   #fips_deps( 
-    glog::glog 
+    g3logger
     activeobject 
+    videoio
     ${G2O_LIBRARIES} 
     )
 

@@ -129,7 +129,7 @@ void FabMap::compareAndAdd( const KeyFrame::SharedPtr &keyframe, int* out_newID,
 	cv::Mat frame;
 	cv::Mat keyFrameImage(keyframe->frame()->height(), keyframe->frame()->width(), CV_32F, const_cast<float*>(keyframe->frame()->image()));
 	keyFrameImage.convertTo(frame, CV_8UC1);
-	//cv::cvtColor(frame, frame, CV_GRAY2RGB);
+	//cv::cvtColor(frame, frame, cv::COLOR_GRAY2RGB);
 
 	// Generate FabMap bag-of-words data (image descriptor)
 	cv::Mat bow;

@@ -28,7 +28,7 @@
 #include "DataStructures/FramePoseStruct.h"
 #include "DepthEstimation/DepthMap.h"
 
-#include <glog/logging.h>
+#include <g3log/g3log.hpp>
 
 
 namespace lsd_slam
