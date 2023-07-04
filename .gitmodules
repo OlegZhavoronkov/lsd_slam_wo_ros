@@ -16,6 +16,3 @@
 [submodule "thirdparty/libbinlogger"]
 	path = thirdparty/libbinlogger
 	url = https://github.com/apl-ocean-engineering/libbinlogger.git
-[submodule "thirdparty/CLI11"]
-	path = thirdparty/CLI11
-	url = https://github.com/CLIUtils/CLI11.git
