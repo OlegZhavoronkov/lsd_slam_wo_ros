@@ -7,6 +7,6 @@ add_executable(LSD LSD.cpp
 
 #  fips_files(  )
 
-target_link_libraries(LSD g3log g3logger lsdslam videoio )
+target_link_libraries(LSD g3log g3logger lsdslam videoio CLI11)
 #  fips_deps(  )
 #fips_end_app()

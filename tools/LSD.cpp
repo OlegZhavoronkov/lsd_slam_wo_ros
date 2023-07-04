@@ -35,14 +35,15 @@
 #include "util/globalFuncs.h"
 #include "util/ThreadMutexObject.h"
 #include "util/Configuration.h"
+#include <CLI/Error.hpp>
+#include "CLI/App.hpp"
 
-#include "App/App.h"
 #include "App/InputThread.h"
-#include "CLI11.hpp"
-
-
+#include "CLI/CLI.hpp"
+#include <libvideoio/Undistorter.h>
+#include <boost/filesystem.hpp>
 using namespace lsd_slam;
-
+namespace fs=boost::filesystem;
 
 int main( int argc, char** argv )
 {
@@ -66,19 +67,40 @@ int main( int argc, char** argv )
   app.set_config("--config");
 
   CLI11_PARSE(app, argc, argv);
-
+  
+  
+    auto pUndisorter=libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
+    std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
   // Load the configuration object
-  Conf().setSlamImageSize( args.undistorter->outputImageSize() );
+  Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();
 
   LOG(INFO) << "Slam image: " << Conf().slamImageSize.width << " x " << Conf().slamImageSize.height;
 
-  CHECK( (Conf().camera.fx) > 0 && (Conf().camera.fy > 0) ) << "Camera focal length is zero";
+  CHECK( (undistorter->getCamera().fx) > 0 && (undistorter->getCamera().fy > 0) ) << "Camera focal length is zero";
 
 	std::shared_ptr<SlamSystem> system( new SlamSystem() );
-
+    std::string folder=inFiles[0];
+    CHECK(fs::is_directory(folder));
+    std::list<std::string> files;
+    for(const auto&p : fs::directory_iterator(folder))
+    {
+        if(!fs::is_regular_file(p.path()))
+        {
+            continue;
+        }
+        files.push_back(p.path().string());
+    }
+    files.sort();
+    std::vector<std::string > vec_of_files;
+    vec_of_files.reserve(files.size());
+    for(const auto& p : files)
+    {
+        vec_of_files.emplace_back(p);
+    }
   LOG(INFO) << "Starting input thread.";
-  InputThread input( system, args.dataSource, args.undistorter );
+  std::shared_ptr<libvideoio::ImageSource> dataSource(new libvideoio::ImageFilesSource(vec_of_files));
+  InputThread input( system, dataSource, undistorter );
   boost::thread inputThread( boost::ref(input) );
   input.inputReady.wait();
 

@@ -10,3 +10,12 @@
 [submodule "thirdparty/libg3logger"]
 	path = thirdparty/libg3logger
 	url = https://github.com/apl-ocean-engineering/libg3logger.git
+[submodule "thirdparty/g3logg"]
+	path = thirdparty/g3logg
+	url = https://github.com/KjellKod/g3log.git
+[submodule "thirdparty/libbinlogger"]
+	path = thirdparty/libbinlogger
+	url = https://github.com/apl-ocean-engineering/libbinlogger.git
+[submodule "thirdparty/CLI11"]
+	path = thirdparty/CLI11
+	url = https://github.com/CLIUtils/CLI11.git
