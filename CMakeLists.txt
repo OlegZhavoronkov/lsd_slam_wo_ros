@@ -1,17 +1,17 @@
 
 ## Error message if not run in fips
-if (NOT FIPS_CONFIG)
-  message(FATAL_ERROR "As of December 2017, I'm using \"fips\" as a package manager.   The \"cmake\" branch contains the working head for the cmake-based build.  See README.md for more information.")
-endif()
+#if (NOT FIPS_CONFIG)
+#  message(FATAL_ERROR "As of December 2017, I'm using \"fips\" as a package manager.   The \"cmake\" branch contains the working head for the cmake-based build.  See README.md for more information.")
+#endif()
 
-if (NOT FIPS_IMPORT)
-  cmake_minimum_required(VERSION 3.5.0)
+#if (NOT FIPS_IMPORT)
+cmake_minimum_required(VERSION 3.5.0)
 
-  get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
-  include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
-
-  fips_setup(PROJECT lsd_slam)
-endif()
+#  get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
+#  include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
+project(lsd_slam)
+#fips_setup(PROJECT lsd_slam)
+#endif()
 
 option(BUILD_GUI "Build Pangolin-based GUI" OFF)
 
@@ -20,11 +20,17 @@ find_package(Eigen3 REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+
+
+
 ## I believe the fipsified version of g2o will handle this...
 # ## I haven't packaged suitesparse yet...
-find_package(SuiteSparse REQUIRED)
-find_package( TinyXML2 REQUIRED )
 
+find_package(SuiteSparse REQUIRED)
+find_package(Ceres)
+find_package( TinyXML2 REQUIRED )
+find_package(OpenGL)
+#find_package(glog REQUIRED)
 # FabMap
 # uncomment this part to enable fabmap
 #add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/openFabMap)
@@ -35,7 +41,14 @@ find_package( TinyXML2 REQUIRED )
 
 ##==== Check and define the architecture
 ## Architecture-specific optimizations
-option( CUDA_VERSION "Use CUDA" "")
+if( NOT CUDA_VERSION_EXACT )
+    set( CUDA_VERSION_EXACT "11.6" CACHE STRING  "Use CUDA")
+endif()
+
+if( NOT CUDA_VERSION)
+    set(CUDA_VERSION ${CUDA_VERSION_EXACT})
+endif()
+
 
 EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
 message( STATUS "Architecture: ${ARCHITECTURE}" )
@@ -54,11 +67,17 @@ elseif( ${ARCHITECTURE} STREQUAL "x86_64" )
     message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
   endif()
 endif()
+if( CUDA_VERSION )
+	find_package( CUDA REQUIRED 
+    #${CUDA_VERSION} 
+    )
+  SET( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
+endif()
 
 set( OPENCV_COMPONENTS core highgui imgproc video calib3d )
 find_package(OpenCV COMPONENTS ${OPENCV_COMPONENTS} REQUIRED)
 
-if( OpenCV_VERSION_MAJOR EQUAL "3" )
+if( OpenCV_VERSION_MAJOR GREATER_EQUAL "3" )
   message( STATUS "Using OpenCV 3.x")
   add_definitions( -DOPENCV3 )
 else()
@@ -66,10 +85,6 @@ else()
   add_definitions( -DOPENCV2 )
 endif()
 
-if( CUDA_VERSION )
-	find_package( CUDA REQUIRED ${CUDA_VERSION} )
-  SET( CUDA_USE_STATIC_CUDA_RUNTIME OFF )
-endif()
 
 ## C++ flags applied to all builds
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -88,25 +103,83 @@ if(APPLE)
 	set( CMAKE_MACOSX_RPATH OFF )
 endif()
 
-fips_include_directories( ${LSDSLAM_INCLUDE_DIRS} )
+include_directories( ${LSDSLAM_INCLUDE_DIRS} )
 
-fips_add_subdirectory( lib/ )
+set(EMPTY_EXPLICIT_G2O_PATH "EXPLICIT_G2O_PATH_NOT_DEFINED")
+set(EXPLICIT_G2O_PATH "${EMPTY_EXPLICIT_G2O_PATH}" CACHE PATH "path to g2o-provided cmake")
+
+if(NOT EXPLICIT_G2O_PATH STREQUAL EMPTY_EXPLICIT_G2O_PATH)
+    #find_package(Eigen3)
+    #find_package(OpenGL)
+    message(STATUS "Starting search for g2o EIGEN3_INCLUDE_DIR \"${EIGEN3_INCLUDE_DIR}\" EIGEN3_FOUND \"${EIGEN3_FOUND}\" OpenGL_FOUND \"${OpenGL_FOUND}\" OPENGL_FOUND \"${OPENGL_FOUND}\"")
+    if(${EIGEN3_FOUND}   )
+        set(REAL_G2O_CONFIG_PATH "${EXPLICIT_G2O_PATH}/g2oTargets.cmake")
+        find_package(Eigen3 REQUIRED)
+        #find_file(REAL_G2O_CONFIG_PATH "g2oTargets.cmake" PATHS ${EXPLICIT_G2O_PATH})
+        include("${REAL_G2O_CONFIG_PATH}")
+        #find_package(g2o REQUIRED CONFIG PATHS "${EXPLICIT_G2O_PATH}" NO_DEFAULT_PATH)
+        list(APPEND g2o_libraries g2o)
+        message(STATUS "g2o_libraries \"${g2o_libraries}\"")
+        set(NATIVE_G2O_CMAKE_USED "TRUE")
+        #return()
+    else()
+        message(STATUS  "either Eigen or OpenGL which are dependencies of g2o not found")
+        #return()
+    endif()
+endif()
+set(G2O_LIBRARIES)
+if(${NATIVE_G2O_CMAKE_USED})
+    list(APPEND G2O_LIBRARIES 
+            g2o::core 
+            g2o::stuff 
+            g2o::solver_csparse 
+            g2o::csparse_extension 
+            g2o::types_sim3 
+            g2o::types_sba)
+else()
+    list(APPEND G2O_LIBRARIES 
+            g2o_core 
+            g2o_stuff 
+            g2o_solver_csparse 
+            g2o_csparse_extension 
+            g2o_types_sim3 
+            g2o_types_sba)
+endif()
+set(INITIAL_LIBVIDEOIO-TYPES_INCLUDE "LIBVIDEOIO-TYPES_INCLUDE_NOT_SET")
+
+if(NOT LIBVIDEOIO-TYPES_INCLUDE)
+    set(LIBVIDEOIO-TYPES_INCLUDE ${INITIAL_LIBVIDEOIO-TYPES_INCLUDE} )
+endif()
+add_subdirectory(thirdparty/g3logg/)
+add_subdirectory(thirdparty/libg3logger/)
+add_subdirectory(thirdparty/CLI11/)
+add_subdirectory(thirdparty/libvideoio-types/)
+
+add_subdirectory(thirdparty/libbinlogger/)
+add_subdirectory(thirdparty/libvideoio/)
+add_subdirectory(thirdparty/libactiveobject/)
+message(STATUS "\"root LIBVIDEOIO-TYPES_INCLUDE\" \"${LIBVIDEOIO-TYPES_INCLUDE}\"")
+#if(g2o_libraries)
+#    set(G2O_LIBRARIES ${g2o_libraries})
+#endif()
+add_subdirectory( lib/ )
 
 ## Provide option to not build tools, default to yes unless FIP_IMPORT
 option( LSDSLAM_BUILD_TOOLS ON )
-if( NOT FIPS_IMPORT )
-  set( LSDSLAM_BUILD_TOOLS OFF )
-endif()
-if( LSDSLAM_BUILD_TOOLS )
-  fips_add_subdirectory( tools/ )
-endif()
+#if( NOT FIPS_IMPORT )
+#  set( LSDSLAM_BUILD_TOOLS OFF )
+#endif()
+#if( LSDSLAM_BUILD_TOOLS )
+  #fips_add_subdirectory( tools/ )
+  add_subdirectory( tools/ )
+#endif()
 
-if( NOT FIPS_IMPORT )
-
-  if( FIPS_UNITTESTS )
-    ## Build a local copy of gtest (as per the GTest FAQ)
-    fips_add_subdirectory( test/unit/ )
-  endif()
-
-  fips_finish()
-endif()
+#if( NOT FIPS_IMPORT )
+#
+#  if( FIPS_UNITTESTS )
+#    ## Build a local copy of gtest (as per the GTest FAQ)
+#    fips_add_subdirectory( test/unit/ )
+#  endif()
+#
+#  fips_finish()
+#endif()

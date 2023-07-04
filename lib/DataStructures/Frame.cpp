@@ -89,8 +89,11 @@ Frame::Frame(int frameId, const Camera &cam, const ImageSize &sz,
 
 Frame::~Frame()
 {
-
-	LOGF_IF(INFO, Conf().print.frameBuildDebugInfo,"DELETING frame %d", id());
+    if(Conf().print.frameBuildDebugInfo)
+    {
+        LOG(INFO)<< "DELETING frame %d", id();
+    }
+	
 
 	FrameMemory::getInstance().deactivateFrame(this);
 

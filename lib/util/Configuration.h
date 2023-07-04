@@ -2,7 +2,7 @@
 #include <opencv2/core/core.hpp>
 
 #include <g3log/g3log.hpp>            // Provides CHECK() macros
-
+#include <opencv2/core.hpp>
 #ifdef USE_ZED
 #include <zed/Camera.hpp>
 #endif
@@ -18,7 +18,7 @@ namespace lsd_slam {
 
   using libvideoio::Camera;
   using libvideoio::ImageSize;
-
+  //using ImageSize=cv::Size;
   class Configuration;
 
   // Accessor for the global instance of Configuration...

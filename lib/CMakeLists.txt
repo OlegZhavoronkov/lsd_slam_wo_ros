@@ -36,17 +36,30 @@ set(lsdslam_SOURCE_FILES
   ${GUI_SRCS}
 )
 
-fips_begin_module( lsdslam )
-
-  fips_files( ${lsdslam_SOURCE_FILES} )
-
+add_library(lsdslam SHARED "")
+target_sources(lsdslam PUBLIC ${lsdslam_SOURCE_FILES})
+message(STATUS "lsdslam \"\${LIBVIDEOIO-TYPES_INCLUDE} \"${LIBVIDEOIO-TYPES_INCLUDE}\"")
+#fips_begin_module( lsdslam )
+if(NOT LIBVIDEOIO-TYPES_INCLUDE STREQUAL "${INITIAL_LIBVIDEOIO-TYPES_INCLUDE}")
+    target_include_directories(lsdslam PUBLIC ${LIBVIDEOIO-TYPES_INCLUDE})
+endif()
+#  fips_files( ${lsdslam_SOURCE_FILES} )
+message(STATUS "\${G2O_LIBRARIES} \"${G2O_LIBRARIES}\"")
   # build shared library.
-  fips_libs(
+target_link_libraries(lsdslam
+    PUBLIC
+  #fips_libs(
     ${FABMAP_LIB}
     ${Boost_LIBRARIES}
     ${OpenCV_LIBS}
-    ${CSPARSE_LIBRARY} )
+    ${CSPARSE_LIBRARY} 
+    #)
 
-  fips_deps( g3logger activeobject videoio ${G2O_LIBRARIES} )
+  #fips_deps( 
+    g3logger
+    activeobject 
+    videoio
+    ${G2O_LIBRARIES} 
+    )
 
-fips_end_module()
+#fips_end_module()

@@ -14,7 +14,7 @@ namespace lsd_slam {
   class InputThread {
   public:
 
-    InputThread(  std::shared_ptr<lsd_slam::SlamSystem> &system,
+    InputThread(   std::shared_ptr<lsd_slam::SlamSystem> &system,
                    std::shared_ptr<libvideoio::ImageSource> &dataSource,
                    std::shared_ptr<libvideoio::Undistorter> &undistorter );
 

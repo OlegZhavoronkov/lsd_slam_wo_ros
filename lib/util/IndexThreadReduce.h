@@ -38,7 +38,7 @@ public:
 		nextIndex = 0;
 		maxIndex = 0;
 		stepSize = 1;
-		callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, _1, _2, _3);
+		callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3);
 
 		running = true;
 		for(int i=0;i<MAPPING_THREADS;i++)
@@ -117,7 +117,7 @@ public:
 
 		nextIndex = 0;
 		maxIndex = 0;
-		this->callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, _1, _2, _3);
+		this->callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3);
 
 		//printf("reduce done (all threads finished)\n");
 	}

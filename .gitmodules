@@ -1,0 +1,21 @@
+[submodule "thirdparty/libvideoio-types"]
+	path = thirdparty/libvideoio-types
+	url = https://github.com/apl-ocean-engineering/libvideoio-types.git
+[submodule "thirdparty/libvideoio"]
+	path = thirdparty/libvideoio
+	url = https://github.com/apl-ocean-engineering/libvideoio.git
+[submodule "thirdparty/libactiveobject"]
+	path = thirdparty/libactiveobject
+	url = https://github.com/apl-ocean-engineering/libactiveobject.git
+[submodule "thirdparty/libg3logger"]
+	path = thirdparty/libg3logger
+	url = https://github.com/apl-ocean-engineering/libg3logger.git
+[submodule "thirdparty/g3logg"]
+	path = thirdparty/g3logg
+	url = https://github.com/KjellKod/g3log.git
+[submodule "thirdparty/libbinlogger"]
+	path = thirdparty/libbinlogger
+	url = https://github.com/apl-ocean-engineering/libbinlogger.git
+[submodule "thirdparty/CLI11"]
+	path = thirdparty/CLI11
+	url = https://github.com/CLIUtils/CLI11.git
