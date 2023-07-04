@@ -48,7 +48,7 @@ void FrameMemory::releaseBuffers()
 
 		for(unsigned int i=0;i<p.second.size();i++)
 		{
-			Eigen::internal::aligned_free(p.second[i]);
+			delete (char*)p.second[i];
 			bufferSizes.erase(p.second[i]);
 		}
 

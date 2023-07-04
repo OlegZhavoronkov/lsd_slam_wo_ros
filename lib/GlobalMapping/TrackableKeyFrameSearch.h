@@ -22,7 +22,6 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <Eigen/StdVector>
 #include "util/SophusUtil.h"
 #include "util/Configuration.h"
 
@@ -60,8 +59,6 @@ struct TrackableKFStruct
 class TrackableKeyFrameSearch
 {
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	/** Constructor. */
 	TrackableKeyFrameSearch( const std::shared_ptr<KeyFrameGraph> &graph );
 	~TrackableKeyFrameSearch();

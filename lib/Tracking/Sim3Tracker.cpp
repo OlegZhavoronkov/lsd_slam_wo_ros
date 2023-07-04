@@ -71,7 +71,6 @@ Sim3Tracker::Sim3Tracker( const ImageSize &sz )
 
 	buf_warped_size = 0;
 
-
 	lastResidual = 0;
 	iterationNumber = 0;
 	lastDepthResidual = lastPhotometricResidual = lastDepthResidualUnweighted = lastPhotometricResidualUnweighted = lastResidualUnweighted = 0;
@@ -90,16 +89,16 @@ Sim3Tracker::~Sim3Tracker()
 	delete[] buf_warped_y;
 	delete[] buf_warped_z;
 
-	Eigen::internal::aligned_free((void*)buf_d);
-	Eigen::internal::aligned_free((void*)buf_residual_d);
-	Eigen::internal::aligned_free((void*)buf_idepthVar);
-	Eigen::internal::aligned_free((void*)buf_warped_idepthVar);
-	Eigen::internal::aligned_free((void*)buf_weight_p);
-	Eigen::internal::aligned_free((void*)buf_weight_d);
+	delete[] buf_d;
+	delete[] buf_residual_d;
+	delete[] buf_idepthVar;
+	delete[] buf_warped_idepthVar;
+	delete[] buf_weight_p;
+	delete[] buf_weight_d;
 
-	Eigen::internal::aligned_free((void*)buf_weight_Huber);
-	Eigen::internal::aligned_free((void*)buf_weight_VarP);
-	Eigen::internal::aligned_free((void*)buf_weight_VarD);
+	delete[] buf_weight_Huber;
+	delete[] buf_weight_VarP;
+	delete[] buf_weight_VarD;
 }
 
 

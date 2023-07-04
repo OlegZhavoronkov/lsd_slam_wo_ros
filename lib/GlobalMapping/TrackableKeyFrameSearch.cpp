@@ -60,7 +60,7 @@ std::vector<TrackableKFStruct> TrackableKeyFrameSearch::findEuclideanOverlapFram
 	Eigen::Vector3d pos = keyframe->frame()->getCamToWorld().translation();
 	Eigen::Vector3d viewingDir = keyframe->frame()->getCamToWorld().rotationMatrix().rightCols<1>();
 
-	std::vector<TrackableKFStruct, Eigen::aligned_allocator<TrackableKFStruct> > potentialReferenceFrames;
+	std::vector<TrackableKFStruct> potentialReferenceFrames;
 
 	float distFacReciprocal = 1;
 	if(checkBothScales)
@@ -171,8 +171,7 @@ std::unordered_set<KeyFrame::SharedPtr> TrackableKeyFrameSearch::findCandidates(
 	std::unordered_set<KeyFrame::SharedPtr> results;
 
 	// Add all candidates that are similar in an euclidean sense.
-    std::vector<TrackableKFStruct, Eigen::aligned_allocator<TrackableKFStruct> > potentialReferenceFrames =
-            findEuclideanOverlapFrames(keyframe, closenessTH * 15 / (KFDistWeight*KFDistWeight), 1.0 - 0.25 * closenessTH, true);
+	std::vector<TrackableKFStruct> potentialReferenceFrames = findEuclideanOverlapFrames(keyframe, closenessTH * 15 / (KFDistWeight*KFDistWeight), 1.0 - 0.25 * closenessTH, true);
 	for(unsigned int i=0;i<potentialReferenceFrames.size();i++)
 		results.insert(potentialReferenceFrames[i].keyframe);
 

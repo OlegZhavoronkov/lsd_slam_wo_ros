@@ -101,8 +101,7 @@ cv::Mat getDepthRainbowPlot(const float* idepth, const float* idepthVar, const f
 }
 cv::Mat getVarRedGreenPlot(const float* idepthVar, const float* gray, int width, int height)
 {
-	float* idepthVarExt = (float*)Eigen::internal::aligned_malloc(width*height*sizeof(float));
-
+    float* idepthVarExt = new float[width*height];
 	memcpy(idepthVarExt,idepthVar,sizeof(float)*width*height);
 
 	for(int i=2;i<width-2;i++)

@@ -45,8 +45,6 @@ class FramePoseStruct;
 
 struct KFConstraintStruct
 {
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	inline KFConstraintStruct()
 	{
 		firstFrame = secondFrame = 0;
@@ -93,8 +91,6 @@ class KeyFrameGraph
 {
 friend class IntegrationTest;
 public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 	/** Constructs an empty pose graph. */
 	KeyFrameGraph();
 
@@ -160,7 +156,7 @@ public:
 
 	// contains ALL edges, as soon as they are created
 	boost::shared_mutex edgesListsMutex;
-	std::vector< KFConstraintStruct*, Eigen::aligned_allocator<KFConstraintStruct*> > edgesAll;
+	std::vector< KFConstraintStruct* > edgesAll;
 
 
 

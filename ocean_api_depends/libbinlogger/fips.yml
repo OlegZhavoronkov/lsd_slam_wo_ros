@@ -1,0 +1,18 @@
+imports:
+    fips-googletest:
+        git: https://github.com/amarburg/fips-googletest.git
+    libactiveobject:
+        git: https://github.com/apl-ocean-engineering/libactiveobject.git
+    libg3logger:
+        git: https://github.com/apl-ocean-engineering/libg3logger.git
+
+exports:
+  header-dirs:
+    - include/
+  modules:
+    libbinlogger: .
+
+defines:
+  FIPS_RTTI: ON
+  FIPS_EXCEPTIONS: ON
+  FIPS_UNITTESTS_RUN_AFTER_BUILD: ON
