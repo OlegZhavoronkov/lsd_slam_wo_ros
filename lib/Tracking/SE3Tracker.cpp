@@ -155,6 +155,12 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, referenceToFrame, QUICK_KF_CHECK_LVL, false));
 	if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
 	{
+        LOGF(WARNING,"diverged = true frame id %d ref frame id %d(buf_warped_size %d < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL)) %.2f",
+                frame->id(),
+                reference->id(),
+                buf_warped_size,
+                (MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
+                );
 		diverged = true;
 		trackingWasGood = false;
 		return SE3();
@@ -190,6 +196,11 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 			callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, new_referenceToFrame, QUICK_KF_CHECK_LVL, false));
 			if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
 			{
+                LOGF(WARNING,"diverged = true frame id %d keyframe id %d,buf_warped_size %d < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL) %.2f",
+                    frame->id(),
+                    reference->id(),
+                    buf_warped_size,
+                    MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL));
 				diverged = true;
 				trackingWasGood = false;
 				return SE3();
