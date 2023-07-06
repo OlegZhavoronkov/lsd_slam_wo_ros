@@ -97,8 +97,8 @@ public:
 	float affineEstimation_b;
 
 
-	bool diverged;
-	bool trackingWasGood;
+	bool _diverged;
+	bool _trackingWasGood;
 private:
 
 	float _lastGoodCount;

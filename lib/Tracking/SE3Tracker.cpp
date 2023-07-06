@@ -74,7 +74,7 @@ SE3Tracker::SE3Tracker(const ImageSize &sz )
 	iterationNumber = 0;
 	pointUsage = 0;
 
-	diverged = false;
+	_diverged = false;
 }
 
 SE3Tracker::~SE3Tracker()
@@ -149,8 +149,8 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	affineEstimation_a = 1; affineEstimation_b = 0;
 
 	LGS6 ls;
-	diverged = false;
-	trackingWasGood = true;
+	_diverged = false;
+	_trackingWasGood = true;
 
 	callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, referenceToFrame, QUICK_KF_CHECK_LVL, false));
 	if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
@@ -161,8 +161,8 @@ SE3 SE3Tracker::trackFrameOnPermaref(
                 buf_warped_size,
                 (MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
                 );
-		diverged = true;
-		trackingWasGood = false;
+		_diverged = true;
+		_trackingWasGood = false;
 		return SE3();
 	}
 	if(useAffineLightningEstimation)
@@ -201,8 +201,8 @@ SE3 SE3Tracker::trackFrameOnPermaref(
                     reference->id(),
                     buf_warped_size,
                     MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL));
-				diverged = true;
-				trackingWasGood = false;
+				_diverged = true;
+				_trackingWasGood = false;
 				return SE3();
 			}
 			float error = callOptimized(calcWeightsAndResidual,(new_referenceToFrame));
@@ -254,7 +254,7 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	_pctGoodPerTotal = _lastGoodCount / (frame->width(QUICK_KF_CHECK_LVL)*frame->height(QUICK_KF_CHECK_LVL));
 	_pctGoodPerGoodBad = _lastGoodCount / (_lastGoodCount + _lastBadCount);
 
-	trackingWasGood = !diverged
+	_trackingWasGood = !_diverged
 			&& _pctGoodPerTotal > MIN_GOODPERALL_PIXEL
 			&& _pctGoodPerGoodBad > MIN_GOODPERGOODBAD_PIXEL;
 
@@ -275,8 +275,8 @@ SE3 SE3Tracker::trackFrame(
 	std::shared_ptr<TrackingReference> &reference( keyframe->trackingReference() );
 
 	boost::shared_lock<boost::shared_mutex> lock = frame->getActiveLock();
-	diverged = false;
-	trackingWasGood = true;
+	_diverged = false;
+	_trackingWasGood = true;
 	affineEstimation_a = 1; affineEstimation_b = 0;
 
 	if(saveAllTrackingStages)
@@ -321,9 +321,15 @@ SE3 SE3Tracker::trackFrame(
 
 		if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>lvl)*(_imgSize.height>>lvl))
 		{
-			diverged = true;
-			trackingWasGood = false;
-			LOG(INFO) << "Diverged at level " << lvl << "!  Only " << buf_warped_size << " pixel to track.";
+			_diverged = true;
+			_trackingWasGood = false;
+            LOGF(WARNING,"Frame %d,keyframe %d Diverged at level %d!  Only %d (%.2f%%) pixel to track.",
+                frame->id(),
+                keyframe->id(),
+                lvl,
+                buf_warped_size,
+                buf_warped_size*100.0/((_imgSize.width>>lvl)*(_imgSize.height>>lvl))
+                );
 			return SE3();
 		}
 
@@ -369,9 +375,17 @@ SE3 SE3Tracker::trackFrame(
 
 				if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN* (_imgSize.width>>lvl)*(_imgSize.height>>lvl))
 				{
-					diverged = true;
-					trackingWasGood = false;
-					LOG(INFO) << "Diverged at level " << lvl << " on iteration " << iteration << "!  Only " << buf_warped_size << " pixels to track.";
+					_diverged = true;
+					_trackingWasGood = false;
+					//LOG(INFO) << "Diverged at level " << lvl << " on iteration " << iteration << "!  Only " << buf_warped_size << " pixels to track.";
+                    LOGF(WARNING,"Frame %d,keyframe %d Diverged at level %d iteration %d!  Only %d (%.2f%%) pixel to track.",
+                                frame->id(),
+                                keyframe->id(),
+                                lvl,
+                                iteration,
+                                buf_warped_size,
+                                buf_warped_size*100.0/((_imgSize.width>>lvl)*(_imgSize.height>>lvl))
+                                );
 					return SE3();
 				}
 
@@ -464,11 +478,14 @@ SE3 SE3Tracker::trackFrame(
 	//LOG_IF(DEBUG, Conf().print.trackingIterationInfo ) << frame->width(SE3TRACKING_MIN_LEVEL) << " " << frame->height(SE3TRACKING_MIN_LEVEL);
 	//LOG_IF(DEBUG, Conf().print.trackingIterationInfo ) << _pctGoodPerTotal << " " << _pctGoodPerGoodBad;
 
-	trackingWasGood = !diverged
+	_trackingWasGood = !_diverged
 			&& _pctGoodPerTotal > MIN_GOODPERALL_PIXEL
 			&& _pctGoodPerGoodBad > MIN_GOODPERGOODBAD_PIXEL;
 
-	if(trackingWasGood) keyframe->numFramesTrackedOnThis++;
+	if(_trackingWasGood) 
+    {
+        keyframe->numFramesTrackedOnThis++;
+    }
 
 	frame->initialTrackedResidual = lastResidual / pointUsage;
 	frame->pose->thisToParent_raw = sim3FromSE3(toSophus(referenceToFrame.inverse()),1);

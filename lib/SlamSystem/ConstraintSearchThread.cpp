@@ -282,13 +282,13 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 		SE3 c2f_init = se3FromSim3(candidateToFrame_initialEstimateMap[candidate].inverse()).inverse();
 		c2f_init.so3() = c2f_init.so3() * disturbance;
 		SE3 c2f = constraintSE3Tracker->trackFrameOnPermaref(candidate, newKeyFrame->frame(), c2f_init);
-		if(!constraintSE3Tracker->trackingWasGood) {closeFailed++; continue;}
+		if(!constraintSE3Tracker->_trackingWasGood) {closeFailed++; continue;}
 
 
 		SE3 f2c_init = se3FromSim3(candidateToFrame_initialEstimateMap[candidate]).inverse();
 		f2c_init.so3() = disturbance * f2c_init.so3();
 		SE3 f2c = constraintSE3Tracker->trackFrameOnPermaref(newKeyFrame, candidate->frame(), f2c_init);
-		if(!constraintSE3Tracker->trackingWasGood) {closeFailed++; continue;}
+		if(!constraintSE3Tracker->_trackingWasGood) {closeFailed++; continue;}
 
 		if((f2c.so3() * c2f.so3()).log().norm() >= 0.09) {closeInconsistent++; continue;}
 
@@ -501,8 +501,8 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 
 	if(parent != 0 && forceParent)
 	{
-		KFConstraintStruct* e1=0;
-		KFConstraintStruct* e2=0;
+		KFConstraintStruct* e1=nullptr;
+		KFConstraintStruct* e2=nullptr;
 		testConstraint(
 				newKeyFrame,
 				parent, e1, e2,
@@ -510,7 +510,7 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 				100);
 		LOG_IF(DEBUG, Conf().print.constraintSearchInfo) << " PARENT (0)";
 
-		if(e1 != 0)
+		if(e1 != nullptr)
 		{
 			constraints.push_back(e1);
 			constraints.push_back(e2);
@@ -519,7 +519,10 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 		{
 			float downweightFac = 5;
 			const float kernelDelta = 5 * sqrt(6000*loopclosureStrictness) / downweightFac;
-			LOG(WARNING) << "warning: reciprocal tracking on new frame failed badly, added odometry edge (Hacky).";
+            LOGF(WARNING,"warning: reciprocal tracking on new frame id %d parent keyFrame id %s failed badly, added odometry edge (Hacky).",
+                    newKeyFrame->id(),
+                    parent ? std::to_string(parent->id()).c_str() : "no parent keyframe");
+			
 
 			_system.poseConsistencyMutex.lock_shared();
 			constraints.push_back(new KFConstraintStruct());

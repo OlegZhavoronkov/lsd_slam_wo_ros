@@ -67,7 +67,7 @@ int main( int argc, char** argv )
   app.set_config("--config");
 
   CLI11_PARSE(app, argc, argv);
-  
+  lsd_slam::Conf().debugDisplay=1;
   
     auto pUndisorter=libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
     std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
@@ -100,6 +100,7 @@ int main( int argc, char** argv )
     }
   LOG(INFO) << "Starting input thread.";
   std::shared_ptr<libvideoio::ImageSource> dataSource(new libvideoio::ImageFilesSource(vec_of_files));
+  dataSource->setFPS(0.5);
   InputThread input( system, dataSource, undistorter );
   boost::thread inputThread( boost::ref(input) );
   input.inputReady.wait();
