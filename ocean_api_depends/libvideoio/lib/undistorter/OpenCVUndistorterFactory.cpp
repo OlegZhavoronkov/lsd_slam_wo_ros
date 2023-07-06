@@ -89,7 +89,10 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 		printf("Out: Failed to Read Output resolution... not rectifying.\n");
 		valid = false;
 	}
-
+    if(!valid)
+    {
+        return nullptr;
+    }
 	cv::Mat distCoeffs = cv::Mat::zeros(4, 1, CV_32F);
 	for (int i = 0; i < 4; ++ i)
 		distCoeffs.at<float>(i, 0) = inputCalibration[4 + i];

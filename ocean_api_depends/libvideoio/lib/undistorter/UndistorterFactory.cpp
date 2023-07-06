@@ -71,7 +71,22 @@ Undistorter* UndistorterFactory::getUndistorterFromFile(const std::string &confi
 		LOG(INFO) << "   ... believe file is Photoscan XML format";
 		return PhotoscanXMLUndistorterFactory::loadFromXML( doc, configFileName, wrap );
 	}
+    LOGF(INFO,"try to interpret file \"%s\" as OpenCV",configFileName.c_str());
+    try
+    {
+        auto* pUndistortion= OpenCVUndistorterFactory::loadFromFile(configFileName);
+        if(pUndistortion != nullptr)
+        {
+            return pUndistortion;
+        }
+    }
+    catch(const std::exception& e)
+    {
+        LOGF(INFO,"file \"%s\" is not looks like open cv calibration",configFileName.c_str());
+    }
+    {
 
+    }
 	// If all else fails...
 	LOG(INFO) << "Hm, all else has failed, try the PTAM Undistorter";
 	return new PTAMUndistorter(configFileName.c_str());
