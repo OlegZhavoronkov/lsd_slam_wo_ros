@@ -16,8 +16,8 @@
 #endif
 #include <zlib.h>
 
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <g3log/g3log.hpp>
 

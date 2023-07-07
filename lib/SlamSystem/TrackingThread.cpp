@@ -19,7 +19,7 @@
  * along with LSD-SLAM. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/thread/shared_lock_guard.hpp>
+#include <shared_mutex>
 
 #include "TrackingThread.h"
 

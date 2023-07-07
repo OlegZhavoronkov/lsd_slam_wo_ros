@@ -14,8 +14,8 @@
 #include <g3log/g3log.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include "active_object/active.h"
 #include "LogFields.h"

@@ -23,7 +23,7 @@
 
 #include "SlamSystem.h"
 
-#include <boost/thread/shared_lock_guard.hpp>
+#include <shared_mutex>
 
 #include <g3log/g3log.hpp>
 
@@ -194,7 +194,7 @@ void SlamSystem::nextImageSet( const std::shared_ptr<ImageSet> &set )
 //
 // 	if( Conf().SLAMEnabled)
 // 	{
-// 		boost::shared_lock_guard< boost::shared_mutex > lock( keyFrameGraph()->idToKeyFrameMutex );
+// 		std::shared_lock< std::shared_mutex > lock( keyFrameGraph()->idToKeyFrameMutex );
 // 		keyFrameGraph()->idToKeyFrame.insert(std::make_pair(newKeyframeCandidate->id(), newKeyframeCandidate));
 // 	}
 //

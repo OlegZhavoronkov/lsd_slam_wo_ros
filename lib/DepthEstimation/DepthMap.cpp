@@ -345,8 +345,8 @@ void DepthMap::propagateFrom( const DepthMap::SharedPtr &other, float &rescaleFa
 	// assert(new_keyframe != nullptr);
 	// assert(new_keyframe->hasTrackingParent());
 	//
-	// //boost::shared_lock<boost::shared_mutex> lock = activeKeyFrame->getActiveLock();
-	// boost::shared_lock<boost::shared_mutex> lock2 = new_keyframe->getActiveLock();
+	// //std::shared_lock<std::shared_mutex> lock = activeKeyFrame->getActiveLock();
+	// std::shared_lock<std::shared_mutex> lock2 = new_keyframe->getActiveLock();
 	// std::lock_guard<std::mutex> lock( new_keyframe->frameMutex );
 
 	// TODO.  Check that my frame tracked on other's frame
@@ -563,7 +563,7 @@ void DepthMap::observeDepth( const Frame::SharedPtr &updateFrame )
 {
 	_observeFrame = updateFrame;
 
-	threadReducer.reduce(boost::bind(&DepthMap::observeDepthRow, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 3, Conf().slamImageSize.height-3, 10);
+	threadReducer.reduce(std::bind_front(&DepthMap::observeDepthRow, this), 3, Conf().slamImageSize.height-3, 10);
 
 	LOGF_IF(DEBUG, Conf().print.observeStatistics, "OBSERVE (%d): %d / %d created; %d / %d updated; %d skipped; %d init-blacklisted",
 			frame()->id(),
@@ -1088,8 +1088,7 @@ void DepthMap::regularizeDepthMapFillHoles() {
   memcpy(otherDepthMap, currentDepthMap,
          Conf().slamImageSize.area() * sizeof(DepthMapPixelHypothesis));
   threadReducer.reduce(
-      boost::bind(&DepthMap::regularizeDepthMapFillHolesRow, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3),
-      3, Conf().slamImageSize.height - 2, 10);
+      std::bind_front(&DepthMap::regularizeDepthMapFillHolesRow, this), 3, Conf().slamImageSize.height - 2, 10);
   LOGF_IF(INFO, Conf().print.fillHolesStatistics,
           "FillHoles (discreteDepth): %d created\n",
           runningStats.num_reg_created);
@@ -1149,8 +1148,7 @@ void DepthMap::regularizeDepthMapFillHolesRow(int yMin, int yMax, RunningStats* 
 
 void DepthMap::buildRegIntegralBuffer() {
   threadReducer.reduce(
-      boost::bind(&DepthMap::buildRegIntegralBufferRow1, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 0,
-      Conf().slamImageSize.height);
+      std::bind_front(&DepthMap::buildRegIntegralBufferRow1, this), 0, Conf().slamImageSize.height);
 
   int *validityIntegralBufferPT = validityIntegralBuffer;
   int *validityIntegralBufferPT_T =
@@ -1197,9 +1195,9 @@ void DepthMap::regularizeDepthMap(bool removeOcclusions, int validityTH)
 
 
 	if(removeOcclusions)
-		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<true>, this, validityTH, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 2, Conf().slamImageSize.height-2, 10);
+		threadReducer.reduce(std::bind_front(&DepthMap::regularizeDepthMapRow<true>, this, validityTH), 2, Conf().slamImageSize.height-2, 10);
 	else
-		threadReducer.reduce(boost::bind(&DepthMap::regularizeDepthMapRow<false>, this, validityTH, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3), 2, Conf().slamImageSize.height-2, 10);
+		threadReducer.reduce(std::bind_front(&DepthMap::regularizeDepthMapRow<false>, this, validityTH), 2, Conf().slamImageSize.height-2, 10);
 
 	LOGF_IF(INFO, Conf().print.regularizeStatistics, "REGULARIZE (%d): %d smeared; %d blacklisted /%d new); %d deleted; %d occluded; %d filled\n",
 			frame()->id(),

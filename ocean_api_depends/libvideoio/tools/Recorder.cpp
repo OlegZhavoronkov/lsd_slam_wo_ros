@@ -5,8 +5,8 @@ using namespace std;
 #include <opencv2/opencv.hpp>
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <CLI/CLI.hpp>
 

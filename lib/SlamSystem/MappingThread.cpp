@@ -3,7 +3,7 @@
 
 #include <g3log/g3log.hpp>
 
-#include <boost/thread/shared_lock_guard.hpp>
+#include <shared_mutex>
 
 #include "GlobalMapping/KeyFrameGraph.h"
 #include "Tracking/TrackingReference.h"
@@ -79,8 +79,8 @@ void MappingThread::mergeOptimizationOffsetImpl()
 
 	// if(_optThread->haveUnmergedOptimizationOffset())
 	{
-		boost::shared_lock_guard< boost::shared_mutex > pose_lock(_system.poseConsistencyMutex);
-		boost::shared_lock_guard< boost::shared_mutex > kfLock( _system.keyFrameGraph()->keyframesAllMutex);
+		std::shared_lock< std::shared_mutex > pose_lock(_system.poseConsistencyMutex);
+		std::shared_lock< std::shared_mutex > kfLock( _system.keyFrameGraph()->keyframesAllMutex);
 
 		for(unsigned int i=0;i<_system.keyFrameGraph()->keyframesAll.size(); i++)
 			_system.keyFrameGraph()->keyframesAll[i]->frame()->pose->applyPoseGraphOptResult();

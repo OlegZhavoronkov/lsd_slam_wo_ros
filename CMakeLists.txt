@@ -45,13 +45,15 @@ find_package(OpenGL)
 ## Architecture-specific optimizations
 if( NOT CUDA_VERSION_EXACT )
     set( CUDA_VERSION_EXACT "11.6" CACHE STRING  "Use CUDA")
+    # set( CUDA_VERSION_EXACT "11.8" CACHE STRING  "Use CUDA")
 endif()
 
 if( NOT CUDA_VERSION)
     set(CUDA_VERSION ${CUDA_VERSION_EXACT})
 endif()
 
-
+set(CMAKE_CXX_STANDARD 20)
+message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
 message( STATUS "Architecture: ${ARCHITECTURE}" )
 if( ${ARCHITECTURE} STREQUAL "aarch64" )

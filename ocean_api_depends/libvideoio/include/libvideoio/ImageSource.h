@@ -9,8 +9,8 @@
 #include <g3log/g3log.hpp>
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 
 #include "FileUtils.h"

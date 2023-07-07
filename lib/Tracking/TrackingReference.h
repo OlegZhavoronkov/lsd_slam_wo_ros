@@ -22,7 +22,7 @@
 #include "util/settings.h"
 #include "util/EigenCoreInclude.h"
 #include "boost/thread/mutex.hpp"
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 
 #include "DataStructures/Frame.h"
 
