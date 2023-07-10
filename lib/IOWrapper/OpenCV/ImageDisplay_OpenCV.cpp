@@ -111,7 +111,7 @@ void displayImage(const char* windowName, const cv::Mat& image, bool autoSize)
 		}
 		cv::imshow(windowName, image);
 	}
-	//cv::waitKey(1);
+	cv::waitKey(1);
 }
 
 int waitKey(int milliseconds)
