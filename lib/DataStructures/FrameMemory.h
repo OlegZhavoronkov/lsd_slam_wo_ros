@@ -21,10 +21,9 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
-#include <boost/thread/mutex.hpp>
 #include <deque>
 #include <list>
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 
 
 namespace lsd_slam
@@ -51,7 +50,7 @@ public:
 	void returnBuffer(void* buffer);
 
 
-	boost::shared_lock<boost::shared_mutex> activateFrame(Frame* frame);
+	std::shared_lock<std::shared_timed_mutex> activateFrame(Frame* frame);
 	void deactivateFrame(Frame* frame);
 	void pruneActiveFrames();
 
@@ -60,11 +59,11 @@ private:
 	FrameMemory();
 	void* allocateBuffer(unsigned int sizeInByte);
 
-	boost::mutex accessMutex;
+	std::mutex accessMutex;
 	std::unordered_map< void*, unsigned int > bufferSizes;
 	std::unordered_map< unsigned int, std::vector< void* > > availableBuffers;
 
-	boost::mutex activeFramesMutex;
+	std::mutex activeFramesMutex;
 	std::list<Frame*> activeFrames;
 };
 

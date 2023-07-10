@@ -20,7 +20,7 @@ namespace lsd_slam {
 
     void setIOOutputWrapper( const std::shared_ptr<lsd_slam::OutputIOWrapper> &out );
 
-    // Entry point for boost::thread
+    // Entry point for std::thread
     void operator()();
 
     std::shared_ptr<lsd_slam::SlamSystem> &system;

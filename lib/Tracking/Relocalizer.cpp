@@ -117,18 +117,18 @@ void Relocalizer::start(std::vector<KeyFrame::SharedPtr> &allKeyframesList)
 	// start threads
 	for(int i=0;i<RELOCALIZE_THREADS;i++)
 	{
-		relocThreads[i] = boost::thread(&Relocalizer::threadLoop, this, i);
+		relocThreads[i] = std::thread(&Relocalizer::threadLoop, this, i);
 		running[i] = true;
 	}
 }
 
 bool Relocalizer::waitResult(int milliseconds)
 {
-	std::lock_guard<std::mutex> lock(exMutex);
+	std::unique_lock<std::mutex> lock(exMutex);
 	if(hasResult) return true;
 
-	// !!TODO.  Change to C++11 condition variable
-	//resultReadySignal.timed_wait(lock, boost::posix_time::milliseconds(milliseconds));
+	// !!DONE.  Change to C++11 condition variable
+	resultReadySignal.wait_for(lock, std::chrono::milliseconds(milliseconds));
 	return hasResult;
 }
 

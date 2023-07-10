@@ -99,7 +99,7 @@ float SE3Tracker::checkPermaRefOverlap(
 		SE3 referenceToFrameOrg)
 {
 	Sophus::SE3f referenceToFrame = referenceToFrameOrg.cast<float>();
-	//boost::unique_lock<boost::mutex> lock2 = boost::unique_lock<boost::mutex>(reference->permaRef_mutex);
+	//std::unique_lock<std::mutex> lock2 = std::unique_lock<std::mutex>(reference->permaRef_mutex);
 	const std::shared_ptr<Frame> &frame( reference->frame() );
 	const std::shared_ptr<TrackingReference> &ref( reference->trackingReference() );
 
@@ -274,7 +274,7 @@ SE3 SE3Tracker::trackFrame(
 
 	std::shared_ptr<TrackingReference> &reference( keyframe->trackingReference() );
 
-	boost::shared_lock<boost::shared_mutex> lock = frame->getActiveLock();
+	auto lock = frame->getActiveLock();
 	diverged = false;
 	trackingWasGood = true;
 	affineEstimation_a = 1; affineEstimation_b = 0;

@@ -23,9 +23,9 @@
 #include <iostream>
 #include <condition_variable>
 #include <mutex>
+#include <thread>
 
 #include "util/settings.h"
-#include "boost/thread.hpp"
 #include "util/SophusUtil.h"
 #include "util/Configuration.h"
 
@@ -78,7 +78,7 @@ public:
 private:
 	// int w, h;
 	// Eigen::Matrix3f K;
-	boost::thread relocThreads[RELOCALIZE_THREADS];
+	std::thread relocThreads[RELOCALIZE_THREADS];
 	bool running[RELOCALIZE_THREADS];
 
 	// locking & signalling structures
