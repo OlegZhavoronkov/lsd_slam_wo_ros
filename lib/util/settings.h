@@ -102,7 +102,8 @@ namespace lsd_slam
 #define SE3TRACKING_MAX_LEVEL 5
 
 #define SIM3TRACKING_MIN_LEVEL 1
-#define SIM3TRACKING_MAX_LEVEL 5
+//TODO: must be introduced in settings
+#define SIM3TRACKING_MAX_LEVEL 4
 
 #define QUICK_KF_CHECK_LVL 4
 
@@ -171,10 +172,10 @@ const int PYRAMID_DIVISOR=(0x1<<PYRAMID_LEVELS);
 #define MIN_GOODPERGOODBAD_PIXEL (0.3f)
 #define MIN_GOODPERALL_PIXEL (0.01f)
 #define MIN_GOODPERALL_PIXEL_ABSMIN (0.005f)
-
+//TODO: must be introduced in settings
 #define INITIALIZATION_PHASE_COUNT 5
-
-#define MIN_NUM_MAPPED 5
+//TODO: must be introduced in settings
+#define MIN_NUM_MAPPED 1
 
 
 

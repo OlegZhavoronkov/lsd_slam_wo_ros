@@ -310,8 +310,7 @@ SE3 SE3Tracker::trackFrame(
 		lowestLvl = lvl;
 
 		reference->makePointCloud(lvl);
-
-		LOG(INFO) << "Calculating initial residual on frame " << frame->id() << ", level " << lvl << " against reference frame " << reference->frameID() << " with " << reference->numData[lvl] << " points";
+        LOGF(INFO,"Calculating initial residual on frame %d , level %d against reference frame %d  with  points %d",frame->id(),lvl,reference->frameID(),reference->numData[lvl]);
 		callOptimized(calcResidualAndBuffers, (reference->posData[lvl],
 			reference->colorAndVarData[lvl],
 			SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : 0,
@@ -556,11 +555,11 @@ void SE3Tracker::calcResidualAndBuffers_debugFinish(int w)
 {
 	if(plotTrackingIterationInfo)
 	{
-		Util::displayImage( "Weights", _debugImages.debugImageWeights );
-		Util::displayImage( "second_frame", _debugImages.debugImageSecondFrame );
-		Util::displayImage( "Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
-		Util::displayImage( "Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
-		Util::displayImage( "Residuals", _debugImages.debugImageResiduals );
+		Util::displayImage( "SE3Tracker Weights", _debugImages.debugImageWeights );
+		Util::displayImage( "SE3Tracker second_frame", _debugImages.debugImageSecondFrame );
+		Util::displayImage( "SE3Tracker Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
+		Util::displayImage( "SE3Tracker Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
+		Util::displayImage( "SE3Tracker Residuals", _debugImages.debugImageResiduals );
 	}
 
 	if(saveAllTrackingStagesInternal)
@@ -593,7 +592,10 @@ float SE3Tracker::calcResidualAndBuffers(
 {
 	calcResidualAndBuffers_debugStart();
 
-	if(plotResidual)	_debugImages.debugImageResiduals.setTo(0);
+	if(plotResidual)
+    {
+        _debugImages.debugImageResiduals.setTo(0);
+    }	
 
 
 	int w = frame->width(level);
@@ -606,7 +608,13 @@ float SE3Tracker::calcResidualAndBuffers(
 
 	Eigen::Matrix3f rotMat = referenceToFrame.rotationMatrix();
 	Eigen::Vector3f transVec = referenceToFrame.translation();
-
+    const auto& frameWorldTrans=frame->getCamToWorld().translation();
+    LOGF(INFO,"refframe %d frame translation \t[%f\t%f\t%f] toreference translation norm %f vec\t[%f\t%f\t%f]",
+        frame->id(),
+        frameWorldTrans[0],frameWorldTrans[1],frameWorldTrans[2],
+        transVec.norm(),
+        transVec[0],transVec[1],transVec[2]
+        );
 	const Eigen::Vector3f* refPoint_max = refPoint + refNum;
 
 
@@ -640,6 +648,7 @@ float SE3Tracker::calcResidualAndBuffers(
 		Eigen::Vector3f Wxp = rotMat * (*refPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
+        
 
 		// step 1a: coordinates have to be in image:
 		// (inverse test to exclude NANs)
@@ -665,10 +674,13 @@ float SE3Tracker::calcResidualAndBuffers(
 		sy += c2*weight;
 		sw += weight;
 
-		bool isGood = residual*residual / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1;
+		bool isGood = (residual*residual) / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1;
 
 		if(isGoodOutBuffer != 0)
-			isGoodOutBuffer[*idxBuf] = isGood;
+        {
+            isGoodOutBuffer[*idxBuf] = isGood;
+        }
+			
 
 		*(buf_warped_x+idx) = Wxp(0);
 		*(buf_warped_y+idx) = Wxp(1);

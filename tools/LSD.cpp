@@ -68,12 +68,16 @@ int main( int argc, char** argv )
 
   CLI11_PARSE(app, argc, argv);
   lsd_slam::Conf().debugDisplay=1;
-  
+  lsd_slam::Conf().runRealTime=false;
     auto pUndisorter=libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
     std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
   // Load the configuration object
   Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();
+  lsd_slam::plotTrackingIterationInfo=true;
+  lsd_slam::plotSim3TrackingIterationInfo=true;
+  lsd_slam::plotStereoImages=true;
+  lsd_slam::plotTracking=true;
 
   LOG(INFO) << "Slam image: " << Conf().slamImageSize.width << " x " << Conf().slamImageSize.height;
 
@@ -94,12 +98,19 @@ int main( int argc, char** argv )
     files.sort();
     std::vector<std::string > vec_of_files;
     vec_of_files.reserve(files.size());
+    size_t startIdx=500;
+    size_t curr_idx=0;
     for(const auto& p : files)
     {
-        vec_of_files.emplace_back(p);
+        if(curr_idx++ > startIdx)
+        {
+            vec_of_files.emplace_back(p);
+        }
+        
     }
   LOG(INFO) << "Starting input thread.";
   std::shared_ptr<libvideoio::ImageSource> dataSource(new libvideoio::ImageFilesSource(vec_of_files));
+  
   dataSource->setFPS(0.5);
   InputThread input( system, dataSource, undistorter );
   boost::thread inputThread( boost::ref(input) );

@@ -764,6 +764,19 @@ void Frame::releaseIDepthVar(int level)
 	data.idepthVar[level] = 0;
 }
 
+void Frame::setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) 
+{
+    if(!newParent) 
+    {
+        LOGF(WARNING,"frame id %d ,set empty parent for frame",this->id());
+    }
+    else
+    {
+        LOGF(INFO,"frame id %d ,set parent frame id %d",this->id(),newParent->id());
+    }
+    
+    _trackingParent = newParent; 
+}
 
 //====================
 

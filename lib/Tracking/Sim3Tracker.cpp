@@ -110,7 +110,7 @@ Sim3 Sim3Tracker::trackFrameSim3(
 {
 	boost::shared_lock<boost::shared_mutex> lock = frame->getActiveLock();
 
-	diverged = false;
+	_diverged = false;
 
 
 	affineEstimation_a = 1; affineEstimation_b = 0;
@@ -142,7 +142,16 @@ Sim3 Sim3Tracker::trackFrameSim3(
 		callOptimized(calcSim3Buffers, (reference, frame, referenceToFrame, lvl));
 		if(buf_warped_size < 0.5 * MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>lvl)*(_imgSize.height>>lvl) || buf_warped_size < 10)
 		{
-			diverged = true;
+            LOGF(WARNING,"for frame %d and ref %d diverged will set to true buf_warped_size %d ratio %.1f%% lvl %d image size [%d %d]",
+                                            reference->frameID(),
+                                            frame->id(),
+                                            buf_warped_size,
+                                            buf_warped_size*100.0 / (  (_imgSize.width>>lvl)*(_imgSize.height>>lvl)) ,
+                                            lvl,
+                                            _imgSize.width>>lvl,
+                                            _imgSize.height>>lvl
+                                            );
+			_diverged = true;
 			return Sim3();
 		}
 
@@ -197,7 +206,16 @@ Sim3 Sim3Tracker::trackFrameSim3(
 				callOptimized(calcSim3Buffers,(reference, frame, new_referenceToFrame, lvl));
 				if(buf_warped_size < 0.5 * MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>lvl)*(_imgSize.height>>lvl) || buf_warped_size < 10)
 				{
-					diverged = true;
+                    LOGF(WARNING,"for frame %d and ref %d diverged will set to true buf_warped_size %d ratio %.1f%% lvl %d image size [%d %d]",
+                                            reference->frameID(),
+                                            frame->id(),
+                                            buf_warped_size,
+                                            buf_warped_size*100.0 / (  (_imgSize.width>>lvl)*(_imgSize.height>>lvl)) ,
+                                            lvl,
+                                            _imgSize.width>>lvl,
+                                            _imgSize.height>>lvl
+                                            );
+					_diverged = true;
 					return Sim3();
 				}
 
@@ -311,7 +329,12 @@ Sim3 Sim3Tracker::trackFrameSim3(
 
 	if(referenceToFrame.scale() <= 0 )
 	{
-		diverged = true;
+        LOGF(WARNING,"for frame %d and ref %d diverged will set to true referenceToFrame.scale() %.5f",
+                                            reference->frameID(),
+                                            frame->id(),
+                                            referenceToFrame.scale()
+                                            );
+		_diverged = true;
 		return Sim3();
 	}
 
@@ -426,7 +449,11 @@ void Sim3Tracker::calcSim3Buffers(
 		Eigen::Vector3f Wxp = rotMat * (*refPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
-
+        LOGF(WARNING,"frame %d reference %d u_new %f, v_new %f\n",frame->id(),reference->frameID(),u_new,v_new);
+        //if(level==1)
+        //{
+        //    printf("frame %d reference %d u_new %f, v_new %f\n",frame->id(),reference->frameID(),u_new,v_new);
+        //}
 		// step 1a: coordinates have to be in image:
 		// (inverse test to exclude NANs)
 		if(!(u_new > 1 && v_new > 1 && u_new < w-2 && v_new < h-2))
@@ -1012,13 +1039,14 @@ void Sim3Tracker::calcResidualAndBuffers_debugFinish(int w)
 {
 	if(plotTrackingIterationInfo)
 	{
-		Util::displayImage( "Weights", _debugImages.debugImageWeights );
-		Util::displayImage( "second_frame", _debugImages.debugImageSecondFrame );
-		Util::displayImage( "Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
-		Util::displayImage( "Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
-		Util::displayImage( "Residuals", _debugImages.debugImageResiduals );
-		Util::displayImage( "DepthVar Weights", _debugImages.debugImageExternalWeights );
-		Util::displayImage( "Depth Residuals", _debugImages.debugImageDepthResiduals );
+		Util::displayImage( "Sim3Tracker Weights", _debugImages.debugImageWeights );
+        //Util::displayImage( "Sim3Tracker first_frame", _debugImages.debugImageFirstFrame );
+		Util::displayImage( "Sim3Tracker second_frame", _debugImages.debugImageSecondFrame );
+		Util::displayImage( "Sim3Tracker Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
+		Util::displayImage( "Sim3Tracker Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
+		Util::displayImage( "Sim3Tracker Residuals", _debugImages.debugImageResiduals );
+		Util::displayImage( "Sim3Tracker DepthVar Weights", _debugImages.debugImageExternalWeights );
+		Util::displayImage( "Sim3Tracker Depth Residuals", _debugImages.debugImageDepthResiduals );
 
 		// AMM: Disable this functionality for now.
 		// wait for key and handle it
@@ -1064,6 +1092,7 @@ void Sim3Tracker::calcResidualAndBuffers_debugFinish(int w)
 Sim3TrackerDebugImages::Sim3TrackerDebugImages( const ImageSize &imgSize )
 	: debugImageWeights(imgSize.cvSize(),CV_8UC3),
 		debugImageResiduals(imgSize.cvSize(),CV_8UC3),
+        debugImageFirstFrame(imgSize.cvSize(),CV_8UC3),
 		debugImageSecondFrame(imgSize.cvSize(),CV_8UC3),
 		debugImageOldImageWarped(imgSize.cvSize(),CV_8UC3),
 		debugImageOldImageSource(imgSize.cvSize(),CV_8UC3),

@@ -96,15 +96,30 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 	LOG_IF(DEBUG, Conf().print.threadingInfo) << "TRACKING frame " << set->refFrame()->id() << " onto ref. " << _currentKeyFrame->id();
 
 	SE3 frameToReference_initialEstimate =se3FromSim3(  _currentKeyFrame->pose()->getCamToWorld().inverse() * _latestGoodPoseCamToWorld);
-
+    
 	Timer timer;
 
-	LOG(DEBUG) << "Start tracking...";
+	LOGF(DEBUG, "Start tracking..._currentKeyFrame %d frame to track %d frameToReference_initialEstimate trans [%f %f %f] %f",
+            currentKeyFrame()->id(),
+            set->refFrame()->id(),
+            frameToReference_initialEstimate.translation()[0],
+            frameToReference_initialEstimate.translation()[1],
+            frameToReference_initialEstimate.translation()[2],
+            frameToReference_initialEstimate.translation().norm()
+            );
 	SE3 newRefToFrame_poseUpdate = _tracker->trackFrame( _currentKeyFrame,
 	                                                    set->refFrame(),
 	                                                    frameToReference_initialEstimate);
-
-	LOG(DEBUG) << "Done tracking, took " << timer.stop() * 1000 << " ms";
+    LOGF(DEBUG, "Done tracking,took %.1f ms to track frame %d  to  %d newRefToFrame_poseUpdate trans [%f %f %f] norm %f",
+            timer.stop()*1000,
+            set->refFrame()->id(),
+            currentKeyFrame()->id(),
+            newRefToFrame_poseUpdate.translation()[0],
+            newRefToFrame_poseUpdate.translation()[1],
+            newRefToFrame_poseUpdate.translation()[2],
+            newRefToFrame_poseUpdate.translation().norm()
+            );
+	
 	_perf.track.update( timer );
 
 
@@ -145,9 +160,16 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 	if( !_newKeyFramePending && _currentKeyFrame->numMappedOnThisTotal > MIN_NUM_MAPPED)
 	{
 	  Sophus::Vector3d dist = newRefToFrame_poseUpdate.translation() * _currentKeyFrame->frame()->meanIdepth;
-	  float minVal = fmin(0.2f + _system.keyFrameGraph()->size() * 0.8f / INITIALIZATION_PHASE_COUNT,1.0f);
+#if 1 //только для отладки алгоритма,потом надо вернуть назад так как непоянтна эфристикка выбора ключевого кадра
+	  float minVal = 0;
+#else//
+        float minVal = fmin(0.2f + _system.keyFrameGraph()->size() * 0.8f / INITIALIZATION_PHASE_COUNT,1.0f);
+#endif
 
-	  if(_system.keyFrameGraph()->size() < INITIALIZATION_PHASE_COUNT)	minVal *= 0.7;
+	  if(_system.keyFrameGraph()->size() < INITIALIZATION_PHASE_COUNT)
+      {
+        minVal *= 0.7;
+      }	
 
 	  lastTrackingClosenessScore = _system.trackableKeyFrameSearch()->getRefFrameScore(dist.dot(dist), _tracker->pointUsage);
 

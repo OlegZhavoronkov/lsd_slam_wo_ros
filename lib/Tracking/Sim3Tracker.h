@@ -66,6 +66,7 @@ struct Sim3TrackerDebugImages {
 	// debug images
 	cv::Mat debugImageResiduals;
 	cv::Mat debugImageWeights;
+    cv::Mat debugImageFirstFrame;
 	cv::Mat debugImageSecondFrame;
 	cv::Mat debugImageOldImageSource;
 	cv::Mat debugImageOldImageWarped;
@@ -143,7 +144,7 @@ public:
 	float affineEstimation_a;
 	float affineEstimation_b;
 
-	bool diverged;
+	bool _diverged;
 
 
 private:

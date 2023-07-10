@@ -178,7 +178,8 @@ public:
 
 
 	// parent, the frame originally tracked on. never changes.
-	void setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) { _trackingParent = newParent; }
+	void setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) ;
+
 	bool      hasTrackingParent() const     															{ return (bool)_trackingParent; }
 	const std::shared_ptr<KeyFrame> &trackingParent() const       				{ return _trackingParent; }
 
