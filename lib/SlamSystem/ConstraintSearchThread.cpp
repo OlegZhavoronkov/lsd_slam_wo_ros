@@ -1,7 +1,7 @@
 
 #include "ConstraintSearchThread.h"
 
-#include <boost/thread/shared_lock_guard.hpp>
+#include <shared_mutex>
 
 #include <g2o/core/robust_kernel_impl.h>
 
@@ -240,7 +240,7 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 
 	std::unordered_map<KeyFrame::SharedPtr, int> distancesToNewKeyFrame;
 	{
-		boost::shared_lock_guard<boost::shared_mutex> lock(_system.poseConsistencyMutex);
+		std::shared_lock<std::shared_mutex> lock(_system.poseConsistencyMutex);
 		for (auto candidate : candidates)
 		{
 			Sim3 candidateToFrame_initialEstimate = newKeyFrame->frame()->getCamToWorld().inverse() * candidate->frame()->getCamToWorld();

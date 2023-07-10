@@ -20,9 +20,10 @@
 
 #pragma once
 #include "util/settings.h"
-#include "boost/thread.hpp"
+#include <thread>
 #include <stdio.h>
 #include <iostream>
+#include <condition_variable>
 
 
 
@@ -38,13 +39,13 @@ public:
 		nextIndex = 0;
 		maxIndex = 0;
 		stepSize = 1;
-		callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3);
+		callPerIndex = std::bind_front(&IndexThreadReduce::callPerIndexDefault, this);
 
 		running = true;
 		for(int i=0;i<MAPPING_THREADS;i++)
 		{
 			isDone[i] = false;
-			workerThreads[i] = boost::thread(&IndexThreadReduce::workerLoop, this, i);
+			workerThreads[i] = std::thread(&IndexThreadReduce::workerLoop, this, i);
 		}
 
 		//printf("created ThreadReduce\n");
@@ -65,7 +66,7 @@ public:
 
 	}
 
-	inline void reduce(boost::function<void(int,int,RunningStats*)> callPerIndex, int first, int end, int stepSize = 0)
+	inline void reduce(std::function<void(int,int,RunningStats*)> callPerIndex, int first, int end, int stepSize = 0)
 	{
 		if(!multiThreading)
 		{
@@ -81,7 +82,7 @@ public:
 
 		//printf("reduce called\n");
 
-		boost::unique_lock<boost::mutex> lock(exMutex);
+		std::unique_lock<std::mutex> lock(exMutex);
 
 		// save
 		this->callPerIndex = callPerIndex;
@@ -117,19 +118,19 @@ public:
 
 		nextIndex = 0;
 		maxIndex = 0;
-		this->callPerIndex = boost::bind(&IndexThreadReduce::callPerIndexDefault, this, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3);
+		this->callPerIndex = std::bind_front(&IndexThreadReduce::callPerIndexDefault, this);
 
 		//printf("reduce done (all threads finished)\n");
 	}
 
 
 private:
-	boost::thread workerThreads[MAPPING_THREADS];
+	std::thread workerThreads[MAPPING_THREADS];
 	bool isDone[MAPPING_THREADS];
 
-	boost::mutex exMutex;
-	boost::condition_variable todo_signal;
-	boost::condition_variable done_signal;
+	std::mutex exMutex;
+	std::condition_variable todo_signal;
+	std::condition_variable done_signal;
 
 	int nextIndex;
 	int maxIndex;
@@ -137,7 +138,7 @@ private:
 
 	bool running;
 
-	boost::function<void(int,int,RunningStats*)> callPerIndex;
+	std::function<void(int,int,RunningStats*)> callPerIndex;
 
 	void callPerIndexDefault(int i, int j,RunningStats* k)
 	{
@@ -146,7 +147,7 @@ private:
 
 	void workerLoop(int idx)
 	{
-		boost::unique_lock<boost::mutex> lock(exMutex);
+		std::unique_lock<std::mutex> lock(exMutex);
 
 		while(running)
 		{

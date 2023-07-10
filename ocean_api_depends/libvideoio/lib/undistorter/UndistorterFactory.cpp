@@ -25,12 +25,12 @@
 
 #include <fstream>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace libvideoio
 {
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 Undistorter* UndistorterFactory::getUndistorterFromFile(const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
 {

@@ -35,8 +35,9 @@ if( CUDA_VERSION )
 endif()
 
 ## C++ flags applied to all builds
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 ## Set global include paths
 set( LIBLOGGER_INCLUDE_DIRS
   ${Boost_INCLUDE_DIR}

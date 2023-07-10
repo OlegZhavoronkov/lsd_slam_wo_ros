@@ -23,7 +23,7 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 #include <memory>
 #include <chrono>
 
@@ -108,7 +108,7 @@ public:
 	// mutex to lock frame pose consistency. within a shared lock of this, *->getCamToWorld() is
 	// GUARANTEED to give the same result each call, and to be compatible to each other.
 	// locked exclusively during the pose-update by Mapping.
-	boost::shared_mutex poseConsistencyMutex;
+	std::shared_mutex poseConsistencyMutex;
 
 	const shared_ptr<KeyFrameGraph> &keyFrameGraph() 				{ return _keyFrameGraph; };	  // has own locks
 	shared_ptr<TrackableKeyFrameSearch> &trackableKeyFrameSearch() { return _trackableKeyFrameSearch; }

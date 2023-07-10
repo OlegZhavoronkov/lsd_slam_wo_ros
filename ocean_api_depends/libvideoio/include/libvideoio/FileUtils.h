@@ -5,8 +5,8 @@
 #include <fstream>
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem/path.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 
 

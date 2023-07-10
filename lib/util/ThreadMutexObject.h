@@ -11,10 +11,8 @@
 
 #include <mutex>
 #include <condition_variable>
-
-#include <boost/thread.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-// #include <boost/thread/condition_variable.hpp>
+#include <thread>
+#include <chrono>
 
 
 template <class T>
@@ -207,7 +205,7 @@ class ThreadMutexObject
 
         T getValueWait(int wait = 33000)
         {
-            boost::this_thread::sleep(boost::posix_time::microseconds(wait));
+            std::this_thread::sleep_for(std::chrono::microseconds(wait));
             lock_guard lock(_mutex);
             lastCopy = object;
             return lastCopy;
@@ -215,7 +213,7 @@ class ThreadMutexObject
 
         T & getReferenceWait(int wait = 33000)
         {
-            boost::this_thread::sleep(boost::posix_time::microseconds(wait));
+            std::this_thread::sleep_for(std::chrono::microseconds(wait));
             lock_guard lock(_mutex);
             lastCopy = object;
             return lastCopy;

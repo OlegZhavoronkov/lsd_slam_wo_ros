@@ -24,7 +24,7 @@
 * along with LSD-SLAM. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include "libg3logger/g3logger.h"
 
@@ -41,9 +41,9 @@
 #include "App/InputThread.h"
 #include "CLI/CLI.hpp"
 #include <libvideoio/Undistorter.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 using namespace lsd_slam;
-namespace fs=boost::filesystem;
+namespace fs=std::filesystem;
 
 int main( int argc, char** argv )
 {
@@ -113,7 +113,7 @@ int main( int argc, char** argv )
   
   dataSource->setFPS(0.5);
   InputThread input( system, dataSource, undistorter );
-  boost::thread inputThread( boost::ref(input) );
+  std::thread inputThread( std::ref(input) );
   input.inputReady.wait();
 
   // Wait for all threads to be ready.

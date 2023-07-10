@@ -20,7 +20,6 @@
 
 #include "util/settings.h"
 #include <opencv2/opencv.hpp>
-#include <boost/bind.hpp>
 
 
 

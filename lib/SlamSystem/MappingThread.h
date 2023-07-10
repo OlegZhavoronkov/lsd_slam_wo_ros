@@ -5,7 +5,7 @@
 #include <mutex>
 #include <memory>
 
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 
 #include "active_object/active.h"
 

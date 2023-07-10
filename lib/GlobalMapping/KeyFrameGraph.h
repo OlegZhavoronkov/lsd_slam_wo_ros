@@ -24,8 +24,7 @@
 #include <mutex>
 #include <deque>
 
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 
 #include "util/EigenCoreInclude.h"
 #include <g2o/core/sparse_optimizer.h>
@@ -144,18 +143,18 @@ public:
 
 	// contains ALL keyframes, as soon as they are "finished".
 	// does NOT yet contain the keyframe that is currently being created.
-	boost::shared_mutex keyframesAllMutex;
+	std::shared_mutex keyframesAllMutex;
 	std::vector< KeyFrame::SharedPtr > keyframesAll;
 
 
 	/** Maps frame ids to keyframes. Contains ALL Keyframes allocated, including the one that currently being created. */
 	/* this is where the shared pointers of Keyframe Frames are kept, so they are not deleted ever */
-	boost::shared_mutex idToKeyFrameMutex;
+	std::shared_mutex idToKeyFrameMutex;
 	std::unordered_map< int, KeyFrame::SharedPtr > idToKeyFrame;
 
 
 	// contains ALL edges, as soon as they are created
-	boost::shared_mutex edgesListsMutex;
+	std::shared_mutex edgesListsMutex;
 	std::vector< KFConstraintStruct* > edgesAll;
 
 
@@ -163,7 +162,7 @@ public:
 	// contains ALL frame poses, chronologically, as soon as they are tracked.
 	// the corresponding frame may have been removed / deleted in the meantime.
 	// these are the ones that are also referenced by the corresponding Frame / Keyframe object
-	// boost::shared_mutex allFramePosesMutex;
+	// std::shared_mutex allFramePosesMutex;
 	// std::vector< FramePoseStruct::SharedPtr  > allFramePoses;
 
 

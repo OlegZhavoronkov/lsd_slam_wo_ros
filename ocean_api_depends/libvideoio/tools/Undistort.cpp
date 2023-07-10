@@ -9,8 +9,8 @@
 #endif
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <tclap/CmdLine.h>
 

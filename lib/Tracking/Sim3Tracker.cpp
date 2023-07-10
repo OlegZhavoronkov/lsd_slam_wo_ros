@@ -108,7 +108,7 @@ Sim3 Sim3Tracker::trackFrameSim3(
 		const Sim3& frameToReference_initialEstimate,
 		int startLevel, int finalLevel)
 {
-	boost::shared_lock<boost::shared_mutex> lock = frame->getActiveLock();
+	auto lock = frame->getActiveLock();
 
 	_diverged = false;
 
