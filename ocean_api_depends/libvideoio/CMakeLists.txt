@@ -29,8 +29,9 @@ endif()
 ## C++ flags applied to all builds
 ## squelch int-in-bool-context warnings from eigen
 ##"-Wno-int-in-bool-context")
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
-
+#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_EXTENSIONS OFF)
 ## Configure OpenCV ##
 set( OPENCV_COMPONENTS core highgui imgproc video calib3d )
 find_package(OpenCV COMPONENTS ${OPENCV_COMPONENTS} REQUIRED)
