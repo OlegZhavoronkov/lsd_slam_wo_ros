@@ -75,7 +75,7 @@ private:
 	void testConstraint(
 			const KeyFrame::SharedPtr &keyframe,
 			const KeyFrame::SharedPtr &candidate,
-			KFConstraintStruct* e1_out, KFConstraintStruct* e2_out,
+			KFConstraintStruct*& e1_out, KFConstraintStruct*& e2_out,
 			Sim3 candidateToFrame_initialEstimate,
 			float strictness);
 
