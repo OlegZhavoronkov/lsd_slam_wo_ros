@@ -82,7 +82,7 @@ public:
 	// inline bool isValid() {return (bool)activeKeyFrame;};
 
 	//int debugPlotDepthMap();
-	const DepthMapDebugImages &debugImages() const { return _debugImages; }
+	const DepthMapDebugImages &debugImages() const { return *_debugImages; }
 
 	// This is the only debug plot which is triggered externally..
 	void plotDepthMap( const char *buf1, const char *buf2 );
@@ -131,7 +131,7 @@ private:
 	IndexThreadReduce threadReducer;
 
  	PerformanceData _perf;
-	DepthMapDebugImages _debugImages;
+	std::unique_ptr< DepthMapDebugImages > _debugImages;
 
 	// ============= parameter copies for convenience ===========================
 	// these are just copies of the pointers given to this function, for convenience.

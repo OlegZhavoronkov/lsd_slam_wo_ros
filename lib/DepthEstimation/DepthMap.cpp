@@ -43,7 +43,7 @@ namespace lsd_slam {
 // Constructor when unable to proagate from previous
 DepthMap::DepthMap( const Frame::SharedPtr &frame )
 	: _perf(),
-		_debugImages( Conf().slamImageSize ),
+		_debugImages(new DepthMapDebugImages(Conf().slamImageSize) ),
 		_frame( frame ),
 		activeKeyFrameIsReactivated( false )
 {
@@ -290,7 +290,7 @@ bool DepthMap::updateDepthFrom( const Frame::SharedPtr &updateFrame )
 
 	_perf.update.update( timeAll );
 
-	if(plotStereoImages) _debugImages.displayUpdateKeyFrame();
+	if(plotStereoImages) _debugImages->displayUpdateKeyFrame();
 
 	LOGF_IF(DEBUG, Conf().print.lineStereoStatistics,
 		"ST: calls %6d, comp %6d, int %7d; good %6d (%.0f%%), neg %6d (%.0f%%); interp %6d / %6d / %6d\n",
@@ -435,7 +435,7 @@ void DepthMap::propagateFrom( const DepthMap::SharedPtr &other, float &rescaleFa
 	_perf.create.update( timeAll );
 
 
-	if(plotStereoImages) _debugImages.displayNewKeyFrame();
+	if(plotStereoImages) _debugImages->displayNewKeyFrame();
 
 }
 
@@ -629,7 +629,7 @@ bool DepthMap::observeDepthCreate(const int &x, const int &y, const int &idx, Ru
 		bool* wasGoodDuringTracking = _observeFrame->refPixelWasGoodNoCreate();
 		if(wasGoodDuringTracking != 0 && !wasGoodDuringTracking[(x >> SE3TRACKING_MIN_LEVEL) + (Conf().slamImageSize.width >> SE3TRACKING_MIN_LEVEL)*(y >> SE3TRACKING_MIN_LEVEL)])
 		{
-			if(plotStereoImages)  _debugImages.setHypothesisHandling(x,y, cv::Vec3b(255,0,0));  // BLUE for SKIPPED NOT GOOD TRACKED
+			if(plotStereoImages)  _debugImages->setHypothesisHandling(x,y, cv::Vec3b(255,0,0));  // BLUE for SKIPPED NOT GOOD TRACKED
 			return false;
 		}
 	}
@@ -667,7 +667,7 @@ bool DepthMap::observeDepthCreate(const int &x, const int &y, const int &idx, Ru
 			VALIDITY_COUNTER_INITIAL_OBSERVE,
 			Conf().debugDisplay );
 
-	if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(255,255,255)); // white for GOT CREATED
+	if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(255,255,255)); // white for GOT CREATED
 	stats->num_observe_created++;
 
 	return true;
@@ -703,7 +703,7 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 		bool* wasGoodDuringTracking = _observeFrame->refPixelWasGoodNoCreate();
 		if(wasGoodDuringTracking != 0 && !wasGoodDuringTracking[(x >> SE3TRACKING_MIN_LEVEL) + (Conf().slamImageSize.width >> SE3TRACKING_MIN_LEVEL)*(y >> SE3TRACKING_MIN_LEVEL)])
 		{
-			if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(255,0,0)); // BLUE for SKIPPED NOT GOOD TRACKED
+			if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(255,0,0)); // BLUE for SKIPPED NOT GOOD TRACKED
 			return false;
 		}
 	}
@@ -738,7 +738,7 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 		// do nothing, pixel got oob, but is still in bounds in original. I will want to try again.
 		stats->num_observe_skip_oob++;
 
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(0,0,255));       // RED FOR OOB
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(0,0,255));       // RED FOR OOB
 		return false;
 	}
 
@@ -747,7 +747,7 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 	{
 		stats->num_observe_skip_fail++;
 
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(255,0,255));     // PURPLE FOR NON-GOOD
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(255,0,255));     // PURPLE FOR NON-GOOD
 
 		target->validity_counter -= VALIDITY_COUNTER_DEC;
 		if(target->validity_counter < 0) target->validity_counter = 0;
@@ -768,14 +768,14 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 	else if(error == -3)
 	{
 		stats->num_observe_notfound++;
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(0,0,0)); // BLACK FOR big not-found
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(0,0,0)); // BLACK FOR big not-found
 
 		return false;
 	}
 
 	else if(error == -4)
 	{
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(0,0,0)); // BLACK FOR big not-found
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(0,0,0)); // BLACK FOR big not-found
 		return false;
 	}
 
@@ -783,7 +783,7 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 	else if(DIFF_FAC_OBSERVE*diff*diff > result_var + target->idepth_var_smoothed)
 	{
 		stats->num_observe_inconsistent++;
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(255,255,0));     // Turkoise FOR big inconsistent
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(255,255,0));     // Turkoise FOR big inconsistent
 
 		target->idepth_var *= FAIL_VAR_INC_FAC;
 		if(target->idepth_var > MAX_VAR) target->isValid = false;
@@ -838,7 +838,7 @@ bool DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, co
 			target->nextStereoFrameMinID = _observeFrame->id() + inc;
 		}
 
-		if(plotStereoImages) _debugImages.setHypothesisHandling(x,y, cv::Vec3b(0,255,255)); // yellow for GOT UPDATED
+		if(plotStereoImages) _debugImages->setHypothesisHandling(x,y, cv::Vec3b(0,255,255)); // yellow for GOT UPDATED
 
 		return true;
 	}
@@ -1353,7 +1353,7 @@ void DepthMap::logPerformanceData() {
 
 void DepthMap::plotDepthMap( const char *buf1, const char *buf2) {
 	// TODO:  0 arg was referenceFrameByID_offset, but that doesn't exist anymore
-	_debugImages.debugPlotDepthMap( frame(), currentDepthMap, 0, buf1, buf2 );
+	_debugImages->debugPlotDepthMap( frame(), currentDepthMap, 0, buf1, buf2 );
 }
 
 // find pixel in image (do stereo along epipolar line).
@@ -1893,7 +1893,7 @@ inline float DepthMap::doLineStereo(
 				color = cv::Scalar(0,500*(1-rescaleFactor),500*(1-rescaleFactor));
 			*/
 
-			_debugImages.addStereoLine( cv::Point2f(pClose[0], pClose[1]),cv::Point2f(pFar[0], pFar[1]),color );
+			_debugImages->addStereoLine( cv::Point2f(pClose[0], pClose[1]),cv::Point2f(pFar[0], pFar[1]),color );
 		}
 	}
 
