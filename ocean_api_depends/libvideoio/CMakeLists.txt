@@ -13,7 +13,8 @@ find_package( Boost COMPONENTS filesystem system REQUIRED)
 find_package( Eigen3 REQUIRED )
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package( TinyXML2 REQUIRED )
+find_package( TinyXML2  )
+message(STATUS "\${TINYXML2_FOUND} \"${TINYXML2_FOUND}\"")
 find_package( yaml-cpp )
 
 EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
@@ -62,12 +63,16 @@ endif()
 set( VIDEOIO_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/third_party
-  ${OpenCV_INCLUDE_DIRS}
-	${TINYXML2_INCLUDE_DIR}
+    ${OpenCV_INCLUDE_DIRS}
+	
 	${EIGEN3_INCLUDE_DIR}
-  #${YAML_CPP_INCLUDE_DIR}
    )
-
+if(${TINYXML2_FOUND} STREQUAL "FALSE")
+    message(STATUS "1 \${TINYXML2_FOUND} \"${TINYXML2_FOUND}\" not found")
+else()
+    list(APPEND VIDEOIO_INCLUDE_DIRS ${TINYXML2_INCLUDE_DIR})
+    message(STATUS "1 \${TINYXML2_FOUND} \"${TINYXML2_FOUND}\" found")
+endif()
 if(${YAML_CPP_FOUND})
     list(APPEND VIDEOIO_INCLUDE_DIRS ${YAML_CPP_INCLUDE_DIR})
 else()

@@ -1,8 +1,8 @@
 
 #include "libvideoio/Undistorter.h"
-
+#ifdef WITH_TINYXML
 #include <tinyxml2.h>
-
+#endif
 #include <iostream>
 
 #include <opencv2/imgproc/imgproc.hpp>

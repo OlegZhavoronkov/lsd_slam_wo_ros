@@ -27,14 +27,26 @@ add_library(videoio SHARED "")
 #fips_begin_module( videoio )
 target_sources(videoio PRIVATE ${VIDEOIO_SOURCE_FILES})
   #fips_files( ${VIDEOIO_SOURCE_FILES} )
+
+set(PUBLIC_LIBVIDEIO_LIBS
+        ${Boost_LIBRARIES} 
+        ${OpenCV_LIBS}
+        ${ZLIB_LIBRARIES} 
+        #${TINYXML2_LIBRARIES}
+        g3logger
+        activeobject
+        binlogger)
+
+if(${TINYXML2_FOUND} STREQUAL "FALSE")
+  message(STATUS "2 \${TINYXML2_FOUND} \"${TINYXML2_FOUND}\" not found")
+else()
+  list(APPEND PUBLIC_LIBVIDEIO_LIBS ${TINYXML2_LIBRARIES})
+  message(STATUS "2 \${TINYXML2_FOUND} \"${TINYXML2_FOUND}\" found")
+  target_compile_definitions(videoio PUBLIC WITH_TINYXML)
+endif()
+
 target_link_libraries(videoio PUBLIC
-  #fips_libs( 
-    ${Boost_LIBRARIES} ${OpenCV_LIBS}
-            ${ZLIB_LIBRARIES} ${TINYXML2_LIBRARIES}
-            g3logger
-            activeobject
-            binlogger
-            #${YAML_CPP_LIBRARIES} 
+                    ${PUBLIC_LIBVIDEIO_LIBS}
             )
   #fips_deps( g3logger )
 message(STATUS "videoio \${LIBVIDEOIO-TYPES_INCLUDE} \"${LIBVIDEOIO-TYPES_INCLUDE}\"")
