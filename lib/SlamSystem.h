@@ -37,6 +37,7 @@
 #include "DataStructures/KeyFrame.h"
 
 #include "DepthEstimation/DepthMap.h"
+#include "DepthEstimation/DepthMapDebugImages.h"
 
 #include "util/SophusUtil.h"
 #include "util/MovingAverage.h"
@@ -146,7 +147,7 @@ private:
 	// == Shared "global" data structures ==
 	std::shared_ptr<KeyFrameGraph> _keyFrameGraph;	  // has own locks
 	std::shared_ptr<TrackableKeyFrameSearch> _trackableKeyFrameSearch;
-
+    std::unique_ptr<DepthMapDebugImages> _pDepthMapDebugImages;
 };
 
 }

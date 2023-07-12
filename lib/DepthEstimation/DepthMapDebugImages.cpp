@@ -38,6 +38,21 @@ namespace lsd_slam {
     cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
   }
 
+  void DepthMapDebugImages::plotUpdateKeyFrame( const Frame::SharedPtr &activeKeyFrame,
+                                                const Frame::SharedPtr &oldestReferenceFrame,
+                                                const Frame::SharedPtr &newestReferenceFrame )
+  {
+    cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(activeKeyFrame->image(0)));
+    keyFrameImage.convertTo(_debugImageHypothesisHandling, CV_8UC1);
+    cv::cvtColor(_debugImageHypothesisHandling, _debugImageHypothesisHandling, cv::COLOR_GRAY2RGB);
+
+    cv::Mat oldest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(oldestReferenceFrame->image(0)));
+    cv::Mat newest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(newestReferenceFrame->image(0)));
+    cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
+    rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
+    cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
+  }
+
   void DepthMapDebugImages::displayUpdateKeyFrame() {
     Util::displayImage( "Stereo Key Frame", _debugImageHypothesisHandling, false );
     Util::displayImage( "Stereo Reference Frame", _debugImageStereoLines, false );

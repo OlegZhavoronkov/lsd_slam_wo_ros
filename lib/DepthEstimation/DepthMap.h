@@ -218,7 +218,9 @@ private:
                             > >,
              SignalType&> ConnectSignal(SignalType DepthMap::* pSignalMember,SignalInvokable invokable)
     {
-        this->*pSignalMember.connect(invokable);
+        (this->*pSignalMember).connect(invokable);
+        
+        //this->*pSignalMember.connect(invokable);
         //_updateKeyFrameSignal.connect(invokable);
         return std::forward<SignalType&>(this->*pSignalMember);
     }

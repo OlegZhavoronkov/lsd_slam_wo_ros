@@ -117,6 +117,10 @@ private:
 
 
 	std::shared_ptr<active_object::Active> _thread;
+public:
+    DepthMap::DisplayUpdateKeyFrameSignal   _depthMapDisplayUpdateKeyFrameSignal;
+    DepthMap::UpdateKeyFrameSignal          _depthMapUpdateKeyFrameSignal;
+    DepthMap::PlotDepthSignal               _depthMapPlotDepthSignal;
 
 };
 

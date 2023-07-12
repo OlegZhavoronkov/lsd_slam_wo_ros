@@ -75,6 +75,18 @@ void MappingThread::createNewKeyFrameImpl( const KeyFrame::SharedPtr &currentKey
 	CHECK( frame->isTrackingParent( currentKeyFrame ) ) << "New keyframe does not track on current keyframe!";
 
 	KeyFrame::SharedPtr kf( KeyFrame::PropagateAndCreate( currentKeyFrame, frame ) );
+    if(!_depthMapUpdateKeyFrameSignal.empty())
+    {
+        kf->depthMap()->ConnectUpdateKeyFrameSignal([this](auto...args){this->_depthMapUpdateKeyFrameSignal(args...);});
+    }
+    if(!_depthMapDisplayUpdateKeyFrameSignal.empty())
+    {
+        kf->depthMap()->ConnectDisplayUpdateKeyFrameSignal([this](auto...args){this->_depthMapDisplayUpdateKeyFrameSignal(args...);});
+    }
+    if(!_depthMapPlotDepthSignal.empty())
+    {
+        kf->depthMap()->ConnectPlotDepthSignal([this](auto...args){this->_depthMapPlotDepthSignal(args...);});
+    }
 	_system.keyFrameGraph()->addKeyFrame( kf );
 	_system.trackingThread()->doUseNewKeyFrame( kf );
 	_system.constraintThread()->doCheckNewKeyFrame( kf );

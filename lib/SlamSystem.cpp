@@ -52,7 +52,8 @@ SlamSystem::SlamSystem( )
   	_initialized( false ),
   //	_keyFrames(),
   	_keyFrameGraph( new KeyFrameGraph ),
-  	_trackableKeyFrameSearch( new TrackableKeyFrameSearch( _keyFrameGraph ) )
+  	_trackableKeyFrameSearch( new TrackableKeyFrameSearch( _keyFrameGraph ) ),
+    _pDepthMapDebugImages(plotStereoImages ? new DepthMapDebugImages(Conf().slamImageSize):nullptr)
 {
 
 	// Because some of these rely on Conf(), need to explicitly call after
@@ -62,8 +63,13 @@ SlamSystem::SlamSystem( )
 	_mapThread.reset( new MappingThread( *this, threaded ) );
 	_constraintThread.reset( new ConstraintSearchThread( *this, threaded ) );
 	_trackingThread.reset( new TrackingThread( *this, threaded ) );
-
+    if(_pDepthMapDebugImages)
+    {
+        _mapThread->_depthMapDisplayUpdateKeyFrameSignal.connect([this](auto...args){this->_pDepthMapDebugImages->displayUpdateKeyFrame();});
+        _mapThread->_depthMapUpdateKeyFrameSignal.connect([this](auto...args){this->_pDepthMapDebugImages->displayUpdateKeyFrame();});
+    }
 	timeLastUpdate.start();
+
 }
 
 SlamSystem::~SlamSystem() {
