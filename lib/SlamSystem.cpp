@@ -258,8 +258,8 @@ void SlamSystem::updateDisplayDepthMap()
 
 	currentKeyFrame()->depthMap()->plotDepthMap( buf1, buf2 );
 
-	CHECK( currentKeyFrame()->depthMap()->debugImages().depthImage().data != NULL );
-	publishDepthImage( currentKeyFrame()->depthMap()->debugImages().depthImage().data );
+	//CHECK( currentKeyFrame()->depthMap()->debugImages().depthImage().data != NULL );
+	//publishDepthImage( currentKeyFrame()->depthMap()->debugImages().depthImage().data );
 }
 
 

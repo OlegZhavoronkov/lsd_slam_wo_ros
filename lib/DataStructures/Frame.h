@@ -131,7 +131,7 @@ public:
 	inline const float* idepthVar_reAct();
 
 	inline bool* refPixelWasGood();
-	inline bool* refPixelWasGoodNoCreate();
+	inline const bool* refPixelWasGoodNoCreate();
 	inline void  clear_refPixelWasGood();
 
 	/** Flags for use with require() and requirePyramid(). See the Frame class
@@ -358,7 +358,7 @@ inline bool* Frame::refPixelWasGood()
 }
 
 
-inline bool* Frame::refPixelWasGoodNoCreate()
+inline const bool* Frame::refPixelWasGoodNoCreate()
 {
 	return data.refPixelWasGood;
 }

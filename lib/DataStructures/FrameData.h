@@ -47,7 +47,7 @@ namespace lsd_slam {
     ~FrameData();
 
 		//int width[__LEVELS], height[__LEVELS];
-    ImageSize imgSize[__LEVELS];
+        ImageSize imgSize[__LEVELS];
 		Camera camera[__LEVELS];
 
 		// Eigen::Matrix3f K[__LEVELS], KInv[__LEVELS];
