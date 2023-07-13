@@ -1014,11 +1014,12 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 	const float fyi = frame()->fyi();
 	const float cxi = frame()->cxi();
 	const float cyi = frame()->cyi();
-
+    int slamImageWidth=Conf().slamImageSize.width;
+    int slamImageHeight=Conf().slamImageSize.height;
 	// go through all pixels of OLD image, propagating forwards.
-	for(int y=0;y< Conf().slamImageSize.height ;y++)
+	for(int y=0;y< slamImageHeight ;y++)
     {
-		for(int x=0;x< Conf().slamImageSize.width;x++)
+		for(int x=0;x< slamImageWidth;x++)
 		{
 			const DepthMapPixelHypothesis* source = other->hypothesisAt( x, y );
 
@@ -1038,18 +1039,18 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 			float v_new = pn[1]*new_idepth*fy + cy;
 
 			// check if still within image, if not: DROP.
-			if(!(u_new > 2.1f && v_new > 2.1f && u_new < Conf().slamImageSize.width-3.1f && v_new < Conf().slamImageSize.height-3.1f))
+			if(!(u_new > 2.1f && v_new > 2.1f && u_new < slamImageWidth-3.1f && v_new < slamImageHeight-3.1f))
 			{
 				runningStats.num_prop_removed_out_of_bounds++;
 				continue;
 			}
 
-			int newIDX = (int)(u_new+0.5f) + ((int)(v_new+0.5f))*Conf().slamImageSize.width;
+			int newIDX = (int)(u_new+0.5f) + ((int)(v_new+0.5f))*slamImageWidth;
 			float destAbsGrad = newKFMaxGrad[newIDX];
 
 			if(trackingWasGood)
 			{
-				if(!trackingWasGood[(x >> SE3TRACKING_MIN_LEVEL) + (Conf().slamImageSize.width >> SE3TRACKING_MIN_LEVEL)*(y >> SE3TRACKING_MIN_LEVEL)]
+				if(!trackingWasGood[(x >> SE3TRACKING_MIN_LEVEL) + (slamImageWidth >> SE3TRACKING_MIN_LEVEL)*(y >> SE3TRACKING_MIN_LEVEL)]
 				                    || destAbsGrad < MIN_ABS_GRAD_DECREASE)
 				{
 					runningStats.num_prop_removed_colorDiff++;
@@ -1058,8 +1059,8 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 			}
 			else
 			{
-				float sourceColor = activeKFImageData[x + y*Conf().slamImageSize.width];
-				float destColor = getInterpolatedElement(newKFImageData, u_new, v_new, Conf().slamImageSize.width);
+				float sourceColor = activeKFImageData[x + y*slamImageWidth];
+				float destColor = getInterpolatedElement(newKFImageData, u_new, v_new, slamImageWidth);
 
 				float residual = destColor - sourceColor;
 

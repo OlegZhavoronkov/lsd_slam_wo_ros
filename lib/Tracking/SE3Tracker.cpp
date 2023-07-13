@@ -284,7 +284,7 @@ SE3 SE3Tracker::trackFrame(
 		saveAllTrackingStages = false;
 		saveAllTrackingStagesInternal = true;
 	}
-
+//TODO introduce signal for this
 	if (plotTrackingIterationInfo)
 	{
 		const float* frameImage = frame->image();
