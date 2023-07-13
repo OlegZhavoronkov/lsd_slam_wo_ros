@@ -40,6 +40,7 @@ namespace lsd_slam {
 
   void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage)
   {
+    std::scoped_lock lock(_lock);
     if(activeKeyFrame != nullptr)
     {
         cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(activeKeyFrame->image(0)));
@@ -53,16 +54,13 @@ namespace lsd_slam {
         lineImage.copyTo(_debugImageStereoLines);
     }
     
-    hypotesis.copyTo(_debugImageHypothesisHandling);
+    //hypotesis.copyTo(_debugImageHypothesisHandling);
 
-    //cv::Mat oldest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(oldestReferenceFrame->image(0)));
-    //cv::Mat newest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(newestReferenceFrame->image(0)));
-    //cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
-    //rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
-    //cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
+    
   }
 
   void DepthMapDebugImages::displayUpdateKeyFrame() {
+    std::scoped_lock lock(_lock);
     Util::displayImage( "Stereo Key Frame", _debugImageHypothesisHandling, false );
     Util::displayImage( "Stereo Reference Frame", _debugImageStereoLines, false );
   }

@@ -8,6 +8,7 @@
 
 #include "DataStructures/Frame.h"
 #include "DepthMapPixelHypothesis.h"
+#include <mutex>
 
 namespace lsd_slam {
 
@@ -52,6 +53,7 @@ protected:
 	cv::Mat _debugImageHypothesisPropagation;
 	cv::Mat _debugImageStereoLines;
 	cv::Mat _debugImageDepth;
+    std::recursive_mutex _lock;
 
 };
 
