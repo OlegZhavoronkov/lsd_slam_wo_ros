@@ -98,7 +98,7 @@ int main( int argc, char** argv )
     files.sort();
     std::vector<std::string > vec_of_files;
     vec_of_files.reserve(files.size());
-    size_t startIdx=500;
+    size_t startIdx=0;
     size_t curr_idx=0;
     for(const auto& p : files)
     {
