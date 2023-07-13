@@ -569,8 +569,8 @@ void DepthMap::observeDepth( const Frame::SharedPtr &updateFrame )
     SetLineStereoDebugPlotFunctor pLineFunctor=nullptr;
     if(!_updateKeyFrameSignal.empty() && plotStereoImages)
     {
-        hypotesisMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3,{});
-        lineStereoMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3,{});
+        hypotesisMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3);
+        lineStereoMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3);
         pToHypotesisMat = &hypotesisMat;
         pHypotesisFunctor = & DepthMap::SetHypotesisDebugData;
         pLineFunctor = & DepthMap::SetLineStereoDebugData;

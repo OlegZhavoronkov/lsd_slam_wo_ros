@@ -22,7 +22,7 @@ namespace lsd_slam {
   DepthMapDebugImages::~DepthMapDebugImages()
   {;}
 
-
+/*
   void DepthMapDebugImages::plotUpdateKeyFrame( const Frame::SharedPtr &activeKeyFrame,
     const Frame::SharedPtr &oldestReferenceFrame,
     const Frame::SharedPtr &newestReferenceFrame )
@@ -36,21 +36,30 @@ namespace lsd_slam {
     cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
     rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
     cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
-  }
+  }*/
 
-  void DepthMapDebugImages::plotUpdateKeyFrame( const Frame::SharedPtr &activeKeyFrame,
-                                                const Frame::SharedPtr &oldestReferenceFrame,
-                                                const Frame::SharedPtr &newestReferenceFrame )
+  void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage)
   {
-    cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(activeKeyFrame->image(0)));
-    keyFrameImage.convertTo(_debugImageHypothesisHandling, CV_8UC1);
-    cv::cvtColor(_debugImageHypothesisHandling, _debugImageHypothesisHandling, cv::COLOR_GRAY2RGB);
+    if(activeKeyFrame != nullptr)
+    {
+        cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(activeKeyFrame->image(0)));
+        cv::Mat tempKeyFrame;
+        keyFrameImage.convertTo(tempKeyFrame, CV_8UC1);
+        cv::cvtColor(tempKeyFrame, tempKeyFrame, cv::COLOR_GRAY2RGB);
+        _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
+    }
+    else
+    {
+        lineImage.copyTo(_debugImageStereoLines);
+    }
+    
+    hypotesis.copyTo(_debugImageHypothesisHandling);
 
-    cv::Mat oldest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(oldestReferenceFrame->image(0)));
-    cv::Mat newest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(newestReferenceFrame->image(0)));
-    cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
-    rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
-    cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
+    //cv::Mat oldest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(oldestReferenceFrame->image(0)));
+    //cv::Mat newest_refImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(newestReferenceFrame->image(0)));
+    //cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
+    //rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
+    //cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
   }
 
   void DepthMapDebugImages::displayUpdateKeyFrame() {
@@ -69,13 +78,13 @@ namespace lsd_slam {
     Util::displayImage( "KeyFramePropagation", _debugImageHypothesisPropagation );
   }
 
-  void DepthMapDebugImages::setHypothesisHandling( int x, int y, cv::Vec3b color ) {
-    _debugImageHypothesisHandling.at<cv::Vec3b>(y, x) = color;
-  }
+  //void DepthMapDebugImages::setHypothesisHandling( int x, int y, cv::Vec3b color ) {
+  //  _debugImageHypothesisHandling.at<cv::Vec3b>(y, x) = color;
+  //}
 
-  void DepthMapDebugImages::addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color ) {
-    cv::line(_debugImageStereoLines,a,b,color,1,8,0);
-  }
+  //void DepthMapDebugImages::addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color ) {
+  //  cv::line(_debugImageStereoLines,a,b,color,1,8,0);
+  //}
 
   // TODO.  Should expire this version
   int DepthMapDebugImages::debugPlotDepthMap( const Frame::SharedPtr &activeKeyFrame,  DepthMapPixelHypothesis *currentDepthMap, int refID, const char *buf1, const char *buf2 )

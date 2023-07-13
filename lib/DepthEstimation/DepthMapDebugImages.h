@@ -31,9 +31,10 @@ public:
   void displayNewKeyFrame();
 
   //
-  void setHypothesisHandling( int x, int y, cv::Vec3b color );
+  //void setHypothesisHandling( int x, int y, cv::Vec3b color );
 
-  void addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color );
+  //void addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color );
+  void setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage);
 
   // TODO.  First version is a short-term reversion to using DepthMapPixelHypothesis *
   // should purge DepthMapPixelHypothesis * from code base, then remove this

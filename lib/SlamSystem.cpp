@@ -66,7 +66,12 @@ SlamSystem::SlamSystem( )
     if(_pDepthMapDebugImages)
     {
         _mapThread->_depthMapDisplayUpdateKeyFrameSignal.connect([this](auto...args){this->_pDepthMapDebugImages->displayUpdateKeyFrame();});
-        _mapThread->_depthMapUpdateKeyFrameSignal.connect([this](auto...args){this->_pDepthMapDebugImages->displayUpdateKeyFrame();});
+        _mapThread->_depthMapUpdateKeyFrameSignal.connect(
+                [this](auto...args){
+                    auto& currKeyFrame=this->currentKeyFrame();
+                    this->_pDepthMapDebugImages->setHypotesisAndLineImages(currKeyFrame!=nullptr ? currKeyFrame->frame() :
+                                                                                                    Frame::SharedPtr{},
+                                                                            args...);});
     }
 	timeLastUpdate.start();
 
