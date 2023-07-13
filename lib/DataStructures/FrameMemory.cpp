@@ -30,17 +30,18 @@ FrameMemory::FrameMemory()
 
 FrameMemory& FrameMemory::getInstance()
 {
+    std::scoped_lock lock(_instanceMtx);
 	static FrameMemory theOneAndOnly;
 	return theOneAndOnly;
 }
 
 void FrameMemory::releaseBuffers()
 {
-	std::unique_lock<std::mutex> lock(accessMutex);
+	std::unique_lock<std::mutex> lock(_accessMutex);
 	int total = 0;
 
 
-	for(auto p : availableBuffers)
+	for(auto p : _availableBuffers)
 	{
 		LOGF_IF(DEBUG, Conf().print.memoryDebugInfo, "deleting %d buffers of size %d!", (int)p.second.size(), (int)p.first);
 
@@ -48,13 +49,13 @@ void FrameMemory::releaseBuffers()
 
 		for(unsigned int i=0;i<p.second.size();i++)
 		{
-			delete (char*)p.second[i];
-			bufferSizes.erase(p.second[i]);
+			delete[] (char*)p.second[i];
+			_bufferSizes.erase(p.second[i]);
 		}
 
 		p.second.clear();
 	}
-	availableBuffers.clear();
+	_availableBuffers.clear();
 
 	LOGF_IF(DEBUG, Conf().print.memoryDebugInfo, "released %.1f MB!", total / (1000000.0f));
 }
@@ -62,11 +63,11 @@ void FrameMemory::releaseBuffers()
 
 void* FrameMemory::getBuffer(unsigned int sizeInByte)
 {
-	std::unique_lock<std::mutex> lock(accessMutex);
+	std::unique_lock<std::mutex> lock(_accessMutex);
 
-	if (availableBuffers.count(sizeInByte) > 0)
+	if (_availableBuffers.count(sizeInByte) > 0)
 	{
-		std::vector< void* >& availableOfSize = availableBuffers.at(sizeInByte);
+		std::vector< void* >& availableOfSize = _availableBuffers.at(sizeInByte);
 		if (availableOfSize.empty())
 		{
 			void* buffer = allocateBuffer(sizeInByte);
@@ -97,19 +98,19 @@ float* FrameMemory::getFloatBuffer(unsigned int size)
 
 void FrameMemory::returnBuffer(void* buffer)
 {
-	if(buffer==0) return;
+	if(buffer==nullptr) return;
 
-	std::unique_lock<std::mutex> lock(accessMutex);
+	std::unique_lock<std::mutex> lock(_accessMutex);
 
-	unsigned int size = bufferSizes.at(buffer);
+	unsigned int size = _bufferSizes.at(buffer);
 	//printf("returnFloatBuffer(%d)\n", size);
-	if (availableBuffers.count(size) > 0)
-		availableBuffers.at(size).push_back(buffer);
+	if (_availableBuffers.count(size) > 0)
+		_availableBuffers.at(size).push_back(buffer);
 	else
 	{
 		std::vector< void* > availableOfSize;
 		availableOfSize.push_back(buffer);
-		availableBuffers.insert(std::make_pair(size, availableOfSize));
+		_availableBuffers.insert(std::make_pair(size, availableOfSize));
 	}
 }
 
@@ -117,25 +118,25 @@ void* FrameMemory::allocateBuffer(unsigned int size)
 {
 	void* buffer = (void*)(new char[size]);
 	LOG_IF(DEBUG, Conf().print.memoryDebugInfo) << "Alloc " << size << " at " << std::ios::hex << buffer;
-	bufferSizes.insert(std::make_pair(buffer, size));
+	_bufferSizes.insert(std::make_pair(buffer, size));
 	return buffer;
 }
 
 std::shared_lock<std::shared_timed_mutex> FrameMemory::activateFrame(Frame* frame)
 {
-	std::unique_lock<std::mutex> lock(activeFramesMutex);
+	std::unique_lock<std::mutex> lock(_activeFramesMutex);
 	if(frame->isActive)
-		activeFrames.remove(frame);
-	activeFrames.push_front(frame);
+		_activeFrames.remove(frame);
+	_activeFrames.push_front(frame);
 	frame->isActive = true;
 	return std::shared_lock<std::shared_timed_mutex>(frame->activeMutex);
 }
 
 void FrameMemory::deactivateFrame(Frame* frame)
 {
-	std::unique_lock<std::mutex> lock(activeFramesMutex);
+	std::unique_lock<std::mutex> lock(_activeFramesMutex);
 	if(!frame->isActive) return;
-	activeFrames.remove(frame);
+	_activeFrames.remove(frame);
 
 	while(!frame->minimizeInMemory())
 		LOG(WARNING) << "cannot deactivateFrame frame " << frame->id()
@@ -146,21 +147,23 @@ void FrameMemory::deactivateFrame(Frame* frame)
 
 void FrameMemory::pruneActiveFrames()
 {
-	std::unique_lock<std::mutex> lock(activeFramesMutex);
+	std::unique_lock<std::mutex> lock(_activeFramesMutex);
 
-	while((int)activeFrames.size() > maxLoopClosureCandidates + 20)
+	while((int)_activeFrames.size() > maxLoopClosureCandidates + 20)
 	{
-		if(!activeFrames.back()->minimizeInMemory())
+		if(!_activeFrames.back()->minimizeInMemory())
 		{
-			if(!activeFrames.back()->minimizeInMemory())
+			if(!_activeFrames.back()->minimizeInMemory())
 			{
-				LOG(WARNING) << "failed to minimize frame " << activeFrames.back()->id() << " twice. maybe some active-lock is lingering?";
+				LOG(WARNING) << "failed to minimize frame " << _activeFrames.back()->id() << " twice. maybe some active-lock is lingering?";
 				return;	 // pre-emptive return if could not deactivate.
 			}
 		}
-		activeFrames.back()->isActive = false;
-		activeFrames.pop_back();
+		_activeFrames.back()->isActive = false;
+		_activeFrames.pop_back();
 	}
 }
+
+ std::mutex FrameMemory::_instanceMtx;
 
 }

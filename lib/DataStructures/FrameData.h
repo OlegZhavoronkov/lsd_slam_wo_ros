@@ -35,7 +35,7 @@ namespace lsd_slam {
   template< int __LEVELS >
 	struct FrameData
 	{
-        constexpr const int Levels = __LEVELS;
+        constexpr static const int Levels = __LEVELS;
 
 		// Explicitly delete default and copy constructors
 		FrameData() = delete;

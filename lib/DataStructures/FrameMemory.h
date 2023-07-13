@@ -59,12 +59,14 @@ private:
 	FrameMemory();
 	void* allocateBuffer(unsigned int sizeInByte);
 
-	std::mutex accessMutex;
-	std::unordered_map< void*, unsigned int > bufferSizes;
-	std::unordered_map< unsigned int, std::vector< void* > > availableBuffers;
+	std::mutex _accessMutex;
+	std::unordered_map< void*, unsigned int > _bufferSizes;
+	std::unordered_map< unsigned int, std::vector< void* > > _availableBuffers;
 
-	std::mutex activeFramesMutex;
-	std::list<Frame*> activeFrames;
+	std::mutex _activeFramesMutex;
+	std::list<Frame*> _activeFrames;
+
+    static std::mutex _instanceMtx;
 };
 
 }
