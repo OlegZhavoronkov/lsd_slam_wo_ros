@@ -350,8 +350,8 @@ inline bool* Frame::refPixelWasGood()
 			const int width = data.imgSize[SE3TRACKING_MIN_LEVEL].width;
 			const int height = data.imgSize[SE3TRACKING_MIN_LEVEL].height;
 			data.refPixelWasGood = (bool*)FrameMemory::getInstance().getBuffer(sizeof(bool) * width * height);
-
-			memset(data.refPixelWasGood, 0xFFFFFFFF, sizeof(bool) * (width * height));
+            /*on gcc 10.3 this tends to mess during tracking and abnormal tracking finished*/
+			memset(data.refPixelWasGood, (int)true/*0xFFFFFFFF*/, sizeof(bool) * (width * height));
 		}
 	}
 	return data.refPixelWasGood;
