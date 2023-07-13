@@ -175,7 +175,7 @@ const int PYRAMID_DIVISOR=(0x1<<PYRAMID_LEVELS);
 //TODO: must be introduced in settings
 #define INITIALIZATION_PHASE_COUNT 5
 //TODO: must be introduced in settings
-#define MIN_NUM_MAPPED 1
+#define MIN_NUM_MAPPED 5
 
 
 

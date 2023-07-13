@@ -82,6 +82,22 @@ TrackingThread::~TrackingThread()
 
 void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 {
+    try
+    {
+        trackSetImplInternal(set);
+    }
+    catch(const std::exception& ex)
+    {
+        LOGF(WARNING,"exception for frame %u:\n%s",set->id(),ex.what());
+    }
+    catch(...)
+    {
+        LOGF(WARNING,"unknown exception for frame %u",set->id());
+    }
+}
+
+void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set )
+{
 	if(!_trackingIsGood) {
 	        // Prod mapping to check the relocalizer
 
@@ -160,7 +176,7 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 	if( !_newKeyFramePending && _currentKeyFrame->numMappedOnThisTotal > MIN_NUM_MAPPED)
 	{
 	  Sophus::Vector3d dist = newRefToFrame_poseUpdate.translation() * _currentKeyFrame->frame()->meanIdepth;
-#if 1 //только для отладки алгоритма,потом надо вернуть назад так как непоянтна эфристикка выбора ключевого кадра
+#if 0 //только для отладки алгоритма,потом надо вернуть назад так как непоянтна эфристикка выбора ключевого кадра
 	  float minVal = 0;
 #else//
         float minVal = fmin(0.2f + _system.keyFrameGraph()->size() * 0.8f / INITIALIZATION_PHASE_COUNT,1.0f);
