@@ -74,10 +74,10 @@ int main( int argc, char** argv )
   // Load the configuration object
   Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();
-  lsd_slam::plotTrackingIterationInfo=true;
-  lsd_slam::plotSim3TrackingIterationInfo=true;
+  //lsd_slam::plotTrackingIterationInfo=true;
+  //lsd_slam::plotSim3TrackingIterationInfo=true;
   lsd_slam::plotStereoImages=true;
-  lsd_slam::plotTracking=true;
+  //lsd_slam::plotTracking=true;
 
   LOG(INFO) << "Slam image: " << Conf().slamImageSize.width << " x " << Conf().slamImageSize.height;
 

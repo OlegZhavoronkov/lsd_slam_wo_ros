@@ -2025,7 +2025,7 @@ void DepthMap::SetHypotesisDebugData( int x, int y,const cv::Vec3b& /*color*/,Li
 
 void DepthMap::SetLineStereoDebugData( const cv::Point2f& nearestPoint, const cv::Point2f& farestPoint,const cv::Scalar& color,cv::Mat* pDebugMat)
 {
-    //cv::line( *pDebugMat,nearestPoint,farestPoint,color,1,8,0);
+    cv::line( *pDebugMat,nearestPoint,farestPoint,color,1,8,0);
 }
 
 } // namespace lsd_slam
