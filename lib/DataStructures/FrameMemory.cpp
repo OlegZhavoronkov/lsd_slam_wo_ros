@@ -49,7 +49,12 @@ void FrameMemory::releaseBuffers()
 
 		for(unsigned int i=0;i<p.second.size();i++)
 		{
-			delete[] (char*)p.second[i];
+            
+#ifdef __AVX__            
+			::operator delete[]((char*)p.second[i],std::align_val_t{32});
+#else
+            delete[] (char*)p.second[i];
+#endif
 			_bufferSizes.erase(p.second[i]);
 		}
 
@@ -103,7 +108,6 @@ void FrameMemory::returnBuffer(void* buffer)
 	std::unique_lock<std::mutex> lock(_accessMutex);
 
 	unsigned int size = _bufferSizes.at(buffer);
-	//printf("returnFloatBuffer(%d)\n", size);
 	if (_availableBuffers.count(size) > 0)
 		_availableBuffers.at(size).push_back(buffer);
 	else
@@ -116,7 +120,14 @@ void FrameMemory::returnBuffer(void* buffer)
 
 void* FrameMemory::allocateBuffer(unsigned int size)
 {
-	void* buffer = (void*)(new char[size]);
+
+	void* buffer = (void*)(
+#ifdef __AVX__
+        new(std::align_val_t{32}) 
+#else
+        new
+#endif
+        char[size]);
 	LOG_IF(DEBUG, Conf().print.memoryDebugInfo) << "Alloc " << size << " at " << std::ios::hex << buffer;
 	_bufferSizes.insert(std::make_pair(buffer, size));
 	return buffer;

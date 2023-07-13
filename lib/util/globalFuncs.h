@@ -136,4 +136,9 @@ inline cv::Vec3b getGrayCvPixel(float val)
 cv::Mat getDepthRainbowPlot(Frame* kf, int lvl=0);
 cv::Mat getDepthRainbowPlot(const float* idepth, const float* idepthVar, const float* gray, int width, int height);
 cv::Mat getVarRedGreenPlot(const float* idepthVar, const float* gray, int width, int height);
+
+template<typename dataType> void DebugImage(const std::string& debugMsg,const dataType* data,int height,int width);
+
+#define QUICK_DEBUG_DATA(p,h,w) DebugImage((std::string(__PRETTY_FUNCTION__)+std::string(" : ")+std::string(__FILE__)+std::string(" : ")+std::to_string(__LINE__)),p,h,w)
+
 }

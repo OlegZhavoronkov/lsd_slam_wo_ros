@@ -161,4 +161,24 @@ cv::Mat getVarRedGreenPlot(const float* idepthVar, const float* gray, int width,
 	delete[] idepthVarExt;
 	return res;
 }
+
+template<> void DebugImage<float>(const std::string& debugMsg,const float* data,int height,int width)
+{
+    std::unique_ptr<float[]> pbuff(new float[width*height]);
+    memcpy(pbuff.get(),data,width*height*sizeof(float));
+    {
+
+    
+    //cv::Mat mat=cv::Mat::zeros(cv::Size(width,height),CV_32FC1,);// (height,width,CV_32F,(void*)reinterpret_cast<const void*>(data),);
+    cv::Mat mat(cv::Size(width,height),CV_32FC1,pbuff.get());// (height,width,CV_32F,(void*)reinterpret_cast<const void*>(data),);
+    //void* pData= mat.ptr(0);
+    
+    //memcpy(pData,data,width*height*2);
+    cv::Mat mat2;
+    mat.convertTo(mat2,CV_8UC1);
+    cv::imshow(debugMsg,mat2);
+    cv::waitKey(1);
+    }
+}
+
 }

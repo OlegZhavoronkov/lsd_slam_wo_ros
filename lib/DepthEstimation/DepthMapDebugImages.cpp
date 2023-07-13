@@ -41,21 +41,26 @@ namespace lsd_slam {
   void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage)
   {
     std::scoped_lock lock(_lock);
+    
     if(activeKeyFrame != nullptr)
     {
-        cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F, const_cast<float*>(activeKeyFrame->image(0)));
-        cv::Mat tempKeyFrame;
-        keyFrameImage.convertTo(tempKeyFrame, CV_8UC1);
-        cv::cvtColor(tempKeyFrame, tempKeyFrame, cv::COLOR_GRAY2RGB);
-        _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
+        std::unique_ptr<float[]> buff(new float[activeKeyFrame->imgSize(0).area() ]);
+        memcpy(buff.get(),activeKeyFrame->image(0),activeKeyFrame->imgSize(0).area()*sizeof(float));
+        {
+            cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F,buff.get());
+            cv::Mat tempKeyFrame;
+            keyFrameImage.convertTo(tempKeyFrame, CV_8UC1);
+            cv::cvtColor(tempKeyFrame, tempKeyFrame, cv::COLOR_GRAY2RGB);
+            _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
+        }
+        
     }
     else
     {
         lineImage.copyTo(_debugImageStereoLines);
     }
     
-    //hypotesis.copyTo(_debugImageHypothesisHandling);
-
+    hypotesis.copyTo(_debugImageHypothesisHandling);
     
   }
 
