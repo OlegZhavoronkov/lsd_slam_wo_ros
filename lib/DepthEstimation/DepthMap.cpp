@@ -569,8 +569,9 @@ void DepthMap::observeDepth( const Frame::SharedPtr &updateFrame )
     SetLineStereoDebugPlotFunctor pLineFunctor=nullptr;
     if(!_updateKeyFrameSignal.empty() && plotStereoImages)
     {
-        hypotesisMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3);
-        lineStereoMat = cv::Mat(Conf().slamImageSize.cvSize(),CV_8UC3);
+        hypotesisMat = cv::Mat::zeros(Conf().slamImageSize.cvSize(),CV_8UC3);
+        lineStereoMat = cv::Mat::zeros(Conf().slamImageSize.cvSize(),CV_8UC3);
+        
         pToHypotesisMat = &hypotesisMat;
         pHypotesisFunctor = & DepthMap::SetHypotesisDebugData;
         pLineFunctor = & DepthMap::SetLineStereoDebugData;
@@ -580,7 +581,7 @@ void DepthMap::observeDepth( const Frame::SharedPtr &updateFrame )
 	//_threadReducer.reduce(std::bind_front(&DepthMap::observeDepthRow, this,(DepthMap::SetHypothesisHandlingFunctor)nullptr), 3, Conf().slamImageSize.height-3, 10);
     if(!_updateKeyFrameSignal.empty() && plotStereoImages)
     {
-        _updateKeyFrameSignal(hypotesisMat,lineStereoMat);
+        _updateKeyFrameSignal(hypotesisMat,lineStereoMat,(std::string("frame ")+std::to_string(updateFrame->id())));
     }
 	LOGF_IF(DEBUG, Conf().print.observeStatistics, "OBSERVE (%d): %d / %d created; %d / %d updated; %d skipped; %d init-blacklisted",
 			frame()->id(),

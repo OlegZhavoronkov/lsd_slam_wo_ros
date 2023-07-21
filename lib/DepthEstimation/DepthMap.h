@@ -198,7 +198,7 @@ private:
 
 	//float clocksPropagate, clocksPropagateKF, clocksObserve, msObserve, clocksReg1, clocksReg2, msReg1, msReg2, clocksFinalize;
 public :
-    using UpdateKeyFrameSignal = boost::signals2::signal<void(const cv::Mat& /*debugDepthRes*/,const cv::Mat& /*lineStereoDebug*/)>;
+    using UpdateKeyFrameSignal = boost::signals2::signal<void(const cv::Mat& /*debugDepthRes*/,const cv::Mat& /*lineStereoDebug*/,const std::string& /*desc*/)>;
     using DisplayUpdateKeyFrameSignal = boost::signals2::signal<void()>;
     using PlotDepthSignal               = boost::signals2::signal<void(const DepthMapPixelHypothesis*,int,const char*,const char*)>;
     //using DisplayNewKeyFrameSignal = boost::signals2::signal<void()>;

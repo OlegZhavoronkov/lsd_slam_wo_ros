@@ -1,7 +1,7 @@
 
 
 #include <opencv2/imgproc.hpp>
-
+#include <opencv2/imgcodecs.hpp>
 #include "DepthMapDebugImages.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "util/globalFuncs.h"
@@ -37,8 +37,8 @@ namespace lsd_slam {
     rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
     cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
   }*/
-
-  void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage)
+    //static int idx=0;
+  void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage,const std::string& desc)
   {
     std::scoped_lock lock(_lock);
     
@@ -52,6 +52,10 @@ namespace lsd_slam {
             keyFrameImage.convertTo(tempKeyFrame, CV_8UC1);
             cv::cvtColor(tempKeyFrame, tempKeyFrame, cv::COLOR_GRAY2RGB);
             _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
+            if(!desc.empty())
+            {
+                cv::putText(_debugImageStereoLines,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+            }
         }
         
     }
@@ -61,6 +65,10 @@ namespace lsd_slam {
     }
     
     hypotesis.copyTo(_debugImageHypothesisHandling);
+    if(!desc.empty())
+    {
+        cv::putText(_debugImageHypothesisHandling,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+    }
     
   }
 
