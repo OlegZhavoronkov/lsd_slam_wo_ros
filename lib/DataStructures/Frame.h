@@ -205,16 +205,16 @@ public:
 	// A bunch of state which is created by prepareForStereoWith()
 	int referenceID;
 	int referenceLevel;
-	float distSquared;
-	Eigen::Matrix3f K_otherToThis_R;
-	Eigen::Vector3f K_otherToThis_t;
-	Eigen::Vector3f otherToThis_t;
-	Eigen::Vector3f K_thisToOther_t;
-	Eigen::Matrix3f thisToOther_R;
-	Eigen::Vector3f otherToThis_R_row0;
-	Eigen::Vector3f otherToThis_R_row1;
-	Eigen::Vector3f otherToThis_R_row2;
-	Eigen::Vector3f thisToOther_t;
+	float _distSquared;
+	Eigen::Matrix3f _K_otherToThis_R;
+	Eigen::Vector3f _K_otherToThis_t;
+	Eigen::Vector3f _otherToThis_t;
+	Eigen::Vector3f _K_thisToOther_t;
+	Eigen::Matrix3f _thisToOther_R;
+	Eigen::Vector3f _otherToThis_R_row0;
+	Eigen::Vector3f _otherToThis_R_row1;
+	Eigen::Vector3f _otherToThis_R_row2;
+	Eigen::Vector3f _thisToOther_t;
 
 
 

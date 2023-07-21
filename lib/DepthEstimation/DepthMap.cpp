@@ -918,13 +918,16 @@ LineStereoResult DepthMap::makeAndCheckEPL(const int x, const int y, const Frame
                                RunningStats *const stats) {
   int idx = x + y * Conf().slamImageSize.width;
 
-  const float fx = ref->fx(), fy = ref->fy(), cx = ref->cx(), cy = ref->cy();
+  const float fx = ref->fx();
+  const float fy = ref->fy(); 
+  const float cx = ref->cx(); 
+  const float cy = ref->cy();
 
   // ======= make epl ========
   // calculate the plane spanned by the two camera centers and the point (x,y,1)
   // intersect it with the keyframe's image plane (at depth=1)
-  float epx = -fx * ref->thisToOther_t[0] + ref->thisToOther_t[2] * (x - cx);
-  float epy = -fy * ref->thisToOther_t[1] + ref->thisToOther_t[2] * (y - cy);
+  float epx = -fx * ref->_thisToOther_t[0] + ref->_thisToOther_t[2] * (x - cx);
+  float epy = -fy * ref->_thisToOther_t[1] + ref->_thisToOther_t[2] * (y - cy);
 
   if (isnanf(epx + epy))
   {
@@ -1452,15 +1455,17 @@ inline float DepthMap::doLineStereo(
     res = LineStereoResult::FAIL_UNKNOWN;
 	stats->num_stereo_calls++;
 
-	int width = Conf().slamImageSize.width, height = Conf().slamImageSize.height;
+	int width = Conf().slamImageSize.width;
+    int height = Conf().slamImageSize.height;
 
 	// calculate epipolar line start and end point in old image
 	// TODO:  Converted from Conf().camrea to referenceFrame.  Not actually sure
 	// that's the correct frame's K to be using (in the case where K isn't constant)
 	Eigen::Vector3f KinvP = Eigen::Vector3f(referenceFrame->fxi()*u+referenceFrame->cxi(),
-																					referenceFrame->fyi()*v+referenceFrame->cyi(),1.0f);
-	Eigen::Vector3f pInf = referenceFrame->K_otherToThis_R * KinvP;
-	Eigen::Vector3f pReal = pInf / prior_idepth + referenceFrame->K_otherToThis_t;
+											referenceFrame->fyi()*v+referenceFrame->cyi(),
+                                            1.0f);
+	Eigen::Vector3f pInf = referenceFrame->_K_otherToThis_R * KinvP;
+	Eigen::Vector3f pReal = pInf / prior_idepth + referenceFrame->_K_otherToThis_t;
 
 	float rescaleFactor = pReal[2] * prior_idepth;
 
@@ -1497,17 +1502,17 @@ inline float DepthMap::doLineStereo(
 //	if(referenceFrame->K_otherToThis_t[2] * max_idepth + pInf[2] < 0.01)
 
 
-	Eigen::Vector3f pClose = pInf + referenceFrame->K_otherToThis_t*max_idepth;
+	Eigen::Vector3f pClose = pInf + referenceFrame->_K_otherToThis_t*max_idepth;
 	// if the assumed close-point lies behind the
 	// image, have to change that.
 	if(pClose[2] < 0.001f)
 	{
-		max_idepth = (0.001f-pInf[2]) / referenceFrame->K_otherToThis_t[2];
-		pClose = pInf + referenceFrame->K_otherToThis_t*max_idepth;
+		max_idepth = (0.001f-pInf[2]) / referenceFrame->_K_otherToThis_t[2];
+		pClose = pInf + referenceFrame->_K_otherToThis_t*max_idepth;
 	}
 	pClose = pClose / pClose[2]; // pos in new image of point (xy), assuming max_idepth
 
-	Eigen::Vector3f pFar = pInf + referenceFrame->K_otherToThis_t*min_idepth;
+	Eigen::Vector3f pFar = pInf + referenceFrame->_K_otherToThis_t*min_idepth;
 	// if the assumed far-point lies behind the image or closter than the near-point,
 	// we moved past the Point it and should stop.
 	if(pFar[2] < 0.001f || max_idepth < min_idepth)
@@ -1898,24 +1903,24 @@ inline float DepthMap::doLineStereo(
 	if(incx*incx>incy*incy)
 	{
 		float oldX = fxi*best_match_x+cxi;
-		float nominator = (oldX*referenceFrame->otherToThis_t[2] - referenceFrame->otherToThis_t[0]);
-		float dot0 = KinvP.dot(referenceFrame->otherToThis_R_row0);
-		float dot2 = KinvP.dot(referenceFrame->otherToThis_R_row2);
+		float nominator = (oldX*referenceFrame->_otherToThis_t[2] - referenceFrame->_otherToThis_t[0]);
+		float dot0 = KinvP.dot(referenceFrame->_otherToThis_R_row0);
+		float dot2 = KinvP.dot(referenceFrame->_otherToThis_R_row2);
 
 		idnew_best_match = (dot0 - oldX*dot2) / nominator;
-		alpha = incx*fxi*(dot0*referenceFrame->otherToThis_t[2] - dot2*referenceFrame->otherToThis_t[0]) / (nominator*nominator);
+		alpha = incx*fxi*(dot0*referenceFrame->_otherToThis_t[2] - dot2*referenceFrame->_otherToThis_t[0]) / (nominator*nominator);
 
 	}
 	else
 	{
 		float oldY = fyi*best_match_y+cyi;
 
-		float nominator = (oldY*referenceFrame->otherToThis_t[2] - referenceFrame->otherToThis_t[1]);
-		float dot1 = KinvP.dot(referenceFrame->otherToThis_R_row1);
-		float dot2 = KinvP.dot(referenceFrame->otherToThis_R_row2);
+		float nominator = (oldY*referenceFrame->_otherToThis_t[2] - referenceFrame->_otherToThis_t[1]);
+		float dot1 = KinvP.dot(referenceFrame->_otherToThis_R_row1);
+		float dot2 = KinvP.dot(referenceFrame->_otherToThis_R_row2);
 
 		idnew_best_match = (dot1 - oldY*dot2) / nominator;
-		alpha = incy*fyi*(dot1*referenceFrame->otherToThis_t[2] - dot2*referenceFrame->otherToThis_t[1]) / (nominator*nominator);
+		alpha = incy*fyi*(dot1*referenceFrame->_otherToThis_t[2] - dot2*referenceFrame->_otherToThis_t[1]) / (nominator*nominator);
 
 	}
 

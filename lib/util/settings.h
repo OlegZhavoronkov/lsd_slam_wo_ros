@@ -94,8 +94,13 @@ namespace lsd_slam
 	#define RELOCALIZE_THREADS 4
 #else
 	// tracking pyramid levels.
-	#define MAPPING_THREADS 4
-	#define RELOCALIZE_THREADS 6
+#if 1
+#define MAPPING_THREADS 1
+#else
+#define MAPPING_THREADS 4
+	
+#endif
+#define RELOCALIZE_THREADS 6
 #endif
 
 #define SE3TRACKING_MIN_LEVEL 1

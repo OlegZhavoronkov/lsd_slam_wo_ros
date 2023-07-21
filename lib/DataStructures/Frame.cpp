@@ -250,20 +250,20 @@ void Frame::prepareForStereoWith(const Frame::SharedPtr &other, Sim3 thisToOther
 	Sim3 otherToThis = thisToOther.inverse();
 
 	//otherToThis = data.worldToCam * other->data.camToWorld;
-	K_otherToThis_R = other->camera(level).K * otherToThis.rotationMatrix().cast<float>() * otherToThis.scale();
-	otherToThis_t = otherToThis.translation().cast<float>();
-	K_otherToThis_t = other->camera(level).K * otherToThis_t;
+	_K_otherToThis_R = other->camera(level).K * otherToThis.rotationMatrix().cast<float>() * otherToThis.scale();
+	_otherToThis_t = otherToThis.translation().cast<float>();
+	_K_otherToThis_t = other->camera(level).K * _otherToThis_t;
 
 
 
-	thisToOther_t = thisToOther.translation().cast<float>();
-	K_thisToOther_t = camera(level).K * thisToOther_t;
-	thisToOther_R = thisToOther.rotationMatrix().cast<float>() * thisToOther.scale();
-	otherToThis_R_row0 = thisToOther_R.col(0);
-	otherToThis_R_row1 = thisToOther_R.col(1);
-	otherToThis_R_row2 = thisToOther_R.col(2);
+	_thisToOther_t = thisToOther.translation().cast<float>();
+	_K_thisToOther_t = camera(level).K * _thisToOther_t;
+	_thisToOther_R = thisToOther.rotationMatrix().cast<float>() * thisToOther.scale();
+	_otherToThis_R_row0 = _thisToOther_R.col(0);
+	_otherToThis_R_row1 = _thisToOther_R.col(1);
+	_otherToThis_R_row2 = _thisToOther_R.col(2);
 
-	distSquared = otherToThis.translation().dot(otherToThis.translation());
+	_distSquared = otherToThis.translation().dot(otherToThis.translation());
 
 	referenceID = other->id();
 	referenceLevel = level;
