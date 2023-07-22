@@ -36,7 +36,7 @@ FramePoseStruct::FramePoseStruct( Frame &f )
 {
 	cacheValidFor = -1;
 	isOptimized = false;
-	thisToParent_raw = camToWorld = camToWorld_new = Sim3();
+	_thisToParent_raw = camToWorld = camToWorld_new = Sim3();
 	isRegisteredToGraph = false;
 	hasUnmergedPose = false;
 	isInGraph = false;
@@ -53,14 +53,14 @@ FramePoseStruct::~FramePoseStruct()
 
 Sim3 FramePoseStruct::setThisToParent( const Sim3 &val )
 {
-	thisToParent_raw = val;
+	_thisToParent_raw = val;
 	invalidateCache();
-	return thisToParent_raw;
+	return _thisToParent_raw;
 }
 
 FramePoseStruct &FramePoseStruct::operator=( const FramePoseStruct &other )
 {
-	thisToParent_raw = other.thisToParent_raw;
+	_thisToParent_raw = other._thisToParent_raw;
 	invalidateCache();
 	return *this;
 }
@@ -108,7 +108,7 @@ Sim3 FramePoseStruct::getCamToWorld(int recursionDepth)
 			LOG(DEBUG) << "Frame " << frame.id() << ": Calculating pose from tracked parent...";
 			// abs. pose is computed from the parent's abs. pose, and cached.
 			cacheValidFor = cacheValidCounter;
-			return camToWorld = frame.trackingParent()->frame()->pose->getCamToWorld(recursionDepth+1) * thisToParent_raw;
+			return camToWorld = frame.trackingParent()->frame()->pose->getCamToWorld(recursionDepth+1) * _thisToParent_raw;
 	} else {
 		LOG(DEBUG) << "Frame " << frame.id() << ": No parent, returning identity pose";
 

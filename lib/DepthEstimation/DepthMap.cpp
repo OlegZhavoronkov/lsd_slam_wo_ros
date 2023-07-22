@@ -250,7 +250,7 @@ bool DepthMap::updateDepthFrom( const Frame::SharedPtr &updateFrame )
 
 	Sim3 refToKf;
 	if(updateFrame->trackingParent()->id() == frame()->id())
-		refToKf = updateFrame->pose->thisToParent_raw;
+		refToKf = updateFrame->pose->_thisToParent_raw;
 	else
 		refToKf = frame()->getCamToWorld().inverse() *  updateFrame->getCamToWorld();
 
@@ -999,7 +999,7 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 	}
 
 	// re-usable values.
-	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->thisToParent_raw).inverse();
+	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->_thisToParent_raw).inverse();
 	const Eigen::Vector3f trafoInv_t = oldToNew_SE3.translation().cast<float>();
 	const Eigen::Matrix3f trafoInv_R = oldToNew_SE3.rotationMatrix().matrix().cast<float>();
 
@@ -2012,14 +2012,14 @@ inline float DepthMap::doLineStereo(
 
 void DepthMap::SetHypotesisDebugData( int x, int y,const cv::Vec3b& /*color*/,LineStereoResult res,cv::Mat* pDebugHypotesisMat)
 {
-    cv::Vec3b color{};
+    cv::Vec3b color{30,30,30};
     switch (res)
     {
     case LineStereoResult::OK_ERROR_IN_BOUND :              {color =cv::Vec3b(255,255,255);}break; // white for GOT CREATED
     case LineStereoResult::OUT_OF_BOUNDS :                  {color= cv::Vec3b(0,0,255);}  break;      // RED FOR OOB
     case LineStereoResult::NOT_GOOD_FOR_STEREO :            {color= cv::Vec3b(255,0,255);}break;      // PURPLE FOR NON-GOOD
-    case LineStereoResult::NOT_FOUND_ERROR_TOO_HIGH :       {color= cv::Vec3b(0,0,0);}    break;      // BLACK FOR big not-found
-    case LineStereoResult::BIG_NOT_FOUND            :       {color= cv::Vec3b(0,0,0);}    break;      // BLACK FOR big not-found
+    case LineStereoResult::NOT_FOUND_ERROR_TOO_HIGH :       {color= cv::Vec3b(19,90,158);}    break;      // BLROWN FOR big not-found
+    case LineStereoResult::BIG_NOT_FOUND            :       {color= cv::Vec3b(83,129,51);}    break;      // BLACK FOR big not-found
     case LineStereoResult::BIG_INCONSISTENT         :       {color= cv::Vec3b(255,255,0);}break;      // Turkoise FOR big inconsistent
     case LineStereoResult::SKIPPED_NOT_GOOD_TRACKED :       {color= cv::Vec3b(255,0,0);}  break;      // BLUE for SKIPPED NOT GOOD TRACKED
     default:
