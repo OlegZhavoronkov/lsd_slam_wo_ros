@@ -6,7 +6,7 @@
 #  fips_setup(PROJECT binlogger)
 #endif()
 project(binlogger LANGUAGES C CXX)
-find_package(Boost COMPONENTS thread filesystem system REQUIRED)
+# find_package(Boost COMPONENTS system REQUIRED)
 
 #set( ZLIB_ROOT /usr )
 find_package( ZLIB REQUIRED )

@@ -17,7 +17,7 @@ option(BUILD_GUI "Build Pangolin-based GUI" OFF)
 set(EMPTY_EXPLICIT_G2O_PATH "EXPLICIT_G2O_PATH_NOT_DEFINED")
 set(EXPLICIT_G2O_PATH "${EMPTY_EXPLICIT_G2O_PATH}" CACHE PATH "path to g2o-provided cmake")
 
-find_package(Boost COMPONENTS thread filesystem system REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -156,7 +156,6 @@ if(NOT LIBVIDEOIO-TYPES_INCLUDE)
 endif()
 add_subdirectory(ocean_api_depends/g3logg/)
 add_subdirectory(ocean_api_depends/libg3logger/)
-add_subdirectory(ocean_api_depends/CLI11/)
 add_subdirectory(ocean_api_depends/libvideoio-types/)
 
 add_subdirectory(ocean_api_depends/libbinlogger/)
