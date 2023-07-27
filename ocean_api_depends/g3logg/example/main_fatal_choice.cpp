@@ -18,6 +18,9 @@
 #include <thread>
 #include <exception>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+
 #ifndef _MSC_VER
 #define NOEXCEPT noexcept
 #else
@@ -314,3 +317,4 @@ int main(int argc, char **argv)
 
 }
 
+#pragma GCC diagnostic pop

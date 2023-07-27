@@ -140,7 +140,7 @@ void KeyFrameGraph::dumpMap(std::string folder)
 	printf("DUMP MAP: dumping to %s\n", folder.c_str());
 
 	keyframesAllMutex.lock_shared();
-	char buf[100];
+	// char buf[100];
 	int succ = system(("rm -rf "+folder).c_str());
 	succ += system(("mkdir "+folder).c_str());
 
