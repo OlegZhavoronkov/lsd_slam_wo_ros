@@ -38,20 +38,20 @@ int privateFrameAllocCount = 0;
 
 Frame::Frame(int frameId, const Camera &cam, const ImageSize &sz,
 							double timestamp, const unsigned char* image )
-	: _trackingParent( nullptr ),
-		_id( frameId ),
-		_timestamp( timestamp ),
-		data( cam, sz, image ),
+	: 	data( cam, sz, image ),
 		pose( new FramePoseStruct(*this) ),
+		lastConstraintTrackedCamToWorld( Sim3() ),
 		referenceID ( -1 ),
 		referenceLevel( -1 ),
-		numMappablePixels( -1 ),
 		meanIdepth( 1 ),
 		numPoints( 0 ),
 		idxInKeyframes( -1 ),
 		edgeErrorSum( 1 ),
 		edgesNum( 1 ),
-		lastConstraintTrackedCamToWorld( Sim3() ),
+		numMappablePixels( -1 ),
+		_trackingParent( nullptr ),
+		_id( frameId ),
+		_timestamp( timestamp ),
 		isActive( false )
 {
 	privateFrameAllocCount++;
@@ -63,20 +63,20 @@ Frame::Frame(int frameId, const Camera &cam, const ImageSize &sz,
 
 Frame::Frame(int frameId, const Camera &cam, const ImageSize &sz,
 							double timestamp, const float* image )
-	: _trackingParent( nullptr ),
-		_id( frameId ),
-		_timestamp( timestamp ),
-		data( cam, sz, image ),
+	:   data( cam, sz, image ),
 		pose( new FramePoseStruct(*this) ),
+		lastConstraintTrackedCamToWorld( Sim3() ),
 		referenceID ( -1 ),
 		referenceLevel( -1 ),
-		numMappablePixels( -1 ),
 		meanIdepth( 1 ),
 		numPoints( 0 ),
 		idxInKeyframes( -1 ),
 		edgeErrorSum( 1 ),
 		edgesNum( 1 ),
-		lastConstraintTrackedCamToWorld( Sim3() ),
+		numMappablePixels( -1 ),
+		_trackingParent( nullptr ),
+		_id( frameId ),
+		_timestamp( timestamp ),
 		isActive( false )
 {
 	privateFrameAllocCount++;
@@ -478,7 +478,7 @@ void Frame::buildImage(int level)
 	CHECK( width % 2 == 0 );
 	CHECK( height % 2 == 0 );
 
-	int wh = width*height;
+	// int wh = width*height;
 	const float *s;
 	for(int y=0 ; y<height ; y+=2)
 	{

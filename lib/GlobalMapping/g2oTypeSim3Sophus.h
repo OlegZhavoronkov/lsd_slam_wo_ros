@@ -35,7 +35,7 @@ namespace lsd_slam {
 	class VertexSim3 : public g2o::BaseVertex<7, Sophus::Sim3d>
 	{
 	public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		VertexSim3();
 		virtual bool read(std::istream& is);
 		virtual bool write(std::ostream& os) const;

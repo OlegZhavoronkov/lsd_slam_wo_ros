@@ -78,8 +78,8 @@ namespace lsd_slam {
 		// data needed for re-activating the frame. theoretically, this is all data the
 		// frame contains.
 		unsigned char* validity_reAct;
-		float* idepth_reAct;
 		float* idepthVar_reAct;
+		float* idepth_reAct;
 		bool reActivationDataValid;
 
 

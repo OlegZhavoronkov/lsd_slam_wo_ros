@@ -36,10 +36,10 @@ public:
   ImageSize slamImageSize;
 //  Camera camera;
 
-  enum { NO_STEREO = 0, STEREO_ZED } doDepth;
-
-  // If false, system will block while each new image is tracked and mapped
+// If false, system will block while each new image is tracked and mapped
   bool runRealTime;
+
+  enum { NO_STEREO = 0, STEREO_ZED } doDepth;
 
   bool stopOnFailedRead;
   bool SLAMEnabled;
@@ -50,8 +50,8 @@ public:
   // settings variables
   // controlled via keystrokes
  int  debugDisplay;
- bool displayDepthMap;
  bool onSceenInfoDisplay;
+ bool displayDepthMap;
  bool dumpMap;
  bool doFullReConstraintTrack;
 

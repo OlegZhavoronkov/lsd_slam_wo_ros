@@ -41,9 +41,9 @@ namespace lsd_slam {
 
   //==
   Configuration::PrintConfiguration::PrintConfiguration()
-    : threadingInfo( true ),
-      memoryDebugInfo(false),
-      trackingIterationInfo(false)
+    : trackingIterationInfo(false),
+      threadingInfo( true ),
+      memoryDebugInfo(false)      
     {;}
 
 
