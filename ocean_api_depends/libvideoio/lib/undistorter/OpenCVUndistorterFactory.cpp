@@ -19,7 +19,7 @@ namespace libvideoio
 	// 	 * crop / full / none
 	// 	 * outputWidth outputHeight
 	// 	 */
-OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
+Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
 {
 	bool valid = true;
 
@@ -121,9 +121,18 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 	originalK.at<double>(0, 2) = inputCalibration[2];
 	originalK.at<double>(1, 2) = inputCalibration[3];
 
-	if (valid)
+	if (valid )
 	{
-		return new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap);
+        if( outputCalibration != -1 )
+        {
+            return new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap);
+        }
+        else
+        {
+            //auto* opencvDistorted=;
+            return new ImageCropper(out_width,out_height,0,0,std::shared_ptr<libvideoio::Undistorter>(new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap)));
+        }
+		
     //
 		// K_ = cv::getOptimalNewCameraMatrix(originalK_, distCoeffs, cv::Size(in_width, in_height), (outputCalibration == -2) ? 1 : 0, cv::Size(out_width, out_height), nullptr, false);
     //

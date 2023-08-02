@@ -180,7 +180,7 @@ public:
 
 class OpenCVUndistorterFactory : public UndistorterFactory {
 public:
-  static OpenCVUndistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
+  static Undistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
 };
 
 #ifdef HAS_YAML_CPP
