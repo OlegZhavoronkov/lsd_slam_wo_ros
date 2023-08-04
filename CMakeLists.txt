@@ -75,8 +75,15 @@ elseif( ${ARCHITECTURE} STREQUAL "x86_64" )
     ## Enable SSE on release only...
     #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
     set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native" )
-  else()
-    message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
+  elseif(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
+        # -DENABLE_SSE enables Jakob's original SSE optimizations in his code,
+          # it has nothing to do with compiler behavior
+        message( STATUS " --> Using SSE" )
+        ## Enable SSE on release only...
+        #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
+        set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -msse4.1 -msse3 -msse2 -msse -march=native" )
+   else() 
+        message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
   endif()
 endif()
 if( CUDA_VERSION )
