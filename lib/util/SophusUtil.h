@@ -22,7 +22,7 @@
 
 #include "sophus/sim3.hpp"
 #include "sophus/se3.hpp"
-
+#include <iosfwd>
 
 
 // Typedef and conversion macro for Eigen matrices to currently used type.
@@ -59,12 +59,34 @@ inline Sim3 sim3FromSE3(const SE3& se3, sophusType scale)
 
 inline SE3 se3FromSim3(const Sim3& sim3)
 {
-	return SE3(sim3.quaternion(), sim3.translation());
+	return SE3(sim3.quaternion().normalized(), sim3.translation());
 }
 
+template<typename T> inline std::enable_if_t<   
+                                std::is_void_v<
+                                                std::void_t<typename T::Scalar>  >,
+                                                typename T::Scalar
+                                            > S_im_o_3DiffNorm(const T& l,const T& r)
+{
+    using sc=T::Scalar;
+    Eigen::Matrix<sc,3,1> identity;
+    Eigen::Matrix<sc,3,1> p1,p2;
+    //SE3 se3;
+    
+    identity.fill((sc)1.0);
+    p1=l*identity;
+    p2=r*identity;
+    return (p1-p2).norm();
+}
 
 }
 
+std::ostream& operator<<(std::ostream& s,const Sim3& sim3);
+std::ostream& operator<<(std::ostream& s,const SO3& so3);
+std::ostream& operator<<(std::ostream& s,const SE3& se3);
+std::ostream& operator<<(std::ostream& s,const Sophus::SE3f& se3);
+Eigen::Vector3d QuatToEulers(const Eigen::Quaternion<double> & quat);
+Eigen::Vector3f QuatToEulers(const Eigen::Quaternion<float> & quat);
 // Extern templates (see SophusUtil.cpp)
 extern template class Eigen::Quaternion<float>;
 extern template class Eigen::Quaternion<double>;
