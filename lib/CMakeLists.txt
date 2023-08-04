@@ -54,7 +54,7 @@ target_link_libraries(lsdslam
     ${OpenCV_LIBS}
     ${CSPARSE_LIBRARY} 
     #)
-
+    fmt
   #fips_deps( 
     g3logger
     activeobject 
