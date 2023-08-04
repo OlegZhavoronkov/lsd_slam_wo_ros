@@ -321,12 +321,24 @@ public:
     if( _wrapped ) {
       _wrapped->undistort( image, intermediate );
     }
-
-    cv::Mat roi( intermediate, cv::Rect( _offsetX, _offsetY, _width, _height ) );
-    LOG(WARNING) << "Cropping to " << _width << " x " << _height;
+    if(image.cols> _width && image.rows>_height)
+    {
+        cv::Mat roi( intermediate, cv::Rect( _offsetX, _offsetY, _width, _height ) );
+        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
     // cv::imshow("roi",roi);
     // cv::waitKey(10);
-    result.assign( roi );
+        result.assign( roi );
+    }
+    else
+    {
+        cv::Mat copy;
+        cv::resize( intermediate,copy ,cv::Size(_width,_height),0.0,0.0,cv::INTER_LINEAR);
+        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
+    // cv::imshow("roi",roi);
+    // cv::waitKey(10);
+        result.assign( copy );
+    }
+    
   }
 
   /**
