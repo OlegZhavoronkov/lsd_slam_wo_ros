@@ -105,4 +105,8 @@ For now the Docker process is focused on building and testing, not actually runn
 
 LSD-SLAM is licensed under the GNU General Public License Version 3 (GPLv3), see http://www.gnu.org/licenses/gpl.html.
 
-# TODOS
+For commercial purposes, we also offer a professional version under different licencing terms.
+
+
+
+
