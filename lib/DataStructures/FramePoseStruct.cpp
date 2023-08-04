@@ -32,14 +32,33 @@ int FramePoseStruct::cacheValidCounter = 0;
 
 FramePoseStruct::FramePoseStruct( Frame &f )
 	:frame( f ),
-	 graphVertex( nullptr )
-{
-	cacheValidFor = -1;
-	isOptimized = false;
-	_thisToParent_raw = camToWorld = camToWorld_new = Sim3();
-	isRegisteredToGraph = false;
-	hasUnmergedPose = false;
-	isInGraph = false;
+	 graphVertex( nullptr ),
+     cacheValidFor(-1),
+     isOptimized(false),
+     _thisToParent_raw{},
+     camToWorld{},
+     camToWorld_new{},
+     isRegisteredToGraph(false),
+     hasUnmergedPose(false),
+     isInGraph(false)
+{/*
+    CHECK( abs(camToWorld.quaternion().squaredNorm()+
+            camToWorld_new.quaternion().squaredNorm()+
+            _thisToParent_raw.quaternion().squaredNorm()-3.0)<1e-8);
+    if( abs(camToWorld.quaternion().squaredNorm()+
+            camToWorld_new.quaternion().squaredNorm()+
+            _thisToParent_raw.quaternion().squaredNorm()-3.0)>1e-8)
+    {
+        throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string(    camToWorld.quaternion().squaredNorm()+
+                                                                                            camToWorld_new.quaternion().squaredNorm()+
+                                                                                            _thisToParent_raw.quaternion().squaredNorm() )));
+    }*/
+	//cacheValidFor = -1;
+	//isOptimized = false;
+	//_thisToParent_raw = camToWorld = camToWorld_new = Sim3();
+	//isRegisteredToGraph = false;
+	//hasUnmergedPose = false;
+	//isInGraph = false;
 
 	// privateFramePoseStructAllocCount++;
 	// LOG_IF(INFO, Conf().print.memoryDebugInfo) << "ALLOCATED pose for frame " << frame.id() << ", " << privateFramePoseStructAllocCount << " poses still allocated";
@@ -53,6 +72,13 @@ FramePoseStruct::~FramePoseStruct()
 
 Sim3 FramePoseStruct::setThisToParent( const Sim3 &val )
 {
+    //CHECK(abs(val.quaternion().squaredNorm()-1.0)<1e-8);
+    /*if(abs(val.quaternion().squaredNorm()-1.0)>1e-8)
+    {
+        throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string( val.quaternion().squaredNorm() )));
+    }*/
+    auto tr=val.translation().cast<float>();
+    CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
 	_thisToParent_raw = val;
 	invalidateCache();
 	return _thisToParent_raw;
@@ -60,10 +86,18 @@ Sim3 FramePoseStruct::setThisToParent( const Sim3 &val )
 
 FramePoseStruct &FramePoseStruct::operator=( const FramePoseStruct &other )
 {
+//    CHECK(abs(other._thisToParent_raw.quaternion().squaredNorm()-1.0)<1e-8);
+    /*if(abs(other._thisToParent_raw.quaternion().squaredNorm()-1.0)>1e-8)
+    {
+        throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string( other._thisToParent_raw.quaternion().squaredNorm() )));
+    }*/
+    auto tr=other._thisToParent_raw.translation().cast<float>();
+    CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
 	_thisToParent_raw = other._thisToParent_raw;
 	invalidateCache();
 	return *this;
 }
+
 
 
 void FramePoseStruct::setPoseGraphOptResult(Sim3 camToWorld)
@@ -91,6 +125,17 @@ void FramePoseStruct::invalidateCache()
 	cacheValidFor = -1;
 }
 
+Sim3& FramePoseStruct::setThisToParent_raw(const Sim3& newParentRaw)
+{
+    /*if(abs(newParentRaw.quaternion().squaredNorm()-1.0)>1e-8)
+    {
+        throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string(newParentRaw.quaternion().squaredNorm())));
+    }*/
+    auto tr=newParentRaw.translation();
+    CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
+    return _thisToParent_raw=newParentRaw;
+}
+
 Sim3 FramePoseStruct::getCamToWorld(int recursionDepth)
 {
 	// prevent stack overflow
@@ -107,8 +152,16 @@ Sim3 FramePoseStruct::getCamToWorld(int recursionDepth)
 	if( frame.hasTrackingParent() ) {
 			LOG(DEBUG) << "Frame " << frame.id() << ": Calculating pose from tracked parent...";
 			// abs. pose is computed from the parent's abs. pose, and cached.
+            //TODO recursion should be eliminated
 			cacheValidFor = cacheValidCounter;
-			return camToWorld = frame.trackingParent()->frame()->pose->getCamToWorld(recursionDepth+1) * _thisToParent_raw;
+            auto previousInGraphCamToWorld=frame.trackingParent()->frame()->pose->getCamToWorld(recursionDepth+1);
+            camToWorld = previousInGraphCamToWorld * _thisToParent_raw;
+            LOGF(WARNING,"frame id %d previousInGraphCamToWorld quat norm %f this camToWorld quat norm %f _thisToParent_raw quat norm %f",
+                        this->frame.id(),
+                        sqrt(previousInGraphCamToWorld.quaternion().squaredNorm()),
+                        sqrt(camToWorld.quaternion().squaredNorm()),
+                        sqrt(_thisToParent_raw.quaternion().squaredNorm()));
+			return camToWorld;
 	} else {
 		LOG(DEBUG) << "Frame " << frame.id() << ": No parent, returning identity pose";
 

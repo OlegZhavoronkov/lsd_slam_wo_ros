@@ -23,6 +23,14 @@
 #include "opencv2/opencv.hpp"
 #include "DataStructures/Frame.h"
 
+#if defined(__linux__) || defined(__unix__) || defined(__ANDROID__) || defined(_POSIX_VERSION)
+#include <signal.h>
+#define USE_SIGNAL
+#elif defined(WIN32) || defined(__WIN32__) || defined(__NT__)
+#include 
+#define USE_WIN
+#endif
+
 namespace lsd_slam
 {
 
@@ -181,4 +189,17 @@ template<> void DebugImage<float>(const std::string& debugMsg,const float* data,
     }
 }
 
+}
+
+void debugBreakOnConditon(const std::string& msg,bool condition)
+{
+    if(!condition)
+    {
+        LOGF(WARNING,"condition \"%s\" doesn't met,breaking",msg.c_str());
+#ifdef USE_SIGNAL
+        raise(SIGTRAP);
+#elif USE_WIN
+        __debugbreak();
+#endif
+    }
 }

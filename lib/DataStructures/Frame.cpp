@@ -17,7 +17,7 @@
 * You should have received a copy of the GNU General Public License
 * along with LSD-SLAM. If not, see <http://www.gnu.org/licenses/>.
 */
-
+//#define USE_CONDITIONAL_DEBUG_BREAK
 #include "DataStructures/Frame.h"
 #include "DataStructures/FrameMemory.h"
 #include "DataStructures/KeyFrame.h"
@@ -30,6 +30,7 @@
 
 #include <g3log/g3log.hpp>
 
+#include "util/globalFuncs.h"
 
 namespace lsd_slam
 {
@@ -257,6 +258,7 @@ void Frame::prepareForStereoWith(const Frame::SharedPtr &other, Sim3 thisToOther
 
 
 	_thisToOther_t = thisToOther.translation().cast<float>();
+    CONDITIONAL_BREAK(!((abs(_thisToOther_t[2]) > 2*abs(_thisToOther_t[1])) && (abs(_thisToOther_t[2]) > 2*abs(_thisToOther_t[0]))));
 	_K_thisToOther_t = camera(level).K * _thisToOther_t;
 	_thisToOther_R = thisToOther.rotationMatrix().cast<float>() * thisToOther.scale();
 	_otherToThis_R_row0 = _thisToOther_R.col(0);

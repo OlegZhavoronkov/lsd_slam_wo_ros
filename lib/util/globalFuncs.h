@@ -142,3 +142,12 @@ template<typename dataType> void DebugImage(const std::string& debugMsg,const da
 #define QUICK_DEBUG_DATA(p,h,w) DebugImage((std::string(__PRETTY_FUNCTION__)+std::string(" : ")+std::string(__FILE__)+std::string(" : ")+std::to_string(__LINE__)),p,h,w)
 
 }
+
+
+void debugBreakOnConditon(const std::string& msg,bool condition);
+
+#ifdef USE_CONDITIONAL_DEBUG_BREAK
+#define CONDITIONAL_BREAK(x) debugBreakOnConditon(std::string(#x),x)
+#else
+#define CONDITIONAL_BREAK(x) 
+#endif
