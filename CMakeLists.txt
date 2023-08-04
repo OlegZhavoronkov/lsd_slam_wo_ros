@@ -67,12 +67,14 @@ if( ${ARCHITECTURE} STREQUAL "aarch64" )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a") # -DENABLE_NEON" )
 
 elseif( ${ARCHITECTURE} STREQUAL "x86_64" )
-  if( ${CMAKE_BUILD_TYPE} MATCHES RELEASE )
+    message(STATUS "\${CMAKE_BUILD_TYPE} \"${CMAKE_BUILD_TYPE}\"")
+  if( ${CMAKE_BUILD_TYPE} MATCHES Release )
     # -DENABLE_SSE enables Jakob's original SSE optimizations in his code,
   	# it has nothing to do with compiler behavior
     message( STATUS " --> Using SSE" )
     ## Enable SSE on release only...
-    set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
+    #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
+    set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native" )
   else()
     message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
   endif()
