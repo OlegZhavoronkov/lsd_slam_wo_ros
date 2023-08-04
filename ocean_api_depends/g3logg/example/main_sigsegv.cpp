@@ -14,6 +14,9 @@
 #include <thread>
 #include <iostream>
 #include <memory>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
 namespace
 {
 #if (defined(WIN32) || defined(_WIN32) || defined(__WIN32__))
@@ -56,6 +59,7 @@ namespace example_fatal
 
 } // example fatal
 
+#pragma GCC diagnostic pop
 
 
 int main(int argc, char **argv)

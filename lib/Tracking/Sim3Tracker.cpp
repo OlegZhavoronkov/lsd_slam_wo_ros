@@ -700,8 +700,6 @@ Sim3ResidualStruct Sim3Tracker::calcSim3WeightsAndResidual(
 	float tz = referenceToFrame.translation()[2];
 
 	Sim3ResidualStruct sumRes;
-	memset(&sumRes, 0, sizeof(Sim3ResidualStruct));
-
 
 	float sum_rd=0, sum_rp=0, sum_wrd=0, sum_wrp=0, sum_wp=0, sum_wd=0, sum_num_d=0, sum_num_p=0;
 
@@ -1062,11 +1060,11 @@ void Sim3Tracker::calcResidualAndBuffers_debugFinish(int w)
 //=== Sim3TrackerDebugImages ==
 
 Sim3TrackerDebugImages::Sim3TrackerDebugImages( const ImageSize &imgSize )
-	: debugImageWeights(imgSize.cvSize(),CV_8UC3),
-		debugImageResiduals(imgSize.cvSize(),CV_8UC3),
+	: debugImageResiduals(imgSize.cvSize(),CV_8UC3),
+		debugImageWeights(imgSize.cvSize(),CV_8UC3),
 		debugImageSecondFrame(imgSize.cvSize(),CV_8UC3),
-		debugImageOldImageWarped(imgSize.cvSize(),CV_8UC3),
 		debugImageOldImageSource(imgSize.cvSize(),CV_8UC3),
+		debugImageOldImageWarped(imgSize.cvSize(),CV_8UC3),
 		debugImageExternalWeights(imgSize.cvSize(),CV_8UC3),
 		debugImageDepthResiduals(imgSize.cvSize(),CV_8UC3),
 		debugImageScaleEstimation(imgSize.cvSize(),CV_8UC3),
