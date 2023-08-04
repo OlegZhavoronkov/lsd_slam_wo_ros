@@ -62,10 +62,23 @@ int main( int argc, char** argv )
     ("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(ExistingFile), "Calibration file")
     ("verbose,v", bpo::value<decltype(verbose)>(&verbose)->implicit_value(true)->default_value(false), "Print DEBUG output to console")
     ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories");
-
-  bpo::variables_map vm;
-  bpo::store(bpo::parse_command_line(argc, argv, opt_desc), vm);
-  bpo::notify(vm);
+    try
+    {
+        bpo::variables_map vm;
+        bpo::store(bpo::parse_command_line(argc, argv, opt_desc), vm);
+        bpo::notify(vm);
+        if(inFiles.empty() || inFiles[0].empty() || calibFile.empty())
+        {
+            throw std::runtime_error("no valid arguments");
+        }
+    }
+    catch(...)
+    {
+        std::stringstream str;
+        opt_desc.print(str);
+        printf("command line not valid,usage:\n%s\n",str.str().c_str());
+    }
+  
   
   
   auto pUndisorter = libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
