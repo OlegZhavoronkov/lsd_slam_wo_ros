@@ -16,28 +16,31 @@ namespace fs = std::filesystem;
 
 #include <libg3logger/g3logger.h>
 
-#include <CLI/CLI.hpp>
+#include <boost/program_options.hpp>
 
 #include "libvideoio/Undistorter.h"
 
 using namespace libvideoio;
+namespace bpo = boost::program_options;
 
 int main( int argc, char** argv )
 {
 	libg3logger::G3Logger logWorker( argv[0] );
   logWorker.logBanner();
 
-	CLI::App app{""};
-
 	fs::path calibFile;
-  app.add_option("-c,--calib", calibFile, "Calibration file" )->required()->check(CLI::ExistingFile);
-
 	fs::path inputFile, outputFile;
-	app.add_option("infile", inputFile, "")->required()->check(CLI::ExistingFile);
 
-	app.add_option("outfile", outputFile, "")->required();
+	bpo::options_description opt_desc;
+	opt_desc.add_options()
+    	("help,h", "Help")
+    	("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(lsd_slam::ExistingFile), "Calibration file")
+        ("infile,i", bpo::value<decltype(inputFile)>(&inputFile)->required()->notifier(lsd_slam::ExistingFile), "Input file");
+		("outfile,o", bpo::value<decltype(outputFile)>(&outputFile)->required(), "Output file");
 
-	CLI11_PARSE(app, argc, argv);
+	bpo::variables_map vm;
+	bpo::store(bpo::parse_command_line(argc, argv, opt_desc), vm);
+	bpo::notify(vm);
 
 	// Make undistorter
 	std::shared_ptr<Undistorter> undistorter( PhotoscanXMLUndistorterFactory::loadFromFile( calibFile.string() ));

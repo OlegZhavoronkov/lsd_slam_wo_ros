@@ -45,7 +45,7 @@ typedef Eigen::Matrix<float, 4, 4> Matrix4x4;
 class LGS4
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Matrix4x4 A;
   Vector4 b;
@@ -184,7 +184,7 @@ private:
 class LGS6
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Matrix6x6 A;
   Vector6 b;
@@ -411,7 +411,7 @@ private:
 class LGS7
 {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   Matrix7x7 A;
   Vector7 b;

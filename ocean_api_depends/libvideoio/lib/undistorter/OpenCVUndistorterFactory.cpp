@@ -35,7 +35,7 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 	std::getline(infile,l4);
 
 	float inputCalibration[10];
-	float outputCalibration;
+	[[maybe_unused]] /*using reult of it is commented out for now*/ float outputCalibration;
 	int out_width, out_height;
 	int in_width, in_height;
 

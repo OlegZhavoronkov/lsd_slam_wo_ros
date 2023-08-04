@@ -31,46 +31,58 @@
 #include "SlamSystem.h"
 
 #include "util/settings.h"
+#include <util/validators.hpp>
 
 #include "util/globalFuncs.h"
 #include "util/ThreadMutexObject.h"
 #include "util/Configuration.h"
-#include <CLI/Error.hpp>
-#include "CLI/App.hpp"
 
 #include "App/InputThread.h"
-#include "CLI/CLI.hpp"
+#include <boost/program_options.hpp>
 #include <libvideoio/Undistorter.h>
 #include <filesystem>
 using namespace lsd_slam;
 namespace fs=std::filesystem;
+namespace bpo = boost::program_options;
 
 int main( int argc, char** argv )
 {
   libg3logger::G3Logger logWorker( argv[0] );
   logWorker.logBanner();
 
-  CLI::App app;
+  bpo::options_description opt_desc{"Options"};
 
   // Add new options/flags here
   std::string calibFile;
-  app.add_option("-c,--calib", calibFile, "Calibration file" )->required()->check(CLI::ExistingFile);
-
   bool verbose;
-  app.add_flag("-v,--verbose", verbose, "Print DEBUG output to console");
-
   std::vector<std::string> inFiles;
-  app.add_option("--input,input", inFiles, "Input files or directories");
 
-  // Defines the configuration file;  see
-  //    https://cliutils.gitlab.io/CLI11Tutorial/chapters/config.html
-  app.set_config("--config");
-
-  CLI11_PARSE(app, argc, argv);
+  opt_desc.add_options()
+    ("help,h", "Help")
+    ("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(ExistingFile), "Calibration file")
+    ("verbose,v", bpo::value<decltype(verbose)>(&verbose)->implicit_value(true)->default_value(false), "Print DEBUG output to console")
+    ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories");
+    try
+    {
+        bpo::variables_map vm;
+        bpo::store(bpo::parse_command_line(argc, argv, opt_desc), vm);
+        bpo::notify(vm);
+        if(inFiles.empty() || inFiles[0].empty() || calibFile.empty())
+        {
+            throw std::runtime_error("no valid arguments");
+        }
+    }
+    catch(...)
+    {
+        std::stringstream str;
+        opt_desc.print(str);
+        printf("command line not valid,usage:\n%s\n",str.str().c_str());
+    }
   
   
-    auto pUndisorter=libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
-    std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
+  
+  auto pUndisorter = libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
+  std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
   // Load the configuration object
   Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();

@@ -20,7 +20,7 @@ project(libactiveobject LANGUAGES C CXX)
 #
 # find_package(Threads)
 
-find_package(Boost COMPONENTS thread filesystem system)
+# find_package(Boost COMPONENTS system)
 
 ## C++ flags applied to all builds
 #set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

@@ -44,11 +44,11 @@ struct SE3TrackerDebugImages {
 	SE3TrackerDebugImages( const ImageSize &imgSize );
 
 	// debug images
-	cv::Mat debugImageResiduals;
 	cv::Mat debugImageWeights;
+	cv::Mat debugImageResiduals;
 	cv::Mat debugImageSecondFrame;
-	cv::Mat debugImageOldImageSource;
 	cv::Mat debugImageOldImageWarped;
+	cv::Mat debugImageOldImageSource;
 
 };
 
