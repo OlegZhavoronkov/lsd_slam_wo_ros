@@ -56,7 +56,7 @@ bool plotSim3TrackingIterationInfo = false;
 bool plotStereoImages = false;
 bool plotTracking = false;
 
-float KFUsageWeight = 4;
+float KFUsageWeight = 2;
 float KFDistWeight = 3;
 
 float minUseGrad = 5;

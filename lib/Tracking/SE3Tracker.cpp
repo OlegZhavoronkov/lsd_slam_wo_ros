@@ -29,7 +29,8 @@ using std::stringstream;
 #include "util/globalFuncs.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "Tracking/LGSX.h"
-
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 namespace lsd_slam {
 
 
@@ -148,7 +149,7 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 
 	affineEstimation_a = 1; affineEstimation_b = 0;
 
-	LGS6 ls;
+//	LGS6 ls;
 	_diverged = false;
 	_trackingWasGood = true;
 
@@ -173,25 +174,27 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	float lastErr = callOptimized(calcWeightsAndResidual,(referenceToFrame));
 
 	float LM_lambda = settings.lambdaInitialTestTrack;
-
-	for(int iteration=0; iteration < settings.maxItsTestTrack; iteration++)
+    int iteration=0;
+	for(; iteration < settings.maxItsTestTrack; iteration++)
 	{
+        LGS6D ls;
 		callOptimized(calculateWarpUpdate,(ls));
 
 
 		int incTry=0;
-		while(true)
+		while(incTry<4)
 		{
 			// solve LS system with current lambda
-			Vector6 b = -ls.b;
-			Matrix6x6 A = ls.A;
+			Vector6 b = -ls.b.cast<float>().eval();
+			Matrix6x6 A = ls.A.cast<float>().eval();
 			for(int i=0;i<6;i++) A(i,i) *= 1+LM_lambda;
 			Vector6 inc = A.ldlt().solve(b);
 			incTry++;
 
 			// apply increment. pretty sure this way round is correct, but hard to test.
 			Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * referenceToFrame;
-
+            auto diff=S_im_o_3DiffNorm(new_referenceToFrame,referenceToFrame);
+            fmt::v7::print("diff {0} incTry {1} iteration {2} LM_lambda {3} inc {4}",diff,incTry,iteration,LM_lambda,inc);
 			// re-evaluate residual
 			callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, new_referenceToFrame, QUICK_KF_CHECK_LVL, false));
 			if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
@@ -248,7 +251,7 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 			}
 		}
 	}
-
+    LOGF(WARNING,"%s iteration %d final lambda %f",__PRETTY_FUNCTION__,iteration,LM_lambda);
 	lastResidual = lastErr;
 
 	_pctGoodPerTotal = _lastGoodCount / (frame->width(QUICK_KF_CHECK_LVL)*frame->height(QUICK_KF_CHECK_LVL));
@@ -295,7 +298,7 @@ SE3 SE3Tracker::trackFrame(
 
 	// ============ track frame ============
 	Sophus::SE3f referenceToFrame = frameToReference_initialEstimate.inverse().cast<float>();
-	LGS6 ls;
+	//LGS6 ls;
 
 	int numCalcResidualCalls[PYRAMID_LEVELS];
 	int numCalcWarpUpdateCalls[PYRAMID_LEVELS];
@@ -342,10 +345,10 @@ SE3 SE3Tracker::trackFrame(
 		numCalcResidualCalls[lvl]++;
 
 		float LM_lambda = settings.lambdaInitial[lvl];
-
-		for(int iteration=0; iteration < settings.maxItsPerLvl[lvl]; iteration++)
+        float optimiz_diff=std::numeric_limits<float>::max();
+		for(int iteration=0; iteration < settings.maxItsPerLvl[lvl] && (optimiz_diff>1e-5) ; iteration++)
 		{
-
+            LGS6D ls;
 			callOptimized(calculateWarpUpdate,(ls));
 
 			numCalcWarpUpdateCalls[lvl]++;
@@ -353,18 +356,30 @@ SE3 SE3Tracker::trackFrame(
 			iterationNumber = iteration;
 
 			int incTry=0;
-			while(true)
+			while(optimiz_diff>1e-6)
 			{
 				// solve LS system with current lambda
-				Vector6 b = -ls.b;
-				Matrix6x6 A = ls.A;
-				for(int i=0;i<6;i++) A(i,i) *= 1+LM_lambda;
-				Vector6 inc = A.ldlt().solve(b);
+				/*Vector6*/ auto b = -ls.b.cast<double>().eval();
+				/*Matrix6x6*/ auto A = ls.A.cast<double>().eval();
+				for(int i=0; i< 6;i++) A(i,i) *= 1+LM_lambda;
+				/*Vector6*/ auto incd = (A.ldlt().solve(b)).eval();
+                auto check_vec=(A*incd-b).eval();
+                auto inc=incd.cast<float>().eval();
 				incTry++;
 
 				// apply increment. pretty sure this way round is correct, but hard to test.
 				//Sophus::SE3f exp_increment = Sophus::SE3f::exp((inc));
 				Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * referenceToFrame;
+                auto diff=S_im_o_3DiffNorm(new_referenceToFrame,referenceToFrame);
+                fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {7} inc \n{5}\nreference to frame \n {6} \ncheck_vec {7}\n",diff,incTry,iteration,lvl,lastErr,inc,
+                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame),LM_lambda,check_vec);
+                /*{
+                    auto tr=new_referenceToFrame.translation();
+                    if((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0])))
+                    {
+                        raise(SIGTRAP);
+                    }
+                }*/
 				//Sophus::SE3f new_referenceToFrame = referenceToFrame * Sophus::SE3f::exp((inc));
 
 				// re-evaluate residual
@@ -393,8 +408,9 @@ SE3 SE3Tracker::trackFrame(
 
 
 				// accept inc?
-				if(error < lastErr)
+				if(error < lastErr && diff < optimiz_diff)
 				{
+                    optimiz_diff=diff;
 					// accept inc
 					referenceToFrame = new_referenceToFrame;
 					if(useAffineLightningEstimation)
@@ -418,9 +434,9 @@ SE3 SE3Tracker::trackFrame(
 					last_residual = lastErr = error;
 
 
-					if(LM_lambda <= 0.2)
-						LM_lambda = 0;
-					else
+					//if(LM_lambda <= 0.2)
+					//	LM_lambda = 0;
+					//else
 						LM_lambda *= settings.lambdaSuccessFac;
 
 					break;
@@ -439,11 +455,17 @@ SE3 SE3Tracker::trackFrame(
 						iteration = settings.maxItsPerLvl[lvl];
 						break;
 					}
-
-					if(LM_lambda == 0)
-						LM_lambda = 0.2;
+                    
+                    if(LM_lambda == 0)
+                    {
+					    LM_lambda = 0.01;
+                    }
 					else
-						LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
+                    {
+					    LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
+                    }
+                    
+					
 				}
 			}
 		}
@@ -487,8 +509,8 @@ SE3 SE3Tracker::trackFrame(
     }
 
 	frame->initialTrackedResidual = lastResidual / pointUsage;
-	frame->pose->setThisToParent_raw( sim3FromSE3(toSophus(referenceToFrame.inverse()),1));
-    LOGF(WARNING,"pose setting for frame %d quat norm is %f",frame->id(),sqrt(frame->pose->getThisToParent_raw().quaternion().squaredNorm()));
+	frame->pose->setThisToParent_raw( sim3FromSE3(toSophus(referenceToFrame.inverse()),1) );
+    //LOGF(WARNING,"pose setting for frame %d quat norm is %f ",frame->id(),sqrt(frame->pose->_thisToParent_raw.quaternion().squaredNorm()));
 	frame->setTrackingParent( keyframe );
 	return toSophus(referenceToFrame.inverse());
 }
@@ -675,9 +697,9 @@ float SE3Tracker::calcResidualAndBuffers(
 		sy += c2*weight;
 		sw += weight;
 
-		bool isGood = (residual*residual) / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1;
+		bool isGood = (residual*residual) / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1.5;
 
-		if(isGoodOutBuffer != 0)
+		if(isGoodOutBuffer != nullptr)
         {
             isGoodOutBuffer[*idxBuf] = isGood;
         }
@@ -754,7 +776,7 @@ float SE3Tracker::calcResidualAndBuffers(
 
 
 void SE3Tracker::calculateWarpUpdate(
-		LGS6 &ls)
+		LGS6D &ls)
 {
 //	weightEstimator.reset();
 //	weightEstimator.estimateDistribution(buf_warped_residual, buf_warped_size);
@@ -786,7 +808,7 @@ void SE3Tracker::calculateWarpUpdate(
 			  (px * z) * gy;
 
 		// step 6: integrate into A and b:
-		ls.update(v, r, *(buf_weight_p+i));
+		ls.update(v.cast<double>(), r, *(buf_weight_p+i));
 	}
 
 	// solve ls

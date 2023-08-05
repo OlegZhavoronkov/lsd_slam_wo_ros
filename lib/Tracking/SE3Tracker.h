@@ -122,7 +122,7 @@ private:
 	SE3TrackerDebugImages _debugImages;
 
 
-	void calculateWarpUpdate(LGS6 &ls);
+	void calculateWarpUpdate(LGS6D &ls);
 
 	float calcWeightsAndResidual(	const Sophus::SE3f& referenceToFrame);
 

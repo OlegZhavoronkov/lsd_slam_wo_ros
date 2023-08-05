@@ -54,7 +54,10 @@
 #endif
 
 #include "opencv2/opencv.hpp"
-
+#include "util/SophusUtil.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/printf.h>
 using namespace lsd_slam;
 
 using active_object::Active;
@@ -110,9 +113,17 @@ void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set 
 
 	// DO TRACKING & Show tracking result.
 	LOG_IF(DEBUG, Conf().print.threadingInfo) << "TRACKING frame " << set->refFrame()->id() << " onto ref. " << _currentKeyFrame->id();
-
-	SE3 frameToReference_initialEstimate =se3FromSim3(  _currentKeyFrame->pose()->getCamToWorld().inverse() * _latestGoodPoseCamToWorld);
     
+//    LOGF(WARNING,"tracking frame id %d _latestGoodPoseCamToWorld %s _currentKeyFrame->pose()->getCamToWorld() %s",
+//        set->refFrame()->id(),
+//        fmt::v7::sprintf("%s",_latestGoodPoseCamToWorld).c_str(),
+//        fmt::v7::sprintf("%s",_currentKeyFrame->pose()->getCamToWorld()).c_str());
+	SE3 frameToReference_initialEstimate =se3FromSim3(  _currentKeyFrame->pose()->getCamToWorld().inverse() * _latestGoodPoseCamToWorld);
+    LOG(WARNING)<< "tracking frame id " << set->refFrame()->id() 
+                << "\n _latestGoodPoseCamToWorld " << _latestGoodPoseCamToWorld 
+                << "\n_currentKeyFrame->pose()->getCamToWorld() "<< _currentKeyFrame->pose()->getCamToWorld()
+                << "\n_currentKeyFrame->pose()->getCamToWorld().inverse() " << _currentKeyFrame->pose()->getCamToWorld().inverse()
+                << "\nframeToReference_initialEstimate " << frameToReference_initialEstimate;
 	Timer timer;
 
 	LOGF(DEBUG, "Start tracking..._currentKeyFrame %d frame to track %d frameToReference_initialEstimate trans [%f %f %f] %f",
@@ -126,6 +137,9 @@ void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set 
 	SE3 newRefToFrame_poseUpdate = _tracker->trackFrame( _currentKeyFrame,
 	                                                    set->refFrame(),
 	                                                    frameToReference_initialEstimate);
+    LOG(WARNING)<< " after tracking frame id " << set->refFrame()->id() 
+                << "\nnewRefToFrame_poseUpdate " << newRefToFrame_poseUpdate;
+                
     LOGF(DEBUG, "Done tracking,took %.1f ms to track frame %d  to  %d newRefToFrame_poseUpdate trans [%f %f %f] norm %f",
             timer.stop()*1000,
             set->refFrame()->id(),
@@ -164,6 +178,10 @@ void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set 
 
 	LOG_IF( DEBUG,  Conf().print.threadingInfo ) << "Publishing tracked frame";
 	_system.publishTrackedFrame(set->refFrame());
+    LOGF(WARNING,"tracking frame %d  with keyFrame %d quat norm %f",
+            set->id(),
+            (_currentKeyFrame!=nullptr ? _currentKeyFrame->id():-1),
+            sqrt(set->refFrame()->getCamToWorld().quaternion().squaredNorm()));
 	_system.publishPose(set->refFrame()->getCamToWorld().cast<float>());
 
 	// Keyframe selection
@@ -189,7 +207,7 @@ void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set 
 
 	  lastTrackingClosenessScore = _system.trackableKeyFrameSearch()->getRefFrameScore(dist.dot(dist), _tracker->pointUsage);
 
-	  if (lastTrackingClosenessScore > minVal)
+	  if (lastTrackingClosenessScore > minVal || _currentKeyFrame->numMappedOnThisTotal > (MIN_NUM_MAPPED+1))
 	  {
 	    LOG(INFO) << "Telling mapping thread to make " << set->refFrame()->id() << " the new keyframe.";
 

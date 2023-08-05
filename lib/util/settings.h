@@ -103,8 +103,8 @@ namespace lsd_slam
 #define RELOCALIZE_THREADS 6
 #endif
 
-#define SE3TRACKING_MIN_LEVEL 1
-#define SE3TRACKING_MAX_LEVEL 5
+#define SE3TRACKING_MIN_LEVEL 0
+#define SE3TRACKING_MAX_LEVEL 4
 
 #define SIM3TRACKING_MIN_LEVEL 1
 //TODO: must be introduced in settings

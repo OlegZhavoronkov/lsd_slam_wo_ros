@@ -362,7 +362,7 @@ void DepthMap::propagateFrom( const DepthMap::SharedPtr &other, float &rescaleFa
 
 	{
 		Timer time;
-		propagateDepthFrom(other, rescaleFactor );
+		propagateDepthFrom(other/*, rescaleFactor*/ );
 		_perf.propagate.update( time );
 	}
 
@@ -630,7 +630,7 @@ void DepthMap::observeDepthRow(const SetHypothesisHandlingFunctor pSetHypotesisF
         continue;
 
       LineStereoResult success;
-      pDebugPlot=( !debugLine ? nullptr : ( (( (rand() % 3) ==0) && (x %5)==0 && (y%5)==0 ) ? (([&]()->auto*{plot.IsValid = 0; return &plot;})()) : nullptr ) );
+      pDebugPlot=( !debugLine ? nullptr : ( (/*( (rand() % 3) ==0) && */(x %5)==0 && (y%5)==0 ) ? (([&]()->auto*{plot.IsValid = 0; return &plot;})()) : nullptr ) );
       if (!hasHypothesis)
       {
         success = observeDepthCreate(x, y, idx, stats, pDebugPlot );
@@ -701,6 +701,18 @@ LineStereoResult DepthMap::observeDepthCreate(const int &x, const int &y, const 
 			_observeFrame.get(), _observeFrame->image(0),
 			result_idepth, result_var, result_eplLength, stats,res,pPlotDebugLine);
     (void)error;
+    if (pPlotDebugLine)
+    {
+            float rescaleFactor = 4;
+        	float firstX = new_u - 2*epx*rescaleFactor;
+	        float firstY = new_v - 2*epy*rescaleFactor;
+	        float lastX = new_u + 2*epx*rescaleFactor;
+	        float lastY = new_v + 2*epy*rescaleFactor;
+            pPlotDebugLine->nearestEnd.x=firstX;
+            pPlotDebugLine->nearestEnd.y=firstY;
+            pPlotDebugLine->farEnd.x =lastX;
+            pPlotDebugLine->farEnd.y =lastY;
+    }
 	
     if(res == LineStereoResult::NOT_FOUND_ERROR_TOO_HIGH || res == LineStereoResult::NOT_GOOD_FOR_STEREO)
 	{
@@ -958,7 +970,7 @@ LineStereoResult DepthMap::makeAndCheckEPL(const int x, const int y, const Frame
   }
 
   // ===== check epl-grad angle ======
-  if (eplGradSquared / (gx * gx + gy * gy) < MIN_EPL_ANGLE_SQUARED) {
+  if ((eplGradSquared / (gx * gx + gy * gy)) < MIN_EPL_ANGLE_SQUARED) {
     stats->num_observe_skipped_small_epl_angle++;
     return LineStereoResult::CALCULATION_EPL_FAILED_EPL_ANGLE_TOO_SMALL;
   }
@@ -973,7 +985,7 @@ LineStereoResult DepthMap::makeAndCheckEPL(const int x, const int y, const Frame
 
 
 
-void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &rescaleFactor )
+void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other/*, float&rescaleFactor*/ )
 {
 	runningStats.num_prop_removed_out_of_bounds = 0;
 	runningStats.num_prop_removed_colorDiff = 0;
@@ -999,7 +1011,7 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 	}
 
 	// re-usable values.
-	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->getThisToParent_raw()).inverse();
+	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->getThisToParent_raw() ).inverse();
 	const Eigen::Vector3f trafoInv_t = oldToNew_SE3.translation().cast<float>();
 	const Eigen::Matrix3f trafoInv_R = oldToNew_SE3.rotationMatrix().matrix().cast<float>();
 

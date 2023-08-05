@@ -22,8 +22,16 @@ namespace lsd_slam {
     float rescaleFactor = 1.0;
     kf->depthMap()->propagateFrom( other->depthMap(), rescaleFactor );
     kf->syncDepthMapToFrame();
-
-    kf->frame()->pose->setThisToParent( sim3FromSE3( se3FromSim3( kf->frame()->pose->getThisToParent_raw() ), rescaleFactor ) );
+    auto newThisToParent=sim3FromSE3( se3FromSim3( kf->frame()->pose->getThisToParent_raw() ), rescaleFactor );
+    if(abs(newThisToParent.quaternion().squaredNorm()-1.0)>1e-8)
+    {
+        LOGF(WARNING,"for frame id %d keyframe id %d quat norm is %f rescale %f",
+                        frame->id(),
+                        other->id(),
+                        sqrt (newThisToParent.quaternion().squaredNorm()),
+                        rescaleFactor);
+    }
+    kf->frame()->pose->setThisToParent( newThisToParent );
 
     return kf;
   }

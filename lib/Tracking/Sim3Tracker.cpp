@@ -449,7 +449,7 @@ void Sim3Tracker::calcSim3Buffers(
 		Eigen::Vector3f Wxp = rotMat * (*refPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
-        LOGF(WARNING,"frame %d reference %d u_new %f, v_new %f\n",frame->id(),reference->frameID(),u_new,v_new);
+        //LOGF(WARNING,"frame %d reference %d u_new %f, v_new %f\n",frame->id(),reference->frameID(),u_new,v_new);
         //if(level==1)
         //{
         //    printf("frame %d reference %d u_new %f, v_new %f\n",frame->id(),reference->frameID(),u_new,v_new);
@@ -812,14 +812,14 @@ Sim3ResidualStruct Sim3Tracker::calcSim3WeightsAndResidual(
 	sumRes.meanP = (sumRes.sumResP) / (sumRes.numTermsP);
 
 	if(plotSim3TrackingIterationInfo)
-	{
+	{/*
 		printf("rd %f, rp %f, wrd %f, wrp %f, wd %f, wp %f\n ",
 				sum_rd/sum_num_d,
 				sum_rp/sum_num_p,
 				sum_wrd/sum_num_d,
 				sum_wrp/sum_num_p,
 				sum_wd/sum_num_d,
-				sum_wp/sum_num_p);
+				sum_wp/sum_num_p);*/
 	}
 	return sumRes;
 }

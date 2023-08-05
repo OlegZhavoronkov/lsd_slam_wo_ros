@@ -32,6 +32,17 @@ ConstraintSearchThread::~ConstraintSearchThread( void )
 	if( _thread) delete _thread.release();
 }
 
+void ConstraintSearchThread::doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe )
+{ 
+    if( _thread ) 
+    {
+        _thread->send( std::bind( &ConstraintSearchThread::checkNewKeyFrameImpl, this, keyframe ));
+    }/*
+    else
+    {
+        checkNewKeyFrameImpl(keyframe);
+    } */
+}
 
 //=== callbacks ====
 

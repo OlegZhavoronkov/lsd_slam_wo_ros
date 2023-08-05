@@ -170,7 +170,7 @@ private:
 			RunningStats* const stats,LineStereoResult& res,LineStereoDebugPlotStruct *pPlotStruct);
 
 	// Reset currentDepthMap by re-projecting is from activeKeyFrame to new_keyframe
-	void propagateDepthFrom(const DepthMap::SharedPtr &new_keyframe, float &rescaleFactor );
+	void propagateDepthFrom(const DepthMap::SharedPtr &new_keyframe/*, float &rescaleFactor */);
 
 
 	// This is a local state variable used to share data between the observeDepth* functions.  Sucks, I know

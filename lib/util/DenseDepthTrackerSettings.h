@@ -15,8 +15,8 @@ namespace lsd_slam {
   		if (__LEVELS > 6)
   			printf("WARNING: Sim3Tracker(): default settings are intended for a maximum of 6 levels!");
 
-  		lambdaSuccessFac = 0.5f;
-  		lambdaFailFac = 2.0f;
+  		lambdaSuccessFac = 0.05f;//0.5f;
+  		lambdaFailFac = 1.5f;//2.0f;
 
   		const float stepSizeMinc[6] = {1e-8, 1e-8, 1e-8, 1e-8, 1e-8, 1e-8};
   		const int maxIterations[6] = {5, 20, 50, 100, 100, 100};
