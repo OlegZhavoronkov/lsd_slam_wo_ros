@@ -17,7 +17,7 @@ option(BUILD_GUI "Build Pangolin-based GUI" OFF)
 set(EMPTY_EXPLICIT_G2O_PATH "EXPLICIT_G2O_PATH_NOT_DEFINED")
 set(EXPLICIT_G2O_PATH "${EMPTY_EXPLICIT_G2O_PATH}" CACHE PATH "path to g2o-provided cmake")
 
-find_package(Boost COMPONENTS thread filesystem system REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -56,6 +56,11 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+
 message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
 message( STATUS "Architecture: ${ARCHITECTURE}" )
@@ -72,8 +77,15 @@ elseif( ${ARCHITECTURE} STREQUAL "x86_64" )
     ## Enable SSE on release only...
     #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
     set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native" )
-  else()
-    message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
+  elseif(${CMAKE_BUILD_TYPE} MATCHES RelWithDebInfo)
+        # -DENABLE_SSE enables Jakob's original SSE optimizations in his code,
+          # it has nothing to do with compiler behavior
+        message( STATUS " --> Using SSE" )
+        ## Enable SSE on release only...
+        #set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -msse4.1 -msse3 -msse2 -msse -march=native -DENABLE_SSE" )
+        set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -msse4.1 -msse3 -msse2 -msse -march=native" )
+   else() 
+        message( STATUS " --> Not enabling SSE on x86_64 architecture for Debug build")
   endif()
 endif()
 if( CUDA_VERSION )
@@ -160,7 +172,6 @@ if(NOT LIBVIDEOIO-TYPES_INCLUDE)
 endif()
 add_subdirectory(ocean_api_depends/g3logg/)
 add_subdirectory(ocean_api_depends/libg3logger/)
-add_subdirectory(ocean_api_depends/CLI11/)
 add_subdirectory(ocean_api_depends/libvideoio-types/)
 
 add_subdirectory(ocean_api_depends/libbinlogger/)

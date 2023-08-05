@@ -39,7 +39,7 @@ namespace libvideoio
 
 		try {
 			inFile >> j;
-		} catch( nlohmann::json::parse_error ) {
+		} catch( const nlohmann::json::parse_error& ) {
 			return nullptr;
 		}
 

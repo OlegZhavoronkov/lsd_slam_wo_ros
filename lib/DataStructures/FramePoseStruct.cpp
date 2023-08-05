@@ -31,16 +31,16 @@ int FramePoseStruct::cacheValidCounter = 0;
 //int privateFramePoseStructAllocCount = 0;
 
 FramePoseStruct::FramePoseStruct( Frame &f )
-	:frame( f ),
-	 graphVertex( nullptr ),
-     cacheValidFor(-1),
-     isOptimized(false),
-     _thisToParent_raw{},
-     camToWorld{},
-     camToWorld_new{},
-     isRegisteredToGraph(false),
-     hasUnmergedPose(false),
-     isInGraph(false)
+	: frame( f ),
+      isRegisteredToGraph(false),
+      isOptimized(false),
+      isInGraph(false),
+      graphVertex( nullptr ),
+      cacheValidFor(-1),
+      camToWorld{},
+      camToWorld_new{},
+      hasUnmergedPose(false),
+     _thisToParent_raw{}
 {/*
     CHECK( abs(camToWorld.quaternion().squaredNorm()+
             camToWorld_new.quaternion().squaredNorm()+
@@ -78,6 +78,7 @@ Sim3 FramePoseStruct::setThisToParent( const Sim3 &val )
         throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string( val.quaternion().squaredNorm() )));
     }*/
     auto tr=val.translation().cast<float>();
+    (void)tr;
     CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
 	_thisToParent_raw = val;
 	invalidateCache();
@@ -92,6 +93,7 @@ FramePoseStruct &FramePoseStruct::operator=( const FramePoseStruct &other )
         throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string( other._thisToParent_raw.quaternion().squaredNorm() )));
     }*/
     auto tr=other._thisToParent_raw.translation().cast<float>();
+    (void)tr;
     CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
 	_thisToParent_raw = other._thisToParent_raw;
 	invalidateCache();
@@ -132,6 +134,7 @@ Sim3& FramePoseStruct::setThisToParent_raw(const Sim3& newParentRaw)
         throw Sophus::SophusException(std::string("norm is far from 1 :"+std::to_string(newParentRaw.quaternion().squaredNorm())));
     }*/
     auto tr=newParentRaw.translation();
+    (void)tr;
     CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
     return _thisToParent_raw=newParentRaw;
 }

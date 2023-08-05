@@ -8,8 +8,6 @@ using namespace std;
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include <CLI/CLI.hpp>
-
 #include <libg3logger/g3logger.h>
 
 #include "libvideoio/ImageSource.h"
@@ -43,11 +41,7 @@ int main( int argc, char** argv )
 
 	signal( SIGINT, signal_handler );
 
-
-	CLI::App app{""};
-
-	CLI11_PARSE(app, argc, argv);
-
+	
 	//
 	// try {
 	// 	TCLAP::CmdLine cmd("LSDRecorder", ' ', "0.1");
