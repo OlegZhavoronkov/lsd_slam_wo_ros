@@ -56,12 +56,13 @@ int main( int argc, char** argv )
   std::string calibFile;
   bool verbose;
   std::vector<std::string> inFiles;
-
+  size_t startIdx=0;
   opt_desc.add_options()
     ("help,h", "Help")
     ("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(ExistingFile), "Calibration file")
     ("verbose,v", bpo::value<decltype(verbose)>(&verbose)->implicit_value(true)->default_value(false), "Print DEBUG output to console")
-    ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories");
+    ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories")
+    ("start_from,sf",bpo::value<decltype(startIdx)>(&startIdx)->default_value(0),"Start idx in sequence");
     try
     {
         bpo::variables_map vm;
@@ -110,7 +111,7 @@ int main( int argc, char** argv )
     files.sort();
     std::vector<std::string > vec_of_files;
     vec_of_files.reserve(files.size());
-    size_t startIdx=0;
+    
     size_t curr_idx=0;
     for(const auto& p : files)
     {
