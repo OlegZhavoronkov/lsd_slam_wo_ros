@@ -72,7 +72,7 @@ public:
     inline const Sim3& getThisToParent_raw()const
     {
         auto tr=_thisToParent_raw.translation().cast<float>();
-        
+        (void)tr;
         CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
         return std::forward<const Sim3&>(_thisToParent_raw);
     }

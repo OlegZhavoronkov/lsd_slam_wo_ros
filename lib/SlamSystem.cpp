@@ -48,8 +48,8 @@ using namespace lsd_slam;
 SlamSystem::SlamSystem( )
   : _perf(),
   	_outputWrappers( ),
-  	_finalized(),
   	_initialized( false ),
+	_finalized(),
   //	_keyFrames(),
   	_keyFrameGraph( new KeyFrameGraph ),
   	_trackableKeyFrameSearch( new TrackableKeyFrameSearch( _keyFrameGraph ) ),
@@ -242,7 +242,7 @@ void SlamSystem::updateDisplayDepthMap()
 {
 	if( !Conf().displayDepthMap ) return;
 
-	const double scale = (bool)currentKeyFrame() ? currentKeyFrame()->frame()->getCamToWorld().scale() : 1.0;
+	// const double scale = (bool)currentKeyFrame() ? currentKeyFrame()->frame()->getCamToWorld().scale() : 1.0;
 
 	// debug plot depthmap
 	char buf1[200] = "";

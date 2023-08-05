@@ -250,7 +250,7 @@ bool DepthMap::updateDepthFrom( const Frame::SharedPtr &updateFrame )
 
 	Sim3 refToKf;
 	if(updateFrame->trackingParent()->id() == frame()->id())
-		refToKf = updateFrame->pose->_thisToParent_raw;
+		refToKf = updateFrame->pose->getThisToParent_raw();
 	else
 		refToKf = frame()->getCamToWorld().inverse() *  updateFrame->getCamToWorld();
 
@@ -700,7 +700,7 @@ LineStereoResult DepthMap::observeDepthCreate(const int &x, const int &y, const 
 			0.0f, 1.0f, 1.0f/MIN_DEPTH,
 			_observeFrame.get(), _observeFrame->image(0),
 			result_idepth, result_var, result_eplLength, stats,res,pPlotDebugLine);
-
+    (void)error;
 	
     if(res == LineStereoResult::NOT_FOUND_ERROR_TOO_HIGH || res == LineStereoResult::NOT_GOOD_FOR_STEREO)
 	{
@@ -795,7 +795,7 @@ LineStereoResult DepthMap::observeDepthUpdate(const int &x, const int &y, const 
 			min_idepth, target->idepth_smoothed ,max_idepth,
 			_observeFrame.get(), _observeFrame->image(0),
 			result_idepth, result_var, result_eplLength, stats,res,pDebugPlot );
-
+    (void)error;
 	float diff = result_idepth - target->idepth_smoothed;
 
 
@@ -999,7 +999,7 @@ void DepthMap::propagateDepthFrom( const DepthMap::SharedPtr &other, float &resc
 	}
 
 	// re-usable values.
-	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->_thisToParent_raw).inverse();
+	const SE3 oldToNew_SE3 = se3FromSim3(frame()->pose->getThisToParent_raw()).inverse();
 	const Eigen::Vector3f trafoInv_t = oldToNew_SE3.translation().cast<float>();
 	const Eigen::Matrix3f trafoInv_R = oldToNew_SE3.rotationMatrix().matrix().cast<float>();
 

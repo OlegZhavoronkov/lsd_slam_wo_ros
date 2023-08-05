@@ -60,7 +60,7 @@ Undistorter* UndistorterFactory::getUndistorterFromFile(const std::string &confi
 			LOG(INFO) << "   ... believe file is PTAM JSON format";
 			return PTAMUndistorterFactory::loadFromJSON(j, wrap );
 		}
-	} catch( nlohmann::json::parse_error e ) {
+	} catch( const nlohmann::json::parse_error &e ) {
 		LOG(INFO) << "Error parsing JSON, must not be a PTAM JSON model: " << e.what();
 	}
 #ifdef WITH_TINYXML

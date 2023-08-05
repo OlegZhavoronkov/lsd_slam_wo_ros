@@ -23,7 +23,7 @@ namespace lsd_slam {
     kf->depthMap()->propagateFrom( other->depthMap(), rescaleFactor );
     kf->syncDepthMapToFrame();
 
-    kf->frame()->pose->setThisToParent( sim3FromSE3( se3FromSim3( kf->frame()->pose->_thisToParent_raw ), rescaleFactor ) );
+    kf->frame()->pose->setThisToParent( sim3FromSE3( se3FromSim3( kf->frame()->pose->getThisToParent_raw() ), rescaleFactor ) );
 
     return kf;
   }

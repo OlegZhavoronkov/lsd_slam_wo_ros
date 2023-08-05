@@ -91,50 +91,55 @@ Eigen::Vector3f QuatToEulers(const Eigen::Quaternion<float> & q)
     return ret;
 }
 
-std::ostream& operator<<(std::ostream& s,const Sim3& sim3)
+std::ostream& operator<<(std::ostream& s,const Sim3& /*sim3*/)
 {
-    const auto& tr=sim3.translation();
-    const auto& quat=sim3.quaternion();
-    auto eulers=QuatToEulers( quat)*(180/M_PI);
-    return s<< fmt::format("\tsim3 tr: \t[{0:.6f} {1:.6f} {2:.6f}]\n\tquat [{3:.6f} {4:.6f} {5:.6f} {6:.6f}] quat norm {7:.6f}\n\teulers [{8:.3f} {9:.3f} {10:.3f}]",
-                                tr.x(),tr.y(),tr.z(),
-                                quat.x(),quat.y(),quat.z(),quat.w(),
-                                quat.norm(),
-                                eulers.x(),eulers.y(),eulers.z()
-                            );
+    //const auto& tr=sim3.translation();
+    //const auto& quat=sim3.quaternion();
+    ////Eigen::Vector3d eulers=((180/M_PI)*QuatToEulers( quat)).eval();
+    //return s<< fmt::format("\tsim3 tr: \t[{0:.6f} {1:.6f} {2:.6f}]\n\tquat [{3:.6f} {4:.6f} {5:.6f} {6:.6f}] quat norm {7:.6f}\n\teulers [{8:.3f} {9:.3f} {10:.3f}]",
+    //                            tr.x(),tr.y(),tr.z(),
+    //                            quat.x(),quat.y(),quat.z(),quat.w(),
+    //                            quat.norm()/*,
+    //                            eulers.x(),eulers.y(),eulers.z()*/
+    //                        );
+    
+    return s;
 }
 std::ostream& operator<<(std::ostream& s,const SO3& so3)
 {
     const auto& quat=so3.unit_quaternion();
-    auto eulers=QuatToEulers( quat)*(180/M_PI);
+    auto eulers=(QuatToEulers( quat)*(180/M_PI)).eval();
     return s<< fmt::format("\tso3 quat [{0:.6f} {1:.6f} {2:.6f} {3:.6f}] quat norm {4:.6f}\n\teulers [{5:.3f} {6:.3f} {7:.3f}]",
                                 quat.x(),quat.y(),quat.z(),quat.w(),
                                 quat.norm(),
                                 eulers.x(),eulers.y(),eulers.z()
                             );
+    return s;
 }
 std::ostream& operator<<(std::ostream& s,const SE3& se3)
 {
     const auto& tr=se3.translation();
     const auto& quat=se3.unit_quaternion();
-    auto eulers=QuatToEulers( quat)*(180/M_PI);
+    auto eulers=(QuatToEulers( quat)*(180/M_PI)).eval();
     return s<< fmt::format("\tse3 tr: [{0:.6f} {1:.6f} {2:.6f}]\n\tquat [{3:.6f} {4:.6f} {5:.6f} {6:.6f}] quat norm {7:.6f}\n\teulers [{8:.3f} {9:.3f} {10:.3f}]",
                                 tr.x(),tr.y(),tr.z(),
                                 quat.x(),quat.y(),quat.z(),quat.w(),
                                 quat.norm(),
                                 eulers.x(),eulers.y(),eulers.z()
                             );
+    return s;
 }
 
 std::ostream& operator<<(std::ostream& s,const Sophus::SE3f& se3)
 {
     const auto& tr=se3.translation();
     const auto& quat=se3.unit_quaternion();
-    auto eulers=QuatToEulers( quat)*(180/M_PI);
+    auto eulers=(QuatToEulers( quat)*(180/M_PI)).eval();
     return s<< fmt::format("\tse3 tr: [{0:.6f} {1:.6f} {2:.6f}]\n\tquat [{3:.6f} {4:.6f} {5:.6f} {6:.6f}] quat norm {7:.6f}\n\teulers [{8:.3f} {9:.3f} {10:.3f}]",
                                 tr.x(),tr.y(),tr.z(),
                                 quat.x(),quat.y(),quat.z(),quat.w(),
                                 quat.norm(),
                                 eulers.x(),eulers.y(),eulers.z()
                             );
+    return s;
 }

@@ -46,13 +46,13 @@ namespace lsd_slam {
 
 
 SE3Tracker::SE3Tracker(const ImageSize &sz )
-	: _pctGoodPerGoodBad(-1.0),
+	:   settings(),
+		_pctGoodPerGoodBad(-1.0),
 		_pctGoodPerTotal(-1.0),
 		_lastGoodCount(0),
 		_lastBadCount(0),
 		_imgSize( sz ),
-		_debugImages( sz ),
-		settings()
+		_debugImages( sz )
 {
 
 	const int area = _imgSize.area();
@@ -487,8 +487,8 @@ SE3 SE3Tracker::trackFrame(
     }
 
 	frame->initialTrackedResidual = lastResidual / pointUsage;
-	frame->pose->_thisToParent_raw = sim3FromSE3(toSophus(referenceToFrame.inverse()),1);
-    LOGF(WARNING,"pose setting for frame %d quat norm is %f",frame->id(),sqrt(frame->pose->_thisToParent_raw.quaternion().squaredNorm()));
+	frame->pose->setThisToParent_raw( sim3FromSE3(toSophus(referenceToFrame.inverse()),1));
+    LOGF(WARNING,"pose setting for frame %d quat norm is %f",frame->id(),sqrt(frame->pose->getThisToParent_raw().quaternion().squaredNorm()));
 	frame->setTrackingParent( keyframe );
 	return toSophus(referenceToFrame.inverse());
 }

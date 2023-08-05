@@ -21,6 +21,12 @@ namespace libvideoio
 	// 	 */
 Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
 {
+    enum class RectificationImageInternal:int
+    {
+        NO_RECTIFICATION = 0,
+        FULL = -2,
+        CROP = -1
+    };
 	bool valid = true;
 
 	// read parameters
@@ -35,7 +41,8 @@ Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFi
 	std::getline(infile,l4);
 
 	float inputCalibration[10];
-	float outputCalibration;
+	//[[maybe_unused]] /*using reult of it is commented out for now*/ float
+    RectificationImageInternal outputCalibration=RectificationImageInternal::NO_RECTIFICATION;
 	int out_width, out_height;
 	int in_width, in_height;
 
@@ -60,12 +67,12 @@ Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFi
 	// l3
 	if(l3 == "crop")
 	{
-		outputCalibration = -1;
+		outputCalibration = RectificationImageInternal::CROP;
 		printf("Out: Crop\n");
 	}
 	else if(l3 == "full")
 	{
-		outputCalibration = -2;
+		outputCalibration = RectificationImageInternal::FULL;
 		printf("Out: Full\n");
 	}
 	else if(l3 == "none")
@@ -123,14 +130,29 @@ Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFi
 
 	if (valid )
 	{
-        if( outputCalibration != -1 )
+        switch (outputCalibration)
         {
-            return new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap);
-        }
-        else
-        {
-            //auto* opencvDistorted=;
-            return new ImageCropper(out_width,out_height,0,0,std::shared_ptr<libvideoio::Undistorter>(new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap)));
+        case RectificationImageInternal::FULL:
+            return new OpenCVUndistorter(   originalK, 
+                                            distCoeffs, 
+                                            ImageSize( in_width, in_height ), 
+                                            wrap);
+            break;
+        case RectificationImageInternal::CROP:
+            return new ImageCropper(    out_width,
+                                        out_height,
+                                        0,
+                                        0,
+                                        std::shared_ptr<libvideoio::Undistorter>(
+                                            new OpenCVUndistorter(  originalK, 
+                                                                    distCoeffs, 
+                                                                    ImageSize( in_width, in_height ), 
+                                                                    wrap)
+                                            )
+                                    );
+            break;
+        default:
+            break;
         }
 		
     //
