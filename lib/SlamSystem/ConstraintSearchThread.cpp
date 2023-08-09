@@ -37,11 +37,11 @@ void ConstraintSearchThread::doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyf
     if( _thread ) 
     {
         _thread->send( std::bind( &ConstraintSearchThread::checkNewKeyFrameImpl, this, keyframe ));
-    }/*
+    }
     else
     {
         checkNewKeyFrameImpl(keyframe);
-    } */
+    } 
 }
 
 //=== callbacks ====
