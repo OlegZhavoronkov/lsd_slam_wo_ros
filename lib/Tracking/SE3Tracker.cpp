@@ -366,8 +366,8 @@ SE3 SE3Tracker::trackFrame(
 				// solve LS system with current lambda
 				Sophus::Vector6d b = -ls.b.cast<double>().eval();
 				/*Matrix6x6*/ auto A = ls.A.cast<double>().eval();
-                if(lvl>=SE3TRACKING_MAX_LEVEL-2)
-                {
+                //if(lvl>=SE3TRACKING_MAX_LEVEL-2)
+                //{
 
                 
                 switch (globalLSCallNum % 2)
@@ -394,7 +394,7 @@ SE3 SE3Tracker::trackFrame(
                 default:
                     break;
                 }
-                }
+                //}
 				for(int i=0; i< 6;i++) A(i,i) *= 1+LM_lambda;
 				/*Vector6*/ auto incd = (A.ldlt().solve(b)).eval();
                 //auto check_vec=((A*incd)-b).eval();
@@ -456,7 +456,7 @@ SE3 SE3Tracker::trackFrame(
                                     diff,   incTry, iteration,  lvl,    error,  LM_lambda,  inc,
                                     ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
 				numCalcResidualCalls[lvl]++;
-                bool canLimitIterBeSet=(lvl>=SE3TRACKING_MAX_LEVEL-2) ? ((globalLSCallNum%2) ==1) : true;
+                bool canLimitIterBeSet=/*(lvl>=SE3TRACKING_MAX_LEVEL-2) ?*/ ((globalLSCallNum%2) ==1) /*: true*/;
                 //globalLSCallNum++;
 
 				// accept inc?
@@ -498,7 +498,14 @@ SE3 SE3Tracker::trackFrame(
                     //if((globalLSCallNum-1)%2==1)
                     {
                         referenceToFrame = new_referenceToFrame;
-                        LM_lambda *= settings.lambdaSuccessFac;
+                        if(LM_lambda<0.01)
+                        {
+                            LM_lambda=0;
+                        }
+                        else
+                        {
+                            LM_lambda *= settings.lambdaSuccessFac;
+                        }
                         if(break_this_iter)
                         {
                             break;
