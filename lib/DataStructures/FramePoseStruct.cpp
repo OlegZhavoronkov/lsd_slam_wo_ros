@@ -153,20 +153,20 @@ Sim3 FramePoseStruct::getCamToWorld(int recursionDepth)
 
 	// return identity if there is no parent (very first frame)
 	if( frame.hasTrackingParent() ) {
-			LOG(DEBUG) << "Frame " << frame.id() << ": Calculating pose from tracked parent...";
+//			LOG(DEBUG) << "Frame " << frame.id() << ": Calculating pose from tracked parent...";
 			// abs. pose is computed from the parent's abs. pose, and cached.
             //TODO recursion should be eliminated
 			cacheValidFor = cacheValidCounter;
             auto previousInGraphCamToWorld=frame.trackingParent()->frame()->pose->getCamToWorld(recursionDepth+1);
             camToWorld = previousInGraphCamToWorld * _thisToParent_raw;
-            LOGF(WARNING,"frame id %d previousInGraphCamToWorld quat norm %f this camToWorld quat norm %f _thisToParent_raw quat norm %f",
-                        this->frame.id(),
-                        sqrt(previousInGraphCamToWorld.quaternion().squaredNorm()),
-                        sqrt(camToWorld.quaternion().squaredNorm()),
-                        sqrt(_thisToParent_raw.quaternion().squaredNorm()));
+//            LOGF(WARNING,"frame id %d previousInGraphCamToWorld quat norm %f this camToWorld quat norm %f _thisToParent_raw quat norm %f",
+//                        this->frame.id(),
+//                        sqrt(previousInGraphCamToWorld.quaternion().squaredNorm()),
+//                        sqrt(camToWorld.quaternion().squaredNorm()),
+//                        sqrt(_thisToParent_raw.quaternion().squaredNorm()));
 			return camToWorld;
 	} else {
-		LOG(DEBUG) << "Frame " << frame.id() << ": No parent, returning identity pose";
+		//LOG(DEBUG) << "Frame " << frame.id() << ": No parent, returning identity pose";
 
 		return camToWorld = Sim3();
 	}
