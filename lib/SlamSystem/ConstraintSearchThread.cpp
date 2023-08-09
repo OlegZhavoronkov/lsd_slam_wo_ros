@@ -540,14 +540,15 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 			constraints.back()->firstFrame = newKeyFrame;
 			constraints.back()->secondFrame = newKeyFrame->frame()->trackingParent();
 			constraints.back()->secondToFirst = constraints.back()->firstFrame->frame()->getCamToWorld().inverse() * constraints.back()->secondFrame->frame()->getCamToWorld();
-			constraints.back()->information  <<
-					0.8098,-0.1507,-0.0557, 0.1211, 0.7657, 0.0120, 0,
-					-0.1507, 2.1724,-0.1103,-1.9279,-0.1182, 0.1943, 0,
-					-0.0557,-0.1103, 0.2643,-0.0021,-0.0657,-0.0028, 0.0304,
-					 0.1211,-1.9279,-0.0021, 2.3110, 0.1039,-0.0934, 0.0005,
-					 0.7657,-0.1182,-0.0657, 0.1039, 1.0545, 0.0743,-0.0028,
-					 0.0120, 0.1943,-0.0028,-0.0934, 0.0743, 0.4511, 0,
-					0,0, 0.0304, 0.0005,-0.0028, 0, 0.0228;
+            //very strange-should be checked TODO::
+//			constraints.back()->information  <<
+//					0.8098,-0.1507,-0.0557, 0.1211, 0.7657, 0.0120, 0,
+//					-0.1507, 2.1724,-0.1103,-1.9279,-0.1182, 0.1943, 0,
+//					-0.0557,-0.1103, 0.2643,-0.0021,-0.0657,-0.0028, 0.0304,
+//					 0.1211,-1.9279,-0.0021, 2.3110, 0.1039,-0.0934, 0.0005,
+//					 0.7657,-0.1182,-0.0657, 0.1039, 1.0545, 0.0743,-0.0028,
+//					 0.0120, 0.1943,-0.0028,-0.0934, 0.0743, 0.4511, 0,
+//					0,0, 0.0304, 0.0005,-0.0028, 0, 0.0228;
 			constraints.back()->information *= (1e9/(downweightFac*downweightFac));
 
 			constraints.back()->robustKernel = new g2o::RobustKernelHuber();

@@ -452,9 +452,9 @@ SE3 SE3Tracker::trackFrame(
                 //    
                 //}
                 
-                fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {5} inc \n{6}\nreference to frame \n {7} \n",
-                                    diff,   incTry, iteration,  lvl,    error,  LM_lambda,  inc,
-                                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
+                //fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {5} inc \n{6}\nreference to frame \n {7} \n",
+                //                    diff,   incTry, iteration,  lvl,    error,  LM_lambda,  inc,
+                //                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
 				numCalcResidualCalls[lvl]++;
                 bool canLimitIterBeSet=/*(lvl>=SE3TRACKING_MAX_LEVEL-2) ?*/ ((globalLSCallNum%2) ==1) /*: true*/;
                 //globalLSCallNum++;
