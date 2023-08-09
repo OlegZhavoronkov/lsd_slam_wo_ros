@@ -1,0 +1,37 @@
+
+(!!TrackingThread!!)void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )->
+                    void MappingThread::doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set)->
+(!!MappingThread!!)void MappingThread::mapSetImpl( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set )->
+                    void KeyFrame::updateDepthFrom( const Frame::SharedPtr &frame )->
+                    bool DepthMap::updateDepthFrom( const Frame::SharedPtr &updateFrame )->
+                    void DepthMap::observeDepth( const Frame::SharedPtr &updateFrame )->
+LineStereoResult DepthMap::observeDepthUpdate(const int &x, const int &y, const int &idx, const float* keyFrameMaxGradBuf, RunningStats* const &stats,DepthMap::LineStereoDebugPlotStruct* pDebugPlot)
+
+(!!InputThread!!)void InputThread::operator()() 
+(!!InputThread!!)void SlamSystem::nextImage->
+                void SlamSystem::nextImageSet( const std::shared_ptr<ImageSet> &set )->
+                void TrackingThread::doTrackSet( const std::shared_ptr<ImageSet> &set ) {
+(!!TrackingThread!!)void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )->
+                    void MappingThread::doCreateNewKeyFrame( const KeyFrame::SharedPtr &keyframe, const Frame::SharedPtr &frame )->
+(!!MappingThread!!)void MappingThread::createNewKeyFrameImpl( const KeyFrame::SharedPtr &currentKeyFrame, const Frame::SharedPtr &frame )->
+                    KeyFrame::SharedPtr KeyFrame::PropagateAndCreate( const KeyFrame::SharedPtr &other, const Frame::SharedPtr &frame )->
+                    void DepthMap::propagateFrom( const DepthMap::SharedPtr &other, float &rescaleFactor )
+
+
+
+?
+void KeyFrame::finalize() ->
+void DepthMap::finalize()
+
+(!!TrackingThread!!)void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )->
+(!!MappingThread!!)void MappingThread::doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set)->
+(!!MappingThread!!)void MappingThread::mapSetImpl( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set )->
+(!!MappingThread!!)void SlamSystem::updateDisplayDepthMap()->
+(!!MappingThread!!)void DepthMap::plotDepthMap( const char *buf1, const char *buf2) 
+
+
+(!!InputThread!!)void InputThread::operator()() 
+(!!InputThread!!)void SlamSystem::nextImage->
+(!!InputThread!!)void MappingThread::createFirstKeyFrame( const Frame::SharedPtr &frame )->
+(!!InputThread!!)void TrackingThread::doUseNewKeyFrame( const std::shared_ptr<KeyFrame> &kf )->
+(!!TrackingThread!!)void TrackingThread::useNewKeyFrameImpl( const std::shared_ptr<KeyFrame> &kf )

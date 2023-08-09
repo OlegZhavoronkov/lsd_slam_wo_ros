@@ -35,19 +35,19 @@ namespace lsd_slam {
   template< int __LEVELS >
 	struct FrameData
 	{
-    const int Levels = __LEVELS;
+        constexpr static const int Levels = __LEVELS;
 
 		// Explicitly delete default and copy constructors
 		FrameData() = delete;
 		FrameData( const FrameData & ) = delete;
 
 		FrameData( const Camera &camera, const ImageSize &slamImageSize, const unsigned char *data );
-    FrameData( const Camera &camera, const ImageSize &slamImageSize, const float *data );
+        FrameData( const Camera &camera, const ImageSize &slamImageSize, const float *data );
 
-    ~FrameData();
+        ~FrameData();
 
 		//int width[__LEVELS], height[__LEVELS];
-    ImageSize imgSize[__LEVELS];
+        ImageSize imgSize[__LEVELS];
 		Camera camera[__LEVELS];
 
 		// Eigen::Matrix3f K[__LEVELS], KInv[__LEVELS];

@@ -135,7 +135,7 @@ KeyFrame::SharedPtr TrackableKeyFrameSearch::findRePositionCandidate( const KeyF
 			float goodVal = tracker->pointUsage * tracker->lastGoodCount() / (tracker->lastGoodCount()+tracker->lastBadCount());
 			checkedSecondary++;
 
-			if(tracker->trackingWasGood && goodVal > relocalizationTH && newScore < bestScore && poseDiscrepancy < 0.2)
+			if(tracker->_trackingWasGood && goodVal > relocalizationTH && newScore < bestScore && poseDiscrepancy < 0.2)
 			{
 				bestPoseDiscrepancy = poseDiscrepancy;
 				bestScore = score;

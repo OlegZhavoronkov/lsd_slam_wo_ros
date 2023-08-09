@@ -17,7 +17,7 @@
 * You should have received a copy of the GNU General Public License
 * along with LSD-SLAM. If not, see <http://www.gnu.org/licenses/>.
 */
-
+//#define USE_CONDITIONAL_DEBUG_BREAK
 #include "DataStructures/Frame.h"
 #include "DataStructures/FrameMemory.h"
 #include "DataStructures/KeyFrame.h"
@@ -30,6 +30,7 @@
 
 #include <g3log/g3log.hpp>
 
+#include "util/globalFuncs.h"
 
 namespace lsd_slam
 {
@@ -150,9 +151,9 @@ void Frame::setDepth(const DepthMap::SharedPtr &depthMap )  //PixelHypothesis* n
 	auto lock = getActiveLock();
 	std::unique_lock<std::mutex> lock2(buildMutex);
 
-	if(data.idepth[0] == 0)
+	if(data.idepth[0] == nullptr)
 		data.idepth[0] = FrameMemory::getInstance().getFloatBuffer(area(0));
-	if(data.idepthVar[0] == 0)
+	if(data.idepthVar[0] == nullptr)
 		data.idepthVar[0] = FrameMemory::getInstance().getFloatBuffer(area(0));
 
 	float* pyrIDepth = data.idepth[0];
@@ -203,9 +204,9 @@ void Frame::setDepthFromGroundTruth(const float* depth, float cov_scale)
 
 
 	std::unique_lock<std::mutex> lock2(buildMutex);
-	if(data.idepth[0] == 0)
+	if(data.idepth[0] == nullptr)
 		data.idepth[0] = FrameMemory::getInstance().getFloatBuffer(area(0));
-	if(data.idepthVar[0] == 0)
+	if(data.idepthVar[0] == nullptr)
 		data.idepthVar[0] = FrameMemory::getInstance().getFloatBuffer(area(0));
 
 	float* pyrIDepth = data.idepth[0];
@@ -250,20 +251,21 @@ void Frame::prepareForStereoWith(const Frame::SharedPtr &other, Sim3 thisToOther
 	Sim3 otherToThis = thisToOther.inverse();
 
 	//otherToThis = data.worldToCam * other->data.camToWorld;
-	K_otherToThis_R = other->camera(level).K * otherToThis.rotationMatrix().cast<float>() * otherToThis.scale();
-	otherToThis_t = otherToThis.translation().cast<float>();
-	K_otherToThis_t = other->camera(level).K * otherToThis_t;
+	_K_otherToThis_R = other->camera(level).K * otherToThis.rotationMatrix().cast<float>() * otherToThis.scale();
+	_otherToThis_t = otherToThis.translation().cast<float>();
+	_K_otherToThis_t = other->camera(level).K * _otherToThis_t;
 
 
 
-	thisToOther_t = thisToOther.translation().cast<float>();
-	K_thisToOther_t = camera(level).K * thisToOther_t;
-	thisToOther_R = thisToOther.rotationMatrix().cast<float>() * thisToOther.scale();
-	otherToThis_R_row0 = thisToOther_R.col(0);
-	otherToThis_R_row1 = thisToOther_R.col(1);
-	otherToThis_R_row2 = thisToOther_R.col(2);
+	_thisToOther_t = thisToOther.translation().cast<float>();
+    CONDITIONAL_BREAK(!((abs(_thisToOther_t[2]) > 2*abs(_thisToOther_t[1])) && (abs(_thisToOther_t[2]) > 2*abs(_thisToOther_t[0]))));
+	_K_thisToOther_t = camera(level).K * _thisToOther_t;
+	_thisToOther_R = thisToOther.rotationMatrix().cast<float>() * thisToOther.scale();
+	_otherToThis_R_row0 = _thisToOther_R.col(0);
+	_otherToThis_R_row1 = _thisToOther_R.col(1);
+	_otherToThis_R_row2 = _thisToOther_R.col(2);
 
-	distSquared = otherToThis.translation().dot(otherToThis.translation());
+	_distSquared = otherToThis.translation().dot(otherToThis.translation());
 
 	referenceID = other->id();
 	referenceLevel = level;
@@ -370,7 +372,7 @@ void Frame::buildImage(int level)
 
 	LOGF_IF(DEBUG, Conf().print.frameBuildDebugInfo,"CREATE Image lvl %d for frame %d,  %f x %f", level, id(), width/2.0, height/2.0);
 
-	if (data.image[level] == 0)
+	if (data.image[level] == nullptr)
 		data.image[level] = FrameMemory::getInstance().getFloatBuffer(area(level));
 	float* dest = data.image[level];
 
@@ -504,7 +506,7 @@ void Frame::releaseImage(int level)
 		return;
 	}
 	FrameMemory::getInstance().returnBuffer(data.image[level]);
-	data.image[level] = 0;
+	data.image[level] = nullptr;
 }
 
 void Frame::buildGradients(int level)
@@ -519,7 +521,7 @@ void Frame::buildGradients(int level)
 
 	const int width = imgSize(level).width;
 	const int height = imgSize(level).height;
-	if(data.gradients[level] == 0)
+	if(data.gradients[level] == nullptr)
 		data.gradients[level] = (Eigen::Vector4f*)FrameMemory::getInstance().getBuffer(sizeof(Eigen::Vector4f) * width * height);
 	const float* img_pt = data.image[level] + width;
 	const float* img_pt_max = data.image[level] + width*(height-1);
@@ -529,7 +531,7 @@ void Frame::buildGradients(int level)
 	float val_m1 = *(img_pt-1);
 	float val_00 = *img_pt;
 	float val_p1;
-
+//TODO rewrite this nightmare with eigen and eigen::map
 	for(; img_pt < img_pt_max; img_pt++, gradxyii_pt++)
 	{
 		val_p1 = *(img_pt+1);
@@ -548,7 +550,7 @@ void Frame::buildGradients(int level)
 void Frame::releaseGradients(int level)
 {
 	FrameMemory::getInstance().returnBuffer(reinterpret_cast<float*>(data.gradients[level]));
-	data.gradients[level] = 0;
+	data.gradients[level] = nullptr;
 }
 
 
@@ -564,7 +566,7 @@ void Frame::buildMaxGradients(int level)
 
 	const int width = imgSize(level).width;
 	const int height = imgSize(level).height;
-	if (data.maxGradients[level] == 0)
+	if (data.maxGradients[level] == nullptr)
 		data.maxGradients[level] = FrameMemory::getInstance().getFloatBuffer(width * height);
 
 	float* maxGradTemp = FrameMemory::getInstance().getFloatBuffer(width * height);
@@ -634,7 +636,7 @@ void Frame::buildMaxGradients(int level)
 void Frame::releaseMaxGradients(int level)
 {
 	FrameMemory::getInstance().returnBuffer(data.maxGradients[level]);
-	data.maxGradients[level] = 0;
+	data.maxGradients[level] = nullptr;
 }
 
 void Frame::buildIDepthAndIDepthVar(int level)
@@ -661,9 +663,9 @@ void Frame::buildIDepthAndIDepthVar(int level)
 	const int width = imgSize(level).width;
 	const int height = imgSize(level).height;
 
-	if (data.idepth[level] == 0)
+	if (data.idepth[level] == nullptr)
 		data.idepth[level] = FrameMemory::getInstance().getFloatBuffer(width * height);
-	if (data.idepthVar[level] == 0)
+	if (data.idepthVar[level] == nullptr)
 		data.idepthVar[level] = FrameMemory::getInstance().getFloatBuffer(width * height);
 
 	int sw = imgSize(level - 1).width;
@@ -749,7 +751,7 @@ void Frame::releaseIDepth(int level)
 	}
 
 	FrameMemory::getInstance().returnBuffer(data.idepth[level]);
-	data.idepth[level] = 0;
+	data.idepth[level] = nullptr;
 }
 
 
@@ -761,9 +763,22 @@ void Frame::releaseIDepthVar(int level)
 		return;
 	}
 	FrameMemory::getInstance().returnBuffer(data.idepthVar[level]);
-	data.idepthVar[level] = 0;
+	data.idepthVar[level] = nullptr;
 }
 
+void Frame::setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) 
+{
+    if(!newParent) 
+    {
+        LOGF(WARNING,"frame id %d ,set empty parent for frame",this->id());
+    }
+    else
+    {
+        LOGF(INFO,"frame id %d ,set parent frame id %d",this->id(),newParent->id());
+    }
+    
+    _trackingParent = newParent; 
+}
 
 //====================
 

@@ -56,12 +56,13 @@ int main( int argc, char** argv )
   std::string calibFile;
   bool verbose;
   std::vector<std::string> inFiles;
-
+  size_t startIdx=0;
   opt_desc.add_options()
     ("help,h", "Help")
     ("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(ExistingFile), "Calibration file")
     ("verbose,v", bpo::value<decltype(verbose)>(&verbose)->implicit_value(true)->default_value(false), "Print DEBUG output to console")
-    ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories");
+    ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories")
+    ("start_from,sf",bpo::value<decltype(startIdx)>(&startIdx)->default_value(0),"Start idx in sequence");
     try
     {
         bpo::variables_map vm;
@@ -79,13 +80,17 @@ int main( int argc, char** argv )
         printf("command line not valid,usage:\n%s\n",str.str().c_str());
     }
   
-  
-  
+  lsd_slam::Conf().debugDisplay=1;
+  lsd_slam::Conf().runRealTime=false;
   auto pUndisorter = libvideoio::UndistorterFactory::getUndistorterFromFile(calibFile);
   std::shared_ptr<libvideoio::Undistorter> undistorter(pUndisorter);
   // Load the configuration object
   Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();
+  lsd_slam::plotTrackingIterationInfo=true;
+  //lsd_slam::plotSim3TrackingIterationInfo=true;
+  lsd_slam::plotStereoImages=true;
+  //lsd_slam::plotTracking=true;
 
   LOG(INFO) << "Slam image: " << Conf().slamImageSize.width << " x " << Conf().slamImageSize.height;
 
@@ -106,12 +111,20 @@ int main( int argc, char** argv )
     files.sort();
     std::vector<std::string > vec_of_files;
     vec_of_files.reserve(files.size());
+    
+    size_t curr_idx=0;
     for(const auto& p : files)
     {
-        vec_of_files.emplace_back(p);
+        if(curr_idx++ > startIdx)
+        {
+            vec_of_files.emplace_back(p);
+        }
+        
     }
   LOG(INFO) << "Starting input thread.";
   std::shared_ptr<libvideoio::ImageSource> dataSource(new libvideoio::ImageFilesSource(vec_of_files));
+  
+  dataSource->setFPS(0.5);
   InputThread input( system, dataSource, undistorter );
   std::thread inputThread( std::ref(input) );
   input.inputReady.wait();

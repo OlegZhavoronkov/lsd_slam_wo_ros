@@ -20,7 +20,8 @@
 
 #pragma once
 #include <memory>
-
+//#define USE_CONDITIONAL_DEBUG_BREAK
+#include "util/globalFuncs.h"
 #include "util/SophusUtil.h"
 #include "GlobalMapping/g2oTypeSim3Sophus.h"
 
@@ -44,7 +45,7 @@ public:
 
 	// set initially as tracking result (then it's a SE(3)),
 	// and is changed only once, when the frame becomes a KF (->rescale).
-	Sim3 thisToParent_raw;
+//	Sim3 _thisToParent_raw;
 
  	Frame &frame;
 	//int frameID;
@@ -66,6 +67,15 @@ public:
 
 	Sim3 getCamToWorld(int recursionDepth = 0);
 	void invalidateCache();
+    /*inline*/ Sim3& setThisToParent_raw(const Sim3& newParentRaw);
+
+    inline const Sim3& getThisToParent_raw()const
+    {
+        auto tr=_thisToParent_raw.translation().cast<float>();
+        (void)tr;
+        CONDITIONAL_BREAK(!((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0]))));
+        return std::forward<const Sim3&>(_thisToParent_raw);
+    }
 
 private:
 	int cacheValidFor;
@@ -80,6 +90,11 @@ private:
 
 	// whether camToWorld_new is newer than camToWorld
 	bool hasUnmergedPose;
+
+    	// set initially as tracking result (then it's a SE(3)),
+	// and is changed only once, when the frame becomes a KF (->rescale).
+	Sim3 _thisToParent_raw;
+
 };
 
 }

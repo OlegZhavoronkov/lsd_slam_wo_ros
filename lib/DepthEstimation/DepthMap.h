@@ -20,6 +20,7 @@
  */
 
 #pragma once
+#include <boost/signals2.hpp>
 #include "opencv2/core/core.hpp"
 #include "util/Configuration.h"
 #include "util/EigenCoreInclude.h"
@@ -31,8 +32,8 @@
 
 #include "DataStructures/Frame.h"
 #include "DataStructures/ImageSet.h"
-#include "DepthMapDebugImages.h"
-
+#include "DepthMapPixelHypothesis.h"
+#include "LineStereoResult.h"
 namespace lsd_slam {
 
 class DepthMapPixelHypothesis;
@@ -82,7 +83,7 @@ public:
 	// inline bool isValid() {return (bool)activeKeyFrame;};
 
 	//int debugPlotDepthMap();
-	const DepthMapDebugImages &debugImages() const { return _debugImages; }
+	//const DepthMapDebugImages &debugImages() const { return *_debugImages; }
 
 	// This is the only debug plot which is triggered externally..
 	void plotDepthMap( const char *buf1, const char *buf2 );
@@ -121,17 +122,15 @@ public:
 
 	//
 	DepthMapPixelHypothesis *hypothesisAt( const int x, const int y )
-		{ return currentDepthMap + x + y*Conf().slamImageSize.width; }
-
+		{ return _pCurrentDepthMap + x + y*Conf().slamImageSize.width; }
 
 
 
 private:
-
-	IndexThreadReduce threadReducer;
+	IndexThreadReduce _threadReducer;
 
  	PerformanceData _perf;
-	DepthMapDebugImages _debugImages;
+	//std::unique_ptr< DepthMapDebugImages > _debugImages;
 
 	// ============= parameter copies for convenience ===========================
 	// these are just copies of the pointers given to this function, for convenience.
@@ -149,11 +148,17 @@ private:
 	// ============= internally used buffers for intermediate calculations etc. =============
 	// for internal depth tracking, their memory is managed (created & deleted) by this object.
 	DepthMapPixelHypothesis* otherDepthMap;
-	DepthMapPixelHypothesis* currentDepthMap;
+	DepthMapPixelHypothesis* _pCurrentDepthMap;
 	int* validityIntegralBuffer;
 
 
-
+    struct LineStereoDebugPlotStruct
+    {
+        cv::Point2f nearestEnd;
+        cv::Point2f farEnd;
+        cv::Scalar color;
+        int IsValid=0;
+    };
 	// ============ internal functions ==================================================
 	// does the line-stereo seeking.
 	// takes a lot of parameters, because they all have been pre-computed before.
@@ -162,19 +167,21 @@ private:
 			const float min_idepth, const float prior_idepth, float max_idepth,
 			const Frame* const referenceFrame, const float* referenceFrameImage,
 			float &result_idepth, float &result_var, float &result_eplLength,
-			RunningStats* const stats);
+			RunningStats* const stats,LineStereoResult& res,LineStereoDebugPlotStruct *pPlotStruct);
 
 	// Reset currentDepthMap by re-projecting is from activeKeyFrame to new_keyframe
-	void propagateDepthFrom(const DepthMap::SharedPtr &new_keyframe, float &rescaleFactor );
+	void propagateDepthFrom(const DepthMap::SharedPtr &new_keyframe/*, float &rescaleFactor */);
 
 
 	// This is a local state variable used to share data between the observeDepth* functions.  Sucks, I know
 	Frame::SharedPtr _observeFrame;
 	void observeDepth( const Frame::SharedPtr &updateFrame );
-	void observeDepthRow(int yMin, int yMax, RunningStats* stats);
-	bool observeDepthCreate(const int &x, const int &y, const int &idx, RunningStats* const &stats);
-	bool observeDepthUpdate(const int &x, const int &y, const int &idx, const float* keyFrameMaxGradBuf, RunningStats* const &stats);
-	bool makeAndCheckEPL(const int x, const int y, const Frame* const ref, float* pepx, float* pepy, RunningStats* const stats);
+    using SetHypothesisHandlingFunctor = void(DepthMap::*)( int /*x*/, int /*y*/,const cv::Vec3b& /*color*/,LineStereoResult,cv::Mat* pDebugMat);
+    using SetLineStereoDebugPlotFunctor = void(DepthMap::*)( const cv::Point2f& /*nearest*/,const cv::Point2f& closest,const cv::Scalar& /*color*/,cv::Mat* pDebugMat);
+	void observeDepthRow(const SetHypothesisHandlingFunctor pFunctor,void* pToDebugMat,const SetLineStereoDebugPlotFunctor pLineFunctor,void* pToLineMat,int yMin, int yMax, RunningStats* stats);
+	LineStereoResult observeDepthCreate(const int &x, const int &y, const int &idx, RunningStats* const &stats,LineStereoDebugPlotStruct* pPlotDebugLine );
+	LineStereoResult observeDepthUpdate(const int &x, const int &y, const int &idx, const float* keyFrameMaxGradBuf, RunningStats* const &stats , LineStereoDebugPlotStruct* pPlotDebugLine);
+	LineStereoResult makeAndCheckEPL(const int x, const int y, const Frame* const ref, float* pepx, float* pepy, RunningStats* const stats);
 
 
 	void regularizeDepthMap(bool removeOcclusion, int validityTH);
@@ -190,6 +197,52 @@ private:
 	void resetCounters();
 
 	//float clocksPropagate, clocksPropagateKF, clocksObserve, msObserve, clocksReg1, clocksReg2, msReg1, msReg2, clocksFinalize;
+public :
+    using UpdateKeyFrameSignal = boost::signals2::signal<void(const cv::Mat& /*debugDepthRes*/,const cv::Mat& /*lineStereoDebug*/,const std::string& /*desc*/)>;
+    using DisplayUpdateKeyFrameSignal = boost::signals2::signal<void()>;
+    using PlotDepthSignal               = boost::signals2::signal<void(const DepthMapPixelHypothesis*,int,const char*,const char*)>;
+    //using DisplayNewKeyFrameSignal = boost::signals2::signal<void()>;
+private:
+    UpdateKeyFrameSignal _updateKeyFrameSignal;
+    DisplayUpdateKeyFrameSignal _displayUpdateKeyFrameSignal;
+    PlotDepthSignal _plotDepthSignal;
+    //DisplayNewKeyFrameSignal    _displayNewKeyFrameSignal;
+
+    template<typename SignalType,typename SignalInvokable> std::enable_if_t<
+            std::is_void_v<
+                std::void_t<
+                        decltype(
+                                std::declval<SignalType>()
+                                    .connect(std::declval<SignalInvokable>())
+                                )
+                            > >,
+             SignalType&> ConnectSignal(SignalType DepthMap::* pSignalMember,SignalInvokable invokable)
+    {
+        (this->*pSignalMember).connect(invokable);
+        
+        //this->*pSignalMember.connect(invokable);
+        //_updateKeyFrameSignal.connect(invokable);
+        return std::forward<SignalType&>(this->*pSignalMember);
+    }
+
+public:
+
+
+    template<typename SignalInvokable> UpdateKeyFrameSignal& ConnectUpdateKeyFrameSignal(SignalInvokable invokable)
+    {
+        return ConnectSignal(&DepthMap::_updateKeyFrameSignal,invokable);
+    }
+    template<typename SignalInvokable> DisplayUpdateKeyFrameSignal& ConnectDisplayUpdateKeyFrameSignal(SignalInvokable invokable)
+    {
+        return ConnectSignal(&DepthMap::_displayUpdateKeyFrameSignal,invokable);
+    }
+    template<typename SignalInvokable> PlotDepthSignal&  ConnectPlotDepthSignal(SignalInvokable invokable)
+    {
+        return ConnectSignal(&DepthMap::_plotDepthSignal,invokable);
+    }
+private:
+    void SetHypotesisDebugData( int x, int y,const cv::Vec3b& /*color*/,LineStereoResult res,cv::Mat* pDebugHypotesisMat);
+    void SetLineStereoDebugData( const cv::Point2f& nearestPoint, const cv::Point2f& farestPoint,const cv::Scalar& color,cv::Mat* pDebugMat);
 };
 
 } // namespace lsd_slam

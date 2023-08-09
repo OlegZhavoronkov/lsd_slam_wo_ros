@@ -19,8 +19,14 @@ namespace libvideoio
 	// 	 * crop / full / none
 	// 	 * outputWidth outputHeight
 	// 	 */
-OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
+Undistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &configFileName, const std::shared_ptr<Undistorter> & wrap )
 {
+    enum class RectificationImageInternal:int
+    {
+        NO_RECTIFICATION = 0,
+        FULL = -2,
+        CROP = -1
+    };
 	bool valid = true;
 
 	// read parameters
@@ -35,7 +41,8 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 	std::getline(infile,l4);
 
 	float inputCalibration[10];
-	[[maybe_unused]] /*using reult of it is commented out for now*/ float outputCalibration;
+	//[[maybe_unused]] /*using reult of it is commented out for now*/ float
+    RectificationImageInternal outputCalibration=RectificationImageInternal::NO_RECTIFICATION;
 	int out_width, out_height;
 	int in_width, in_height;
 
@@ -60,12 +67,12 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 	// l3
 	if(l3 == "crop")
 	{
-		outputCalibration = -1;
+		outputCalibration = RectificationImageInternal::CROP;
 		printf("Out: Crop\n");
 	}
 	else if(l3 == "full")
 	{
-		outputCalibration = -2;
+		outputCalibration = RectificationImageInternal::FULL;
 		printf("Out: Full\n");
 	}
 	else if(l3 == "none")
@@ -89,7 +96,10 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 		printf("Out: Failed to Read Output resolution... not rectifying.\n");
 		valid = false;
 	}
-
+    if(!valid)
+    {
+        return nullptr;
+    }
 	cv::Mat distCoeffs = cv::Mat::zeros(4, 1, CV_32F);
 	for (int i = 0; i < 4; ++ i)
 		distCoeffs.at<float>(i, 0) = inputCalibration[4 + i];
@@ -118,9 +128,33 @@ OpenCVUndistorter *OpenCVUndistorterFactory::loadFromFile( const std::string &co
 	originalK.at<double>(0, 2) = inputCalibration[2];
 	originalK.at<double>(1, 2) = inputCalibration[3];
 
-	if (valid)
+	if (valid )
 	{
-		return new OpenCVUndistorter( originalK, distCoeffs, ImageSize( in_width, in_height ), wrap);
+        switch (outputCalibration)
+        {
+        case RectificationImageInternal::FULL:
+            return new OpenCVUndistorter(   originalK, 
+                                            distCoeffs, 
+                                            ImageSize( in_width, in_height ), 
+                                            wrap);
+            break;
+        case RectificationImageInternal::CROP:
+            return new ImageCropper(    out_width,
+                                        out_height,
+                                        0,
+                                        0,
+                                        std::shared_ptr<libvideoio::Undistorter>(
+                                            new OpenCVUndistorter(  originalK, 
+                                                                    distCoeffs, 
+                                                                    ImageSize( in_width, in_height ), 
+                                                                    wrap)
+                                            )
+                                    );
+            break;
+        default:
+            break;
+        }
+		
     //
 		// K_ = cv::getOptimalNewCameraMatrix(originalK_, distCoeffs, cv::Size(in_width, in_height), (outputCalibration == -2) ? 1 : 0, cv::Size(out_width, out_height), nullptr, false);
     //

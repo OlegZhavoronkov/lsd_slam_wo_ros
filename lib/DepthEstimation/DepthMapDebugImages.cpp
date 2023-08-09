@@ -1,7 +1,7 @@
 
 
 #include <opencv2/imgproc.hpp>
-
+#include <opencv2/imgcodecs.hpp>
 #include "DepthMapDebugImages.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "util/globalFuncs.h"
@@ -22,7 +22,7 @@ namespace lsd_slam {
   DepthMapDebugImages::~DepthMapDebugImages()
   {;}
 
-
+/*
   void DepthMapDebugImages::plotUpdateKeyFrame( const Frame::SharedPtr &activeKeyFrame,
     const Frame::SharedPtr &oldestReferenceFrame,
     const Frame::SharedPtr &newestReferenceFrame )
@@ -36,9 +36,44 @@ namespace lsd_slam {
     cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
     rfimg.convertTo(_debugImageStereoLines, CV_8UC1);
     cv::cvtColor(_debugImageStereoLines, _debugImageStereoLines, cv::COLOR_GRAY2RGB);
+  }*/
+    //static int idx=0;
+  void DepthMapDebugImages::setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage,const std::string& desc)
+  {
+    std::scoped_lock lock(_lock);
+    
+    if(activeKeyFrame != nullptr)
+    {
+        std::unique_ptr<float[]> buff(new float[activeKeyFrame->imgSize(0).area() ]);
+        memcpy(buff.get(),activeKeyFrame->image(0),activeKeyFrame->imgSize(0).area()*sizeof(float));
+        {
+            cv::Mat keyFrameImage(_imageSize.height, _imageSize.width, CV_32F,buff.get());
+            cv::Mat tempKeyFrame;
+            keyFrameImage.convertTo(tempKeyFrame, CV_8UC1);
+            cv::cvtColor(tempKeyFrame, tempKeyFrame, cv::COLOR_GRAY2RGB);
+            _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
+            if(!desc.empty())
+            {
+                cv::putText(_debugImageStereoLines,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+            }
+        }
+        
+    }
+    else
+    {
+        lineImage.copyTo(_debugImageStereoLines);
+    }
+    
+    hypotesis.copyTo(_debugImageHypothesisHandling);
+    if(!desc.empty())
+    {
+        cv::putText(_debugImageHypothesisHandling,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+    }
+    
   }
 
   void DepthMapDebugImages::displayUpdateKeyFrame() {
+    std::scoped_lock lock(_lock);
     Util::displayImage( "Stereo Key Frame", _debugImageHypothesisHandling, false );
     Util::displayImage( "Stereo Reference Frame", _debugImageStereoLines, false );
   }
@@ -54,13 +89,13 @@ namespace lsd_slam {
     Util::displayImage( "KeyFramePropagation", _debugImageHypothesisPropagation );
   }
 
-  void DepthMapDebugImages::setHypothesisHandling( int x, int y, cv::Vec3b color ) {
-    _debugImageHypothesisHandling.at<cv::Vec3b>(y, x) = color;
-  }
+  //void DepthMapDebugImages::setHypothesisHandling( int x, int y, cv::Vec3b color ) {
+  //  _debugImageHypothesisHandling.at<cv::Vec3b>(y, x) = color;
+  //}
 
-  void DepthMapDebugImages::addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color ) {
-    cv::line(_debugImageStereoLines,a,b,color,1,8,0);
-  }
+  //void DepthMapDebugImages::addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color ) {
+  //  cv::line(_debugImageStereoLines,a,b,color,1,8,0);
+  //}
 
   // TODO.  Should expire this version
   int DepthMapDebugImages::debugPlotDepthMap( const Frame::SharedPtr &activeKeyFrame,  DepthMapPixelHypothesis *currentDepthMap, int refID, const char *buf1, const char *buf2 )

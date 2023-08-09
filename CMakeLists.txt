@@ -30,8 +30,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(SuiteSparse REQUIRED)
 find_package(Ceres)
-find_package( TinyXML2 REQUIRED )
+#find_package( TinyXML2  )
+#message(STATUS "\${TINYXML2_FOUND} \"${TINYXML2_FOUND}\"")
 find_package(OpenGL)
+find_package(fmt REQUIRED)
 #find_package(glog REQUIRED)
 # FabMap
 # uncomment this part to enable fabmap

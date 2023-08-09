@@ -57,7 +57,7 @@ public:
   {
     A.setZero();
     b.setZero();
-    memset(SSEData,0, sizeof(float)*4*15);
+    //memset(SSEData,0, sizeof(float)*4*15);
     error = 0;
     this->num_constraints = 0;
   }
@@ -172,7 +172,7 @@ public:
   }
 
 private:
-  EIGEN_ALIGN16 float SSEData[4*15];
+  //EIGEN_ALIGN16 float SSEData[4*15];
 };
 
 
@@ -181,12 +181,14 @@ private:
  * Builds 4dof LGS (used for depth-lgs, at it has only 7 non-zero entries in jacobian)
  * only used to accumulate data, NOT really as LGS
  */
-class LGS6
+template<typename T> class LGS6T
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using Matrix6x6=Eigen::Matrix<T,6,6>;
+  using Vector6=Eigen::Matrix<T,6,1>;
 
-  Matrix6x6 A;
+   Matrix6x6 A;
   Vector6 b;
 
   float error;
@@ -196,7 +198,7 @@ public:
   {
     A.setZero();
     b.setZero();
-    memset(SSEData,0, sizeof(float)*4*28);
+    //memset(SSEData,0, sizeof(float)*4*28);
 
     error = 0;
     this->num_constraints = 0;
@@ -398,11 +400,12 @@ public:
 
 
 private:
-  EIGEN_ALIGN16 float SSEData[4*28];
+  //EIGEN_ALIGN16 float SSEData[4*28];
 };
 
 
-
+using LGS6=LGS6T<float>;
+using LGS6D=LGS6T<double>;
 
 
 

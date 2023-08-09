@@ -8,6 +8,7 @@
 
 #include "DataStructures/Frame.h"
 #include "DepthMapPixelHypothesis.h"
+#include <mutex>
 
 namespace lsd_slam {
 
@@ -31,9 +32,10 @@ public:
   void displayNewKeyFrame();
 
   //
-  void setHypothesisHandling( int x, int y, cv::Vec3b color );
+  //void setHypothesisHandling( int x, int y, cv::Vec3b color );
 
-  void addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color );
+  //void addStereoLine( const cv::Point &a, const cv::Point &b, const cv::Scalar &color );
+  void setHypotesisAndLineImages(Frame::SharedPtr activeKeyFrame,const cv::Mat& hypotesis,const cv::Mat& lineImage,const std::string& desc);
 
   // TODO.  First version is a short-term reversion to using DepthMapPixelHypothesis *
   // should purge DepthMapPixelHypothesis * from code base, then remove this
@@ -44,13 +46,14 @@ public:
 
 protected:
 
-  const libvideoio::ImageSize _imageSize;
+    const libvideoio::ImageSize _imageSize;
 
 	// ONLY for debugging, their memory is managed (created & deleted) by this object.
 	cv::Mat _debugImageHypothesisHandling;
 	cv::Mat _debugImageHypothesisPropagation;
 	cv::Mat _debugImageStereoLines;
 	cv::Mat _debugImageDepth;
+    std::recursive_mutex _lock;
 
 };
 

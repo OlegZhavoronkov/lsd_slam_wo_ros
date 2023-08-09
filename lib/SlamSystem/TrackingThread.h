@@ -96,7 +96,7 @@ private:
 
 	// Thread Callbacks
 	void trackSetImpl( const std::shared_ptr<ImageSet> &set );
-
+    void trackSetImplInternal( const std::shared_ptr<ImageSet> &set );
 	void useNewKeyFrameImpl( const std::shared_ptr<KeyFrame> &kf );
 
 	// ============= EXCLUSIVELY TRACKING THREAD (+ init) ===============

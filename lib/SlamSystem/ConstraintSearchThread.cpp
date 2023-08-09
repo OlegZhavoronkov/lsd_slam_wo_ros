@@ -32,6 +32,17 @@ ConstraintSearchThread::~ConstraintSearchThread( void )
 	if( _thread) delete _thread.release();
 }
 
+void ConstraintSearchThread::doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe )
+{ 
+    if( _thread ) 
+    {
+        _thread->send( std::bind( &ConstraintSearchThread::checkNewKeyFrameImpl, this, keyframe ));
+    }
+    else
+    {
+        checkNewKeyFrameImpl(keyframe);
+    } 
+}
 
 //=== callbacks ====
 
@@ -282,13 +293,13 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 		SE3 c2f_init = se3FromSim3(candidateToFrame_initialEstimateMap[candidate].inverse()).inverse();
 		c2f_init.so3() = c2f_init.so3() * disturbance;
 		SE3 c2f = constraintSE3Tracker->trackFrameOnPermaref(candidate, newKeyFrame->frame(), c2f_init);
-		if(!constraintSE3Tracker->trackingWasGood) {closeFailed++; continue;}
+		if(!constraintSE3Tracker->_trackingWasGood) {closeFailed++; continue;}
 
 
 		SE3 f2c_init = se3FromSim3(candidateToFrame_initialEstimateMap[candidate]).inverse();
 		f2c_init.so3() = disturbance * f2c_init.so3();
 		SE3 f2c = constraintSE3Tracker->trackFrameOnPermaref(newKeyFrame, candidate->frame(), f2c_init);
-		if(!constraintSE3Tracker->trackingWasGood) {closeFailed++; continue;}
+		if(!constraintSE3Tracker->_trackingWasGood) {closeFailed++; continue;}
 
 		if((f2c.so3() * c2f.so3()).log().norm() >= 0.09) {closeInconsistent++; continue;}
 
@@ -501,8 +512,8 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 
 	if(parent != 0 && forceParent)
 	{
-		KFConstraintStruct* e1=0;
-		KFConstraintStruct* e2=0;
+		KFConstraintStruct* e1=nullptr;
+		KFConstraintStruct* e2=nullptr;
 		testConstraint(
 				newKeyFrame,
 				parent, e1, e2,
@@ -510,7 +521,7 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 				100);
 		LOG_IF(DEBUG, Conf().print.constraintSearchInfo) << " PARENT (0)";
 
-		if(e1 != 0)
+		if(e1 != nullptr)
 		{
 			constraints.push_back(e1);
 			constraints.push_back(e2);
@@ -519,21 +530,25 @@ int ConstraintSearchThread::findConstraintsForNewKeyFrames(const KeyFrame::Share
 		{
 			float downweightFac = 5;
 			const float kernelDelta = 5 * sqrt(6000*loopclosureStrictness) / downweightFac;
-			LOG(WARNING) << "warning: reciprocal tracking on new frame failed badly, added odometry edge (Hacky).";
+            LOGF(WARNING,"warning: reciprocal tracking on new frame id %d parent keyFrame id %s failed badly, added odometry edge (Hacky).",
+                    newKeyFrame->id(),
+                    parent ? std::to_string(parent->id()).c_str() : "no parent keyframe");
+			
 
 			_system.poseConsistencyMutex.lock_shared();
 			constraints.push_back(new KFConstraintStruct());
 			constraints.back()->firstFrame = newKeyFrame;
 			constraints.back()->secondFrame = newKeyFrame->frame()->trackingParent();
 			constraints.back()->secondToFirst = constraints.back()->firstFrame->frame()->getCamToWorld().inverse() * constraints.back()->secondFrame->frame()->getCamToWorld();
-			constraints.back()->information  <<
-					0.8098,-0.1507,-0.0557, 0.1211, 0.7657, 0.0120, 0,
-					-0.1507, 2.1724,-0.1103,-1.9279,-0.1182, 0.1943, 0,
-					-0.0557,-0.1103, 0.2643,-0.0021,-0.0657,-0.0028, 0.0304,
-					 0.1211,-1.9279,-0.0021, 2.3110, 0.1039,-0.0934, 0.0005,
-					 0.7657,-0.1182,-0.0657, 0.1039, 1.0545, 0.0743,-0.0028,
-					 0.0120, 0.1943,-0.0028,-0.0934, 0.0743, 0.4511, 0,
-					0,0, 0.0304, 0.0005,-0.0028, 0, 0.0228;
+            //very strange-should be checked TODO::
+//			constraints.back()->information  <<
+//					0.8098,-0.1507,-0.0557, 0.1211, 0.7657, 0.0120, 0,
+//					-0.1507, 2.1724,-0.1103,-1.9279,-0.1182, 0.1943, 0,
+//					-0.0557,-0.1103, 0.2643,-0.0021,-0.0657,-0.0028, 0.0304,
+//					 0.1211,-1.9279,-0.0021, 2.3110, 0.1039,-0.0934, 0.0005,
+//					 0.7657,-0.1182,-0.0657, 0.1039, 1.0545, 0.0743,-0.0028,
+//					 0.0120, 0.1943,-0.0028,-0.0934, 0.0743, 0.4511, 0,
+//					0,0, 0.0304, 0.0005,-0.0028, 0, 0.0228;
 			constraints.back()->information *= (1e9/(downweightFac*downweightFac));
 
 			constraints.back()->robustKernel = new g2o::RobustKernelHuber();
@@ -592,13 +607,20 @@ float ConstraintSearchThread::tryTrackSim3(
 	float BtoA_meanPResidual = constraintTracker->lastPhotometricResidual;
 	float BtoA_usage = constraintTracker->pointUsage;
 
-
-	if (constraintTracker->diverged ||
+	if (constraintTracker->_diverged ||
 		BtoA.scale() > 1 / Sophus::SophusConstants<sophusType>::epsilon() ||
 		BtoA.scale() < Sophus::SophusConstants<sophusType>::epsilon() ||
 		BtoAInfo(0,0) == 0 ||
 		BtoAInfo(6,6) == 0)
 	{
+        LOGF(WARNING,"potential divergens occured fA id %d fB id %d constraintTracker->diverged %s BtoA.scale() %.5f ,BtoAInfo(0,0) %.5f,BtoAInfo(6,6) %.5f",
+                        kfA->id(),
+                        kfB->id(),
+                        constraintTracker->_diverged ? "true" : "false",
+                        BtoA.scale(),
+                        BtoAInfo(0,0),
+                        BtoAInfo(6,6)
+        );
 		return 1e20;
 	}
 
@@ -615,12 +637,20 @@ float ConstraintSearchThread::tryTrackSim3(
 	float AtoB_usage = constraintTracker->pointUsage;
 
 
-	if (constraintTracker->diverged ||
+	if (constraintTracker->_diverged ||
 		AtoB.scale() > 1 / Sophus::SophusConstants<sophusType>::epsilon() ||
 		AtoB.scale() < Sophus::SophusConstants<sophusType>::epsilon() ||
 		AtoBInfo(0,0) == 0 ||
 		AtoBInfo(6,6) == 0)
 	{
+        LOGF(WARNING,"potential divergens occured fA id %d fB id %d constraintTracker->diverged %s AtoB.scale() %.5f ,AtoBInfo(0,0) %.5f,AtoBInfo(6,6) %.5f",
+                        kfA->id(),
+                        kfB->id(),
+                        constraintTracker->_diverged ? "true" : "false",
+                        AtoB.scale(),
+                        AtoBInfo(0,0),
+                        AtoBInfo(6,6)
+        );
 		return 1e20;
 	}
 
@@ -633,7 +663,7 @@ float ConstraintSearchThread::tryTrackSim3(
 	float reciprocalConsistency = (diffHesse * diff).dot(diff);
 
 
-	if(e1 != 0 && e2 != 0)
+	if(e1 != nullptr && e2 != nullptr)
 	{
 		e1->firstFrame = kfA;
 		e1->secondFrame = kfB;
@@ -663,16 +693,53 @@ float ConstraintSearchThread::tryTrackSim3(
 void ConstraintSearchThread::testConstraint(
 		const KeyFrame::SharedPtr &keyframe,
 		const KeyFrame::SharedPtr &candidate,
-		KFConstraintStruct* e1_out, KFConstraintStruct* e2_out,
+		KFConstraintStruct*& e1_out, KFConstraintStruct*& e2_out,
 		Sim3 candidateToFrame_initialEstimate,
 		float strictness)
 {
 //	candidateTrackingReference->importFrame(candidate);
-
-	Sim3 FtoC = candidateToFrame_initialEstimate.inverse(), CtoF = candidateToFrame_initialEstimate;
+    float err_level3=0.0f,err_level2=0.0f,err_level1=0.0f;
+    struct local_logger
+    {
+        local_logger(std::function<void()> f)
+            : _log_f(f
+                //[&]()
+                //    {
+                //        (void)candidate;
+                //        (void)keyframe;
+                //        (void)err_level3;
+                //        (void)err_level2;
+                //        (void)err_level1;
+                //        //LOGF(WARNING,"%s frame id %d keyframe id %d err_level3=%.2f,err_level2=%.2f,err_level1=%.2f",__PRETTY_FUNCTION__,candidate->id(),keyframe->id(),err_level3,err_level2,err_level1);
+                //    }
+                )
+        {};
+        ~local_logger()
+        {
+            _log_f();
+        }
+        std::function<void()> _log_f;
+    } localLogger([&]()
+    {
+        (void)candidate;
+        (void)keyframe;
+        (void)err_level3;
+        (void)err_level2;
+        (void)err_level1;
+        LOGF(WARNING,"%s frame id %d keyframe id %d err_level3=%.2f,err_level2=%.2f,err_level1=%.2f constrain is %s",
+                    __PRETTY_FUNCTION__,
+                    candidate->id(),
+                    keyframe->id(),
+                    err_level3,
+                    err_level2,
+                    err_level1,
+                    (e1_out!=nullptr && e2_out!=nullptr) ? "good":"bad");
+    });
+	Sim3 FtoC = candidateToFrame_initialEstimate.inverse();
+    Sim3 CtoF = candidateToFrame_initialEstimate;
 	Matrix7x7 FtoCInfo, CtoFInfo;
-
-	float err_level3 = tryTrackSim3(keyframe, candidate,	// A = frame; b = candidate
+    
+	err_level3 = tryTrackSim3(keyframe, candidate,	// A = frame; b = candidate
 																	SIM3TRACKING_MAX_LEVEL-1, 3,
 																	USESSE,
 																	FtoC, CtoF);
@@ -685,13 +752,13 @@ void ConstraintSearchThread::testConstraint(
 		// 		3,
 		// 		sqrtf(err_level3));
 
-		e1_out = e2_out = 0;
+		e1_out = e2_out = nullptr;
 
 		keyframe->trackingFailed.insert(std::pair< KeyFrame::SharedPtr,Sim3>(candidate, candidateToFrame_initialEstimate));
 		return;
 	}
 
-	float err_level2 = tryTrackSim3(
+	err_level2 = tryTrackSim3(
 			keyframe, candidate,
 			2, 2,
 			USESSE,
@@ -705,7 +772,7 @@ void ConstraintSearchThread::testConstraint(
 		// 		2,
 		// 		sqrtf(err_level3), sqrtf(err_level2));
 
-		e1_out = e2_out = 0;
+		e1_out = e2_out = nullptr;
 		keyframe->trackingFailed.insert(std::pair<KeyFrame::SharedPtr,Sim3>(candidate, candidateToFrame_initialEstimate));
 		return;
 	}
@@ -714,7 +781,7 @@ void ConstraintSearchThread::testConstraint(
 	e2_out = new KFConstraintStruct();
 
 
-	float err_level1 = tryTrackSim3(
+	err_level1 = tryTrackSim3(
 			keyframe, candidate,
 			1, 1,
 			USESSE,
@@ -730,7 +797,7 @@ void ConstraintSearchThread::testConstraint(
 
 		delete e1_out;
 		delete e2_out;
-		e1_out = e2_out = 0;
+		e1_out = e2_out = nullptr;
 		keyframe->trackingFailed.insert(std::pair<KeyFrame::SharedPtr,Sim3>(candidate, candidateToFrame_initialEstimate));
 		return;
 	}

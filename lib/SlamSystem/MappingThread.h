@@ -73,10 +73,15 @@ public:
 	// Create subsequent keyframes by depth map propagation
 	void doCreateNewKeyFrame( const KeyFrame::SharedPtr &keyframe, const Frame::SharedPtr &frame )
 	{
-		if( _thread )
-			_thread->send( std::bind( &MappingThread::createNewKeyFrameImpl, this, keyframe, frame ));
+        auto thread=_thread;
+		if( thread )
+        {
+			thread->send( std::bind( &MappingThread::createNewKeyFrameImpl, this, keyframe, frame ));
+        }
 		else
+        {
 			createNewKeyFrameImpl( keyframe, frame );
+        }
 
 	}
 
@@ -111,7 +116,11 @@ private:
 	void debugDisplayDepthMap();
 
 
-	std::unique_ptr<active_object::Active> _thread;
+	std::shared_ptr<active_object::Active> _thread;
+public:
+    DepthMap::DisplayUpdateKeyFrameSignal   _depthMapDisplayUpdateKeyFrameSignal;
+    DepthMap::UpdateKeyFrameSignal          _depthMapUpdateKeyFrameSignal;
+    DepthMap::PlotDepthSignal               _depthMapPlotDepthSignal;
 
 };
 

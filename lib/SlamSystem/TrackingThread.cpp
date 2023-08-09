@@ -54,7 +54,10 @@
 #endif
 
 #include "opencv2/opencv.hpp"
-
+#include "util/SophusUtil.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/printf.h>
 using namespace lsd_slam;
 
 using active_object::Active;
@@ -82,6 +85,22 @@ TrackingThread::~TrackingThread()
 
 void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 {
+    try
+    {
+        trackSetImplInternal(set);
+    }
+    catch(const std::exception& ex)
+    {
+        LOGF(WARNING,"exception for frame %u:\n%s",set->id(),ex.what());
+    }
+    catch(...)
+    {
+        LOGF(WARNING,"unknown exception for frame %u",set->id());
+    }
+}
+
+void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set )
+{
 	if(!_trackingIsGood) {
 	        // Prod mapping to check the relocalizer
 
@@ -94,32 +113,58 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 
 	// DO TRACKING & Show tracking result.
 	LOG_IF(DEBUG, Conf().print.threadingInfo) << "TRACKING frame " << set->refFrame()->id() << " onto ref. " << _currentKeyFrame->id();
-
+    
+//    LOGF(WARNING,"tracking frame id %d _latestGoodPoseCamToWorld %s _currentKeyFrame->pose()->getCamToWorld() %s",
+//        set->refFrame()->id(),
+//        fmt::v7::sprintf("%s",_latestGoodPoseCamToWorld).c_str(),
+//        fmt::v7::sprintf("%s",_currentKeyFrame->pose()->getCamToWorld()).c_str());
 	SE3 frameToReference_initialEstimate =se3FromSim3(  _currentKeyFrame->pose()->getCamToWorld().inverse() * _latestGoodPoseCamToWorld);
-
+    LOG(WARNING)<< "tracking frame id " << set->refFrame()->id() 
+                << "\n _latestGoodPoseCamToWorld " << _latestGoodPoseCamToWorld 
+                << "\n_currentKeyFrame->pose()->getCamToWorld() "<< _currentKeyFrame->pose()->getCamToWorld()
+                << "\n_currentKeyFrame->pose()->getCamToWorld().inverse() " << _currentKeyFrame->pose()->getCamToWorld().inverse()
+                << "\nframeToReference_initialEstimate " << frameToReference_initialEstimate;
 	Timer timer;
 
-	LOG(DEBUG) << "Start tracking...";
+	LOGF(DEBUG, "Start tracking..._currentKeyFrame %d frame to track %d frameToReference_initialEstimate trans [%f %f %f] %f",
+            currentKeyFrame()->id(),
+            set->refFrame()->id(),
+            frameToReference_initialEstimate.translation()[0],
+            frameToReference_initialEstimate.translation()[1],
+            frameToReference_initialEstimate.translation()[2],
+            frameToReference_initialEstimate.translation().norm()
+            );
 	SE3 newRefToFrame_poseUpdate = _tracker->trackFrame( _currentKeyFrame,
 	                                                    set->refFrame(),
 	                                                    frameToReference_initialEstimate);
-
-	LOG(DEBUG) << "Done tracking, took " << timer.stop() * 1000 << " ms";
+    LOG(WARNING)<< " after tracking frame id " << set->refFrame()->id() 
+                << "\nnewRefToFrame_poseUpdate " << newRefToFrame_poseUpdate;
+                
+    LOGF(DEBUG, "Done tracking,took %.1f ms to track frame %d  to  %d newRefToFrame_poseUpdate trans [%f %f %f] norm %f",
+            timer.stop()*1000,
+            set->refFrame()->id(),
+            currentKeyFrame()->id(),
+            newRefToFrame_poseUpdate.translation()[0],
+            newRefToFrame_poseUpdate.translation()[1],
+            newRefToFrame_poseUpdate.translation()[2],
+            newRefToFrame_poseUpdate.translation().norm()
+            );
+	
 	_perf.track.update( timer );
 
 
 	tracking_lastResidual = _tracker->lastResidual;
 	tracking_lastUsage = _tracker->pointUsage;
 
-	if(manualTrackingLossIndicated || _tracker->diverged ||
-	        (_system.keyFrameGraph()->keyframesAll.size() > INITIALIZATION_PHASE_COUNT && !_tracker->trackingWasGood))
+	if(manualTrackingLossIndicated || _tracker->_diverged ||
+	        (_system.keyFrameGraph()->keyframesAll.size() > INITIALIZATION_PHASE_COUNT && !_tracker->_trackingWasGood))
 	{
 	        LOGF(WARNING, "TRACKING LOST for frame %d (%1.2f%% good Points, which is %1.2f%% of available points; %s tracking; tracker has %s)!\n",
 	                        set->refFrame()->id(),
 	                        100*_tracker->_pctGoodPerTotal,
 	                        100*_tracker->_pctGoodPerGoodBad,
-	                        _tracker->trackingWasGood ? "GOOD" : "BAD",
-	                        _tracker->diverged ? "DIVERGED" : "NOT DIVERGED");
+	                        _tracker->_trackingWasGood ? "GOOD" : "BAD",
+	                        _tracker->_diverged ? "DIVERGED" : "NOT DIVERGED");
 
 	        //_trackingReference->invalidate();
 	        setTrackingIsBad();
@@ -133,6 +178,10 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 
 	LOG_IF( DEBUG,  Conf().print.threadingInfo ) << "Publishing tracked frame";
 	_system.publishTrackedFrame(set->refFrame());
+    LOGF(WARNING,"tracking frame %d  with keyFrame %d quat norm %f",
+            set->id(),
+            (_currentKeyFrame!=nullptr ? _currentKeyFrame->id():-1),
+            sqrt(set->refFrame()->getCamToWorld().quaternion().squaredNorm()));
 	_system.publishPose(set->refFrame()->getCamToWorld().cast<float>());
 
 	// Keyframe selection
@@ -145,13 +194,20 @@ void TrackingThread::trackSetImpl( const std::shared_ptr<ImageSet> &set )
 	if( !_newKeyFramePending && _currentKeyFrame->numMappedOnThisTotal > MIN_NUM_MAPPED)
 	{
 	  Sophus::Vector3d dist = newRefToFrame_poseUpdate.translation() * _currentKeyFrame->frame()->meanIdepth;
-	  float minVal = fmin(0.2f + _system.keyFrameGraph()->size() * 0.8f / INITIALIZATION_PHASE_COUNT,1.0f);
+#if 0 //только для отладки алгоритма,потом надо вернуть назад так как непоянтна эфристикка выбора ключевого кадра
+	  float minVal = 0;
+#else//
+        float minVal = fmin(0.2f + _system.keyFrameGraph()->size() * 0.8f / INITIALIZATION_PHASE_COUNT,1.0f);
+#endif
 
-	  if(_system.keyFrameGraph()->size() < INITIALIZATION_PHASE_COUNT)	minVal *= 0.7;
+	  if(_system.keyFrameGraph()->size() < INITIALIZATION_PHASE_COUNT)
+      {
+        minVal *= 0.7;
+      }	
 
 	  lastTrackingClosenessScore = _system.trackableKeyFrameSearch()->getRefFrameScore(dist.dot(dist), _tracker->pointUsage);
 
-	  if (lastTrackingClosenessScore > minVal)
+	  if (lastTrackingClosenessScore > minVal || _currentKeyFrame->numMappedOnThisTotal > (MIN_NUM_MAPPED+1))
 	  {
 	    LOG(INFO) << "Telling mapping thread to make " << set->refFrame()->id() << " the new keyframe.";
 
@@ -205,7 +261,7 @@ void TrackingThread::takeRelocalizeResult( const RelocalizerResult &result  )
 			result.successfulFrame,
 			result.successfulFrameToKeyframe );
 
-	if(!_tracker->trackingWasGood || _tracker->lastGoodCount() / (_tracker->lastGoodCount()) < 1-0.75f*(1-MIN_GOODPERGOODBAD_PIXEL))
+	if(!_tracker->_trackingWasGood || _tracker->lastGoodCount() / (_tracker->lastGoodCount()) < 1-0.75f*(1-MIN_GOODPERGOODBAD_PIXEL))
 	{
 		LOG_IF(DEBUG, Conf().print.relocalizationInfo) << "RELOCALIZATION FAILED BADLY! discarding result.";
 		//_trackingReference->invalidate();

@@ -131,7 +131,7 @@ public:
 	inline const float* idepthVar_reAct();
 
 	inline bool* refPixelWasGood();
-	inline bool* refPixelWasGoodNoCreate();
+	inline const bool* refPixelWasGoodNoCreate();
 	inline void  clear_refPixelWasGood();
 
 	/** Flags for use with require() and requirePyramid(). See the Frame class
@@ -177,7 +177,8 @@ public:
 
 
 	// parent, the frame originally tracked on. never changes.
-	void setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) { _trackingParent = newParent; }
+	void setTrackingParent( const std::shared_ptr<KeyFrame> &newParent  ) ;
+
 	bool      hasTrackingParent() const     															{ return (bool)_trackingParent; }
 	const std::shared_ptr<KeyFrame> &trackingParent() const       				{ return _trackingParent; }
 
@@ -204,16 +205,16 @@ public:
 	// A bunch of state which is created by prepareForStereoWith()
 	int referenceID;
 	int referenceLevel;
-	float distSquared;
-	Eigen::Matrix3f K_otherToThis_R;
-	Eigen::Vector3f K_otherToThis_t;
-	Eigen::Vector3f otherToThis_t;
-	Eigen::Vector3f K_thisToOther_t;
-	Eigen::Matrix3f thisToOther_R;
-	Eigen::Vector3f otherToThis_R_row0;
-	Eigen::Vector3f otherToThis_R_row1;
-	Eigen::Vector3f otherToThis_R_row2;
-	Eigen::Vector3f thisToOther_t;
+	float _distSquared;
+	Eigen::Matrix3f _K_otherToThis_R;
+	Eigen::Vector3f _K_otherToThis_t;
+	Eigen::Vector3f _otherToThis_t;
+	Eigen::Vector3f _K_thisToOther_t;
+	Eigen::Matrix3f _thisToOther_R;
+	Eigen::Vector3f _otherToThis_R_row0;
+	Eigen::Vector3f _otherToThis_R_row1;
+	Eigen::Vector3f _otherToThis_R_row2;
+	Eigen::Vector3f _thisToOther_t;
 
 
 
@@ -349,15 +350,15 @@ inline bool* Frame::refPixelWasGood()
 			const int width = data.imgSize[SE3TRACKING_MIN_LEVEL].width;
 			const int height = data.imgSize[SE3TRACKING_MIN_LEVEL].height;
 			data.refPixelWasGood = (bool*)FrameMemory::getInstance().getBuffer(sizeof(bool) * width * height);
-
-			memset(data.refPixelWasGood, 0xFFFFFFFF, sizeof(bool) * (width * height));
+            /*on gcc 10.3 this tends to mess during tracking and abnormal tracking finished*/
+			memset(data.refPixelWasGood, (int)true/*0xFFFFFFFF*/, sizeof(bool) * (width * height));
 		}
 	}
 	return data.refPixelWasGood;
 }
 
 
-inline bool* Frame::refPixelWasGoodNoCreate()
+inline const bool* Frame::refPixelWasGoodNoCreate()
 {
 	return data.refPixelWasGood;
 }

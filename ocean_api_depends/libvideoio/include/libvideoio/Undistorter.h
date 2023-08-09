@@ -30,9 +30,9 @@
 
 #include "libvideoio/types/Camera.h"
 #include "libvideoio/types/ImageSize.h"
-
+#ifdef WITH_TINYXML
 #include <tinyxml2.h>
-
+#endif
 namespace libvideoio {
 
 class Undistorter
@@ -164,14 +164,14 @@ public:
   static Undistorter* getUndistorterFromFile(const std::string &configFilename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
 
 };
-
+#ifdef WITH_TINYXML
 // Each of these input files can be mapped to the OpenCV distortion model
 class PhotoscanXMLUndistorterFactory : public UndistorterFactory {
 public:
   static OpenCVUndistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
   static OpenCVUndistorter *loadFromXML( tinyxml2::XMLDocument &doc, const std::string&filename = "", const std::shared_ptr<Undistorter> & wrap  = nullptr );
 };
-
+#endif
 class PTAMUndistorterFactory : public UndistorterFactory {
 public:
   static OpenCVUndistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
@@ -180,7 +180,7 @@ public:
 
 class OpenCVUndistorterFactory : public UndistorterFactory {
 public:
-  static OpenCVUndistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
+  static Undistorter *loadFromFile( const std::string &filename, const std::shared_ptr<Undistorter> & wrap  = nullptr );
 };
 
 #ifdef HAS_YAML_CPP
@@ -321,12 +321,24 @@ public:
     if( _wrapped ) {
       _wrapped->undistort( image, intermediate );
     }
-
-    cv::Mat roi( intermediate, cv::Rect( _offsetX, _offsetY, _width, _height ) );
-    LOG(WARNING) << "Cropping to " << _width << " x " << _height;
+    if(image.cols> _width && image.rows>_height)
+    {
+        cv::Mat roi( intermediate, cv::Rect( _offsetX, _offsetY, _width, _height ) );
+        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
     // cv::imshow("roi",roi);
     // cv::waitKey(10);
-    result.assign( roi );
+        result.assign( roi );
+    }
+    else
+    {
+        cv::Mat copy;
+        cv::resize( intermediate,copy ,cv::Size(_width,_height),0.0,0.0,cv::INTER_LINEAR);
+        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
+    // cv::imshow("roi",roi);
+    // cv::waitKey(10);
+        result.assign( copy );
+    }
+    
   }
 
   /**

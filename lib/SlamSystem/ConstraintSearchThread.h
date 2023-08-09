@@ -28,8 +28,8 @@ public:
 		if( _thread ) _thread->send( std::bind( &ConstraintSearchThread::fullReconstraintSearchImpl, this )); }
 
 	// Note in non-threaded mode, this does nothing!
-	void doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe )
-	{ if( _thread ) _thread->send( std::bind( &ConstraintSearchThread::checkNewKeyFrameImpl, this, keyframe )); }
+	void doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe );
+	//{ if( _thread ) _thread->send( std::bind( &ConstraintSearchThread::checkNewKeyFrameImpl, this, keyframe )); }
 
 	ThreadSynchronizer fullReConstraintSearchComplete;
 
@@ -75,7 +75,7 @@ private:
 	void testConstraint(
 			const KeyFrame::SharedPtr &keyframe,
 			const KeyFrame::SharedPtr &candidate,
-			KFConstraintStruct* e1_out, KFConstraintStruct* e2_out,
+			KFConstraintStruct*& e1_out, KFConstraintStruct*& e2_out,
 			Sim3 candidateToFrame_initialEstimate,
 			float strictness);
 

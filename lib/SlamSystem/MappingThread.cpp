@@ -28,7 +28,19 @@ MappingThread::MappingThread( SlamSystem &system, bool threaded )
 
 MappingThread::~MappingThread()
 {
-	if( _thread ) delete _thread.release();
+    //{
+    //    decltype(_thread) threadLocal=_thread;
+    //    if(threadLocal && threadLocal->thd_.joinable())
+    //    {
+    //        threadLocal->thd_.join();
+    //    }
+    //}
+    _thread.reset();
+	//if( _thread ) 
+    //{
+    //    if
+    //    delete _thread.release()
+    //};
 //	unmappedTrackedFrames.clear();
 }
 
@@ -48,7 +60,7 @@ void MappingThread::mapSetImpl( const KeyFrame::SharedPtr &kf, const ImageSet::S
 
 void MappingThread::createFirstKeyFrame( const Frame::SharedPtr &frame )
 {
-	LOG(WARNING) << "Making " << frame->id() << " into new keyframe!";
+    LOGF(WARNING,"Making %d as first KeyFrame",frame->id());
 
 	KeyFrame::SharedPtr kf( KeyFrame::Create( frame ) );
 	_system.keyFrameGraph()->addKeyFrame( kf );
@@ -58,11 +70,23 @@ void MappingThread::createFirstKeyFrame( const Frame::SharedPtr &frame )
 
 void MappingThread::createNewKeyFrameImpl( const KeyFrame::SharedPtr &currentKeyFrame, const Frame::SharedPtr &frame )
 {
-	LOG(WARNING) << "Making " << frame->id() << " into new keyframe!";
+    LOGF(WARNING,"Making %d as new keyframe with current keyFrame %d", frame->id(),currentKeyFrame->id());
 
 	CHECK( frame->isTrackingParent( currentKeyFrame ) ) << "New keyframe does not track on current keyframe!";
 
 	KeyFrame::SharedPtr kf( KeyFrame::PropagateAndCreate( currentKeyFrame, frame ) );
+    if(!_depthMapUpdateKeyFrameSignal.empty())
+    {
+        kf->depthMap()->ConnectUpdateKeyFrameSignal([this](auto...args){this->_depthMapUpdateKeyFrameSignal(args...);});
+    }
+    if(!_depthMapDisplayUpdateKeyFrameSignal.empty())
+    {
+        kf->depthMap()->ConnectDisplayUpdateKeyFrameSignal([this](auto...args){this->_depthMapDisplayUpdateKeyFrameSignal(args...);});
+    }
+    if(!_depthMapPlotDepthSignal.empty())
+    {
+        kf->depthMap()->ConnectPlotDepthSignal([this](auto...args){this->_depthMapPlotDepthSignal(args...);});
+    }
 	_system.keyFrameGraph()->addKeyFrame( kf );
 	_system.trackingThread()->doUseNewKeyFrame( kf );
 	_system.constraintThread()->doCheckNewKeyFrame( kf );

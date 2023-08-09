@@ -29,7 +29,8 @@ using std::stringstream;
 #include "util/globalFuncs.h"
 #include "IOWrapper/ImageDisplay.h"
 #include "Tracking/LGSX.h"
-
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 namespace lsd_slam {
 
 
@@ -74,7 +75,7 @@ SE3Tracker::SE3Tracker(const ImageSize &sz )
 	iterationNumber = 0;
 	pointUsage = 0;
 
-	diverged = false;
+	_diverged = false;
 }
 
 SE3Tracker::~SE3Tracker()
@@ -148,9 +149,9 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 
 	affineEstimation_a = 1; affineEstimation_b = 0;
 
-	LGS6 ls;
-	diverged = false;
-	trackingWasGood = true;
+//	LGS6 ls;
+	_diverged = false;
+	_trackingWasGood = true;
 
 	callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, referenceToFrame, QUICK_KF_CHECK_LVL, false));
 	if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
@@ -161,8 +162,8 @@ SE3 SE3Tracker::trackFrameOnPermaref(
                 buf_warped_size,
                 (MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
                 );
-		diverged = true;
-		trackingWasGood = false;
+		_diverged = true;
+		_trackingWasGood = false;
 		return SE3();
 	}
 	if(useAffineLightningEstimation)
@@ -173,25 +174,27 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	float lastErr = callOptimized(calcWeightsAndResidual,(referenceToFrame));
 
 	float LM_lambda = settings.lambdaInitialTestTrack;
-
-	for(int iteration=0; iteration < settings.maxItsTestTrack; iteration++)
+    int iteration=0;
+	for(; iteration < settings.maxItsTestTrack; iteration++)
 	{
+        LGS6D ls;
 		callOptimized(calculateWarpUpdate,(ls));
 
 
 		int incTry=0;
-		while(true)
+		while(incTry<4)
 		{
 			// solve LS system with current lambda
-			Vector6 b = -ls.b;
-			Matrix6x6 A = ls.A;
+			Vector6 b = -ls.b.cast<float>().eval();
+			Matrix6x6 A = ls.A.cast<float>().eval();
 			for(int i=0;i<6;i++) A(i,i) *= 1+LM_lambda;
 			Vector6 inc = A.ldlt().solve(b);
 			incTry++;
 
 			// apply increment. pretty sure this way round is correct, but hard to test.
 			Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * referenceToFrame;
-
+            auto diff=S_im_o_3DiffNorm(new_referenceToFrame,referenceToFrame);
+            fmt::v7::print("diff {0} incTry {1} iteration {2} LM_lambda {3} inc {4}",diff,incTry,iteration,LM_lambda,inc);
 			// re-evaluate residual
 			callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, new_referenceToFrame, QUICK_KF_CHECK_LVL, false));
 			if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
@@ -201,8 +204,8 @@ SE3 SE3Tracker::trackFrameOnPermaref(
                     reference->id(),
                     buf_warped_size,
                     MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL));
-				diverged = true;
-				trackingWasGood = false;
+				_diverged = true;
+				_trackingWasGood = false;
 				return SE3();
 			}
 			float error = callOptimized(calcWeightsAndResidual,(new_referenceToFrame));
@@ -248,13 +251,13 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 			}
 		}
 	}
-
+    LOGF(WARNING,"%s iteration %d final lambda %f",__PRETTY_FUNCTION__,iteration,LM_lambda);
 	lastResidual = lastErr;
 
 	_pctGoodPerTotal = _lastGoodCount / (frame->width(QUICK_KF_CHECK_LVL)*frame->height(QUICK_KF_CHECK_LVL));
 	_pctGoodPerGoodBad = _lastGoodCount / (_lastGoodCount + _lastBadCount);
 
-	trackingWasGood = !diverged
+	_trackingWasGood = !_diverged
 			&& _pctGoodPerTotal > MIN_GOODPERALL_PIXEL
 			&& _pctGoodPerGoodBad > MIN_GOODPERGOODBAD_PIXEL;
 
@@ -275,8 +278,8 @@ SE3 SE3Tracker::trackFrame(
 	std::shared_ptr<TrackingReference> &reference( keyframe->trackingReference() );
 
 	auto lock = frame->getActiveLock();
-	diverged = false;
-	trackingWasGood = true;
+	_diverged = false;
+	_trackingWasGood = true;
 	affineEstimation_a = 1; affineEstimation_b = 0;
 
 	if(saveAllTrackingStages)
@@ -284,18 +287,20 @@ SE3 SE3Tracker::trackFrame(
 		saveAllTrackingStages = false;
 		saveAllTrackingStagesInternal = true;
 	}
-
+//TODO introduce signal for this
 	if (plotTrackingIterationInfo)
 	{
 		const float* frameImage = frame->image();
-		for (int row = 0; row < _imgSize.height; ++ row)
-			for (int col = 0; col < _imgSize.height; ++ col)
-				setPixelInCvMat(&_debugImages.debugImageSecondFrame,getGrayCvPixel(frameImage[col+row*_imgSize.width]), col, row, 1);
-	}
+        cv::Mat(_imgSize.height,_imgSize.width,CV_32FC1,const_cast<void*>(reinterpret_cast<const void*>(frameImage))).convertTo(_debugImages.debugImageSecondFrame,CV_8UC3);
+        //_debugImages.debugImageSecondFrame.co
+		//for (int row = 0; row < _imgSize.height; ++ row)
+		//	for (int col = 0; col < _imgSize.height; ++ col)
+		//		setPixelInCvMat(&_debugImages.debugImageSecondFrame,getGrayCvPixel(frameImage[col+row*_imgSize.width]), col, row, 1);
+	}//
 
 	// ============ track frame ============
 	Sophus::SE3f referenceToFrame = frameToReference_initialEstimate.inverse().cast<float>();
-	LGS6 ls;
+	//LGS6 ls;
 
 	int numCalcResidualCalls[PYRAMID_LEVELS];
 	int numCalcWarpUpdateCalls[PYRAMID_LEVELS];
@@ -310,8 +315,7 @@ SE3 SE3Tracker::trackFrame(
 		lowestLvl = lvl;
 
 		reference->makePointCloud(lvl);
-
-		LOG(INFO) << "Calculating initial residual on frame " << frame->id() << ", level " << lvl << " against reference frame " << reference->frameID() << " with " << reference->numData[lvl] << " points";
+        LOGF(INFO,"Calculating initial residual on frame %d , level %d against reference frame %d  with  points %d",frame->id(),lvl,reference->frameID(),reference->numData[lvl]);
 		callOptimized(calcResidualAndBuffers, (reference->posData[lvl],
 			reference->colorAndVarData[lvl],
 			SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : 0,
@@ -321,9 +325,15 @@ SE3 SE3Tracker::trackFrame(
 
 		if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>lvl)*(_imgSize.height>>lvl))
 		{
-			diverged = true;
-			trackingWasGood = false;
-			LOG(INFO) << "Diverged at level " << lvl << "!  Only " << buf_warped_size << " pixel to track.";
+			_diverged = true;
+			_trackingWasGood = false;
+            LOGF(WARNING,"Frame %d,keyframe %d Diverged at level %d!  Only %d (%.2f%%) pixel to track.",
+                frame->id(),
+                keyframe->id(),
+                lvl,
+                buf_warped_size,
+                buf_warped_size*100.0/((_imgSize.width>>lvl)*(_imgSize.height>>lvl))
+                );
 			return SE3();
 		}
 
@@ -337,29 +347,81 @@ SE3 SE3Tracker::trackFrame(
 		numCalcResidualCalls[lvl]++;
 
 		float LM_lambda = settings.lambdaInitial[lvl];
-
-		for(int iteration=0; iteration < settings.maxItsPerLvl[lvl]; iteration++)
+        float optimiz_diff=std::numeric_limits<float>::max();
+        size_t globalLSCallNum=0;
+		for(int iteration=0; iteration < settings.maxItsPerLvl[lvl] && (optimiz_diff>1e-5) ; iteration++)
 		{
-
+            LGS6D ls;
 			callOptimized(calculateWarpUpdate,(ls));
-
+            optimiz_diff=std::numeric_limits<float>::max();
 			numCalcWarpUpdateCalls[lvl]++;
 
 			iterationNumber = iteration;
 
 			int incTry=0;
-			while(true)
+            Sophus::SE3f prevStepReferenceToFrame = referenceToFrame;
+            //int prevErrorDrops=0;
+			while(optimiz_diff>1e-6)
 			{
 				// solve LS system with current lambda
-				Vector6 b = -ls.b;
-				Matrix6x6 A = ls.A;
-				for(int i=0;i<6;i++) A(i,i) *= 1+LM_lambda;
-				Vector6 inc = A.ldlt().solve(b);
+				Sophus::Vector6d b = -ls.b.cast<double>().eval();
+				/*Matrix6x6*/ auto A = ls.A.cast<double>().eval();
+                //if(lvl>=SE3TRACKING_MAX_LEVEL-2)
+                //{
+
+                
+                switch (globalLSCallNum % 2)
+                {
+                case 0:
+                    {
+                        //break;//
+                        A.row(2).setZero(); A.row(4).setZero(); A.row(5).setZero();
+                        A.col(2).setZero(); A.col(4).setZero(); A.col(5).setZero();
+                        //A.row(2)*=0.3; A.row(4)*=0.3; A.row(5)*=0.3;
+                        //A.col(2)*=0.3; A.col(4)*=0.3; A.col(5)*=0.3;
+                        //b.segment<1>(2).setZero();b.segment<2>(4).setZero();
+                        b(2)=b(4)=b(5)=0;
+                        //b(2)*=0.3;b(4)*=0.3;b(5)*=0.3;
+                    }
+                    break;
+                //case 1:
+                //    {
+                //        A.row(2)*=0.3;
+                //        A.col(2)*=0.3;//;.setZero();
+                //        b(2)*=0.3;
+                //    }
+                
+                default:
+                    break;
+                }
+                //}
+				for(int i=0; i< 6;i++) A(i,i) *= 1+LM_lambda;
+				/*Vector6*/ auto incd = (A.ldlt().solve(b)).eval();
+                //auto check_vec=((A*incd)-b).eval();
+                auto inc=incd.cast<float>().eval();
 				incTry++;
+                //inc(2)=0;
+                //inc.tail(2).setZero();
 
 				// apply increment. pretty sure this way round is correct, but hard to test.
 				//Sophus::SE3f exp_increment = Sophus::SE3f::exp((inc));
-				Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * referenceToFrame;
+				Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * prevStepReferenceToFrame;
+                //switch (globalLSCallNum % 2)
+                //{
+                //case 1:
+                //    break;
+                //default:
+                //    prevStepReferenceToFrame=new_referenceToFrame;
+                //    break;
+                //}
+                
+                /*{
+                    auto tr=new_referenceToFrame.translation();
+                    if((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0])))
+                    {
+                        raise(SIGTRAP);
+                    }
+                }*/
 				//Sophus::SE3f new_referenceToFrame = referenceToFrame * Sophus::SE3f::exp((inc));
 
 				// re-evaluate residual
@@ -369,21 +431,41 @@ SE3 SE3Tracker::trackFrame(
 
 				if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN* (_imgSize.width>>lvl)*(_imgSize.height>>lvl))
 				{
-					diverged = true;
-					trackingWasGood = false;
-					LOG(INFO) << "Diverged at level " << lvl << " on iteration " << iteration << "!  Only " << buf_warped_size << " pixels to track.";
+					_diverged = true;
+					_trackingWasGood = false;
+					//LOG(INFO) << "Diverged at level " << lvl << " on iteration " << iteration << "!  Only " << buf_warped_size << " pixels to track.";
+                    LOGF(WARNING,"Frame %d,keyframe %d Diverged at level %d iteration %d!  Only %d (%.2f%%) pixel to track.",
+                                frame->id(),
+                                keyframe->id(),
+                                lvl,
+                                iteration,
+                                buf_warped_size,
+                                buf_warped_size*100.0/((_imgSize.width>>lvl)*(_imgSize.height>>lvl))
+                                );
 					return SE3();
 				}
 
 				float error = callOptimized(calcWeightsAndResidual,(new_referenceToFrame));
+                auto diff=S_im_o_3DiffNorm(new_referenceToFrame,prevStepReferenceToFrame);
+                //if(incTry==1)
+                //{
+                //    
+                //}
+                
+                //fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {5} inc \n{6}\nreference to frame \n {7} \n",
+                //                    diff,   incTry, iteration,  lvl,    error,  LM_lambda,  inc,
+                //                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
 				numCalcResidualCalls[lvl]++;
-
+                bool canLimitIterBeSet=/*(lvl>=SE3TRACKING_MAX_LEVEL-2) ?*/ ((globalLSCallNum%2) ==1) /*: true*/;
+                //globalLSCallNum++;
 
 				// accept inc?
-				if(error < lastErr)
+				if(error < lastErr /*&& diff < optimiz_diff*/ && incTry>1)
 				{
+                    //prevErrorDrops++;
+                    optimiz_diff=diff;
 					// accept inc
-					referenceToFrame = new_referenceToFrame;
+					prevStepReferenceToFrame=new_referenceToFrame;
 					if(useAffineLightningEstimation)
 					{
 						affineEstimation_a = affineEstimation_a_lastIt;
@@ -395,26 +477,46 @@ SE3 SE3Tracker::trackFrame(
 							lvl,iteration, sqrt(inc.dot(inc)), LM_lambda, lastErr, error);
 
 					// converged?
-					if(error / lastErr > settings.convergenceEps[lvl])
+                    bool break_this_iter=false;
+					if((((error / lastErr) > settings.convergenceEps[lvl]) /*|| (prevErrorDrops>2)*/) && incTry>1)
 					{
+                        if(canLimitIterBeSet)
+                        {
+                            iteration = settings.maxItsPerLvl[lvl];
+                        }
 						LOGF_IF(DEBUG, Conf().print.trackingIterationInfo,"(%d-%d): FINISHED pyramid level (last residual reduction too small).",
 								lvl,iteration);
-						iteration = settings.maxItsPerLvl[lvl];
+						break_this_iter=true;
 					}
 
 					last_residual = lastErr = error;
 
 
-					if(LM_lambda <= 0.2)
-						LM_lambda = 0;
-					else
-						LM_lambda *= settings.lambdaSuccessFac;
-
-					break;
+					//if(LM_lambda <= 0.2)
+					//	LM_lambda = 0;
+					//else
+                    //if((globalLSCallNum-1)%2==1)
+                    {
+                        referenceToFrame = new_referenceToFrame;
+                        if(LM_lambda<0.01)
+                        {
+                            LM_lambda=0;
+                        }
+                        else
+                        {
+                            LM_lambda *= settings.lambdaSuccessFac;
+                        }
+                        if(break_this_iter)
+                        {
+                            break;
+                        }
+                        
+                    }
+					
 				}
 				else
 				{
-
+                    //prevErrorDrops=0;
 					LOGF_IF(DEBUG,Conf().print.trackingIterationInfo,"(%d-%d): REJECTED increment of %f with lambda %.1f, (residual: %f < %f).",
 							lvl,iteration, sqrt(inc.dot(inc)), LM_lambda, lastErr, error);
 
@@ -422,18 +524,30 @@ SE3 SE3Tracker::trackFrame(
 					{
 						LOGF_IF(DEBUG,Conf().print.trackingIterationInfo,"(%d-%d): FINISHED pyramid level (stepsize too small).",
 								lvl,iteration);
-
-						iteration = settings.maxItsPerLvl[lvl];
+                        if(canLimitIterBeSet)
+                        {
+						    iteration = settings.maxItsPerLvl[lvl];
+                        }
 						break;
 					}
+                    //if((globalLSCallNum-1) % 2 == 1)
+                    {
 
-					if(LM_lambda == 0)
-						LM_lambda = 0.2;
-					else
-						LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
+                    
+                        if(LM_lambda == 0)
+                        {
+					        LM_lambda = 0.01;
+                        }
+					    else
+                        {
+					        LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
+                        }
+                    }
+					
 				}
 			}
-		}
+            globalLSCallNum++;
+        }
 	}
 
 
@@ -464,14 +578,18 @@ SE3 SE3Tracker::trackFrame(
 	//LOG_IF(DEBUG, Conf().print.trackingIterationInfo ) << frame->width(SE3TRACKING_MIN_LEVEL) << " " << frame->height(SE3TRACKING_MIN_LEVEL);
 	//LOG_IF(DEBUG, Conf().print.trackingIterationInfo ) << _pctGoodPerTotal << " " << _pctGoodPerGoodBad;
 
-	trackingWasGood = !diverged
+	_trackingWasGood = !_diverged
 			&& _pctGoodPerTotal > MIN_GOODPERALL_PIXEL
 			&& _pctGoodPerGoodBad > MIN_GOODPERGOODBAD_PIXEL;
 
-	if(trackingWasGood) keyframe->numFramesTrackedOnThis++;
+	if(_trackingWasGood) 
+    {
+        keyframe->numFramesTrackedOnThis++;
+    }
 
 	frame->initialTrackedResidual = lastResidual / pointUsage;
-	frame->pose->thisToParent_raw = sim3FromSE3(toSophus(referenceToFrame.inverse()),1);
+	frame->pose->setThisToParent_raw( sim3FromSE3(toSophus(referenceToFrame.inverse()),1) );
+    //LOGF(WARNING,"pose setting for frame %d quat norm is %f ",frame->id(),sqrt(frame->pose->_thisToParent_raw.quaternion().squaredNorm()));
 	frame->setTrackingParent( keyframe );
 	return toSophus(referenceToFrame.inverse());
 }
@@ -528,7 +646,7 @@ void SE3Tracker::calcResidualAndBuffers_debugStart()
 	if(plotTrackingIterationInfo || saveAllTrackingStagesInternal)
 	{
 		int other = saveAllTrackingStagesInternal ? 255 : 0;
-		fillCvMat(&_debugImages.debugImageResiduals,cv::Vec3b(other,other,255));
+		fillCvMat(&_debugImages.debugImageResiduals,cv::Vec3b(255,112,0));
 		fillCvMat(&_debugImages.debugImageWeights,cv::Vec3b(other,other,255));
 		fillCvMat(&_debugImages.debugImageOldImageSource,cv::Vec3b(other,other,255));
 		fillCvMat(&_debugImages.debugImageOldImageWarped,cv::Vec3b(other,other,255));
@@ -539,11 +657,11 @@ void SE3Tracker::calcResidualAndBuffers_debugFinish(int w)
 {
 	if(plotTrackingIterationInfo)
 	{
-		Util::displayImage( "Weights", _debugImages.debugImageWeights );
-		Util::displayImage( "second_frame", _debugImages.debugImageSecondFrame );
-		Util::displayImage( "Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
-		Util::displayImage( "Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
-		Util::displayImage( "Residuals", _debugImages.debugImageResiduals );
+		Util::displayImage( "SE3Tracker Weights", _debugImages.debugImageWeights );
+		Util::displayImage( "SE3Tracker second_frame", _debugImages.debugImageSecondFrame );
+		Util::displayImage( "SE3Tracker Intensities of second_frame at transformed positions", _debugImages.debugImageOldImageSource );
+		Util::displayImage( "SE3Tracker Intensities of second_frame at pointcloud in first_frame", _debugImages.debugImageOldImageWarped );
+		Util::displayImage( "SE3Tracker Residuals", _debugImages.debugImageResiduals );
 	}
 
 	if(saveAllTrackingStagesInternal)
@@ -576,7 +694,10 @@ float SE3Tracker::calcResidualAndBuffers(
 {
 	calcResidualAndBuffers_debugStart();
 
-	if(plotResidual)	_debugImages.debugImageResiduals.setTo(0);
+	if(plotResidual)
+    {
+        _debugImages.debugImageResiduals.setTo(0);
+    }	
 
 
 	int w = frame->width(level);
@@ -589,7 +710,13 @@ float SE3Tracker::calcResidualAndBuffers(
 
 	Eigen::Matrix3f rotMat = referenceToFrame.rotationMatrix();
 	Eigen::Vector3f transVec = referenceToFrame.translation();
-
+    const auto& frameWorldTrans=frame->getCamToWorld().translation();
+    LOGF(INFO,"refframe %d frame translation \t[%f\t%f\t%f] toreference translation norm %f vec\t[%f\t%f\t%f]",
+        frame->id(),
+        frameWorldTrans[0],frameWorldTrans[1],frameWorldTrans[2],
+        transVec.norm(),
+        transVec[0],transVec[1],transVec[2]
+        );
 	const Eigen::Vector3f* refPoint_max = refPoint + refNum;
 
 
@@ -623,6 +750,7 @@ float SE3Tracker::calcResidualAndBuffers(
 		Eigen::Vector3f Wxp = rotMat * (*refPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
+        
 
 		// step 1a: coordinates have to be in image:
 		// (inverse test to exclude NANs)
@@ -640,18 +768,24 @@ float SE3Tracker::calcResidualAndBuffers(
 		float c1 = affineEstimation_a * (*refColVar)[0] + affineEstimation_b;
 		float c2 = resInterp[2];
 		float residual = c1 - c2;
-
-		float weight = fabsf(residual) < 5.0f ? 1 : 5.0f / fabsf(residual);
+        //TODO: introduce to settings
+        float absResidual=fabsf(residual);
+        [[maybe_unused]]
+        constexpr static const float  residualMaxError=5.f;
+		float weight = absResidual < residualMaxError ? 1 : residualMaxError / absResidual;
 		sxx += c1*c1*weight;
 		syy += c2*c2*weight;
 		sx += c1*weight;
 		sy += c2*weight;
 		sw += weight;
 
-		bool isGood = residual*residual / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1;
+		bool isGood = (residual*residual) / (MAX_DIFF_CONSTANT + MAX_DIFF_GRAD_MULT*(resInterp[0]*resInterp[0] + resInterp[1]*resInterp[1])) < 1.5;
 
-		if(isGoodOutBuffer != 0)
-			isGoodOutBuffer[*idxBuf] = isGood;
+		if(isGoodOutBuffer != nullptr)
+        {
+            isGoodOutBuffer[*idxBuf] = isGood;
+        }
+			
 
 		*(buf_warped_x+idx) = Wxp(0);
 		*(buf_warped_y+idx) = Wxp(1);
@@ -724,7 +858,7 @@ float SE3Tracker::calcResidualAndBuffers(
 
 
 void SE3Tracker::calculateWarpUpdate(
-		LGS6 &ls)
+		LGS6D &ls)
 {
 //	weightEstimator.reset();
 //	weightEstimator.estimateDistribution(buf_warped_residual, buf_warped_size);
@@ -744,19 +878,20 @@ void SE3Tracker::calculateWarpUpdate(
 		float z = 1.0f / pz;
 		float z_sqr = 1.0f / (pz*pz);
 		Vector6 v;
-		v[0] = z*gx + 0;
-		v[1] = 0 +         z*gy;
-		v[2] = (-px * z_sqr) * gx +
-			  (-py * z_sqr) * gy;
-		v[3] = (-px * py * z_sqr) * gx +
+		v[0] = z*gx     +   0   ;        //dS/dx
+		v[1] = 0        +   z*gy; //ds/dy
+		v[2] = (-px * z_sqr) * gx + //ds/dx^2+ds/dy^2
+			   (-py * z_sqr) * gy  ;
+		v[3] = (-px * py * z_sqr) * gx +        //ds/dxdy^2
 			  (-(1.0 + py * py * z_sqr)) * gy;
-		v[4] = (1.0 + px * px * z_sqr) * gx +
-			  (px * py * z_sqr) * gy;
-		v[5] = (-py * z) * gx +
-			  (px * z) * gy;
+		v[4] =  (px * py * z_sqr) * gy+         //ds/dydx^2
+                (1.0 + px * px * z_sqr) * gx 
+			  ;
+		v[5] = -(py * z) * gx +
+			    (px * z) * gy;
 
 		// step 6: integrate into A and b:
-		ls.update(v, r, *(buf_weight_p+i));
+		ls.update(v.cast<double>(), r, *(buf_weight_p+i));
 	}
 
 	// solve ls

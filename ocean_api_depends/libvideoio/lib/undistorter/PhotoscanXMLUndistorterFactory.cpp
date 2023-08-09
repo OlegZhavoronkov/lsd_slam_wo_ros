@@ -1,4 +1,5 @@
 
+#ifdef WITH_TINYXML
 #include "libvideoio/Undistorter.h"
 
 #include <tinyxml2.h>
@@ -166,3 +167,4 @@ namespace libvideoio
 
 
 }
+#endif

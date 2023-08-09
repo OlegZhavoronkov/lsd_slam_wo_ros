@@ -23,6 +23,14 @@
 #include "opencv2/opencv.hpp"
 #include "DataStructures/Frame.h"
 
+#if defined(__linux__) || defined(__unix__) || defined(__ANDROID__) || defined(_POSIX_VERSION)
+#include <signal.h>
+#define USE_SIGNAL
+#elif defined(WIN32) || defined(__WIN32__) || defined(__NT__)
+#include 
+#define USE_WIN
+#endif
+
 namespace lsd_slam
 {
 
@@ -161,4 +169,37 @@ cv::Mat getVarRedGreenPlot(const float* idepthVar, const float* gray, int width,
 	delete[] idepthVarExt;
 	return res;
 }
+
+template<> void DebugImage<float>(const std::string& debugMsg,const float* data,int height,int width)
+{
+    std::unique_ptr<float[]> pbuff(new float[width*height]);
+    memcpy(pbuff.get(),data,width*height*sizeof(float));
+    {
+
+    
+    //cv::Mat mat=cv::Mat::zeros(cv::Size(width,height),CV_32FC1,);// (height,width,CV_32F,(void*)reinterpret_cast<const void*>(data),);
+    cv::Mat mat(cv::Size(width,height),CV_32FC1,pbuff.get());// (height,width,CV_32F,(void*)reinterpret_cast<const void*>(data),);
+    //void* pData= mat.ptr(0);
+    
+    //memcpy(pData,data,width*height*2);
+    cv::Mat mat2;
+    mat.convertTo(mat2,CV_8UC1);
+    cv::imshow(debugMsg,mat2);
+    cv::waitKey(1);
+    }
+}
+
+}
+
+void debugBreakOnConditon(const std::string& msg,bool condition)
+{
+    if(!condition)
+    {
+        LOGF(WARNING,"condition \"%s\" doesn't met,breaking",msg.c_str());
+#ifdef USE_SIGNAL
+        raise(SIGTRAP);
+#elif USE_WIN
+        __debugbreak();
+#endif
+    }
 }

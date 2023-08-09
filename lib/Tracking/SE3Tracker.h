@@ -20,6 +20,7 @@
 
 #pragma once
 #include <opencv2/core/core.hpp>
+#include <boost/signals2.hpp>
 #include "util/DenseDepthTrackerSettings.h"
 #include "util/EigenCoreInclude.h"
 #include "util/SophusUtil.h"
@@ -97,8 +98,8 @@ public:
 	float affineEstimation_b;
 
 
-	bool diverged;
-	bool trackingWasGood;
+	bool _diverged;
+	bool _trackingWasGood;
 private:
 
 	float _lastGoodCount;
@@ -122,7 +123,7 @@ private:
 	SE3TrackerDebugImages _debugImages;
 
 
-	void calculateWarpUpdate(LGS6 &ls);
+	void calculateWarpUpdate(LGS6D &ls);
 
 	float calcWeightsAndResidual(	const Sophus::SE3f& referenceToFrame);
 
@@ -175,7 +176,10 @@ private:
 
 	float affineEstimation_a_lastIt;
 	float affineEstimation_b_lastIt;
-
+public:
+    using OnCalcResidualStarted=boost::signals2::signal<void(cv::Mat* /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
+    using OnCalcResidualFinished=boost::signals2::signal<void(cv::Mat* /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
+    using OnCalcResidualErrorCalculated=boost::signals2::signal<void(double /*error*/,int /*lvl*/,int /*iter*/)>;
 };
 
 
