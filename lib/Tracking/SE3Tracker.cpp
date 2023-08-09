@@ -291,10 +291,12 @@ SE3 SE3Tracker::trackFrame(
 	if (plotTrackingIterationInfo)
 	{
 		const float* frameImage = frame->image();
-		for (int row = 0; row < _imgSize.height; ++ row)
-			for (int col = 0; col < _imgSize.height; ++ col)
-				setPixelInCvMat(&_debugImages.debugImageSecondFrame,getGrayCvPixel(frameImage[col+row*_imgSize.width]), col, row, 1);
-	}
+        cv::Mat(_imgSize.height,_imgSize.width,CV_32FC1,const_cast<void*>(reinterpret_cast<const void*>(frameImage))).convertTo(_debugImages.debugImageSecondFrame,CV_8UC3);
+        //_debugImages.debugImageSecondFrame.co
+		//for (int row = 0; row < _imgSize.height; ++ row)
+		//	for (int col = 0; col < _imgSize.height; ++ col)
+		//		setPixelInCvMat(&_debugImages.debugImageSecondFrame,getGrayCvPixel(frameImage[col+row*_imgSize.width]), col, row, 1);
+	}//
 
 	// ============ track frame ============
 	Sophus::SE3f referenceToFrame = frameToReference_initialEstimate.inverse().cast<float>();
@@ -346,33 +348,73 @@ SE3 SE3Tracker::trackFrame(
 
 		float LM_lambda = settings.lambdaInitial[lvl];
         float optimiz_diff=std::numeric_limits<float>::max();
+        size_t globalLSCallNum=0;
 		for(int iteration=0; iteration < settings.maxItsPerLvl[lvl] && (optimiz_diff>1e-5) ; iteration++)
 		{
             LGS6D ls;
 			callOptimized(calculateWarpUpdate,(ls));
-
+            optimiz_diff=std::numeric_limits<float>::max();
 			numCalcWarpUpdateCalls[lvl]++;
 
 			iterationNumber = iteration;
 
 			int incTry=0;
+            Sophus::SE3f prevStepReferenceToFrame = referenceToFrame;
+            //int prevErrorDrops=0;
 			while(optimiz_diff>1e-6)
 			{
 				// solve LS system with current lambda
-				/*Vector6*/ auto b = -ls.b.cast<double>().eval();
+				Sophus::Vector6d b = -ls.b.cast<double>().eval();
 				/*Matrix6x6*/ auto A = ls.A.cast<double>().eval();
+                if(lvl>=SE3TRACKING_MAX_LEVEL-2)
+                {
+
+                
+                switch (globalLSCallNum % 2)
+                {
+                case 0:
+                    {
+                        //break;//
+                        A.row(2).setZero(); A.row(4).setZero(); A.row(5).setZero();
+                        A.col(2).setZero(); A.col(4).setZero(); A.col(5).setZero();
+                        //A.row(2)*=0.3; A.row(4)*=0.3; A.row(5)*=0.3;
+                        //A.col(2)*=0.3; A.col(4)*=0.3; A.col(5)*=0.3;
+                        //b.segment<1>(2).setZero();b.segment<2>(4).setZero();
+                        b(2)=b(4)=b(5)=0;
+                        //b(2)*=0.3;b(4)*=0.3;b(5)*=0.3;
+                    }
+                    break;
+                //case 1:
+                //    {
+                //        A.row(2)*=0.3;
+                //        A.col(2)*=0.3;//;.setZero();
+                //        b(2)*=0.3;
+                //    }
+                
+                default:
+                    break;
+                }
+                }
 				for(int i=0; i< 6;i++) A(i,i) *= 1+LM_lambda;
 				/*Vector6*/ auto incd = (A.ldlt().solve(b)).eval();
-                auto check_vec=(A*incd-b).eval();
+                //auto check_vec=((A*incd)-b).eval();
                 auto inc=incd.cast<float>().eval();
 				incTry++;
+                //inc(2)=0;
+                //inc.tail(2).setZero();
 
 				// apply increment. pretty sure this way round is correct, but hard to test.
 				//Sophus::SE3f exp_increment = Sophus::SE3f::exp((inc));
-				Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * referenceToFrame;
-                auto diff=S_im_o_3DiffNorm(new_referenceToFrame,referenceToFrame);
-                fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {7} inc \n{5}\nreference to frame \n {6} \ncheck_vec {7}\n",diff,incTry,iteration,lvl,lastErr,inc,
-                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame),LM_lambda,check_vec);
+				Sophus::SE3f new_referenceToFrame = Sophus::SE3f::exp((inc)) * prevStepReferenceToFrame;
+                //switch (globalLSCallNum % 2)
+                //{
+                //case 1:
+                //    break;
+                //default:
+                //    prevStepReferenceToFrame=new_referenceToFrame;
+                //    break;
+                //}
+                
                 /*{
                     auto tr=new_referenceToFrame.translation();
                     if((abs(tr[2]) > 2*abs(tr[1])) && (abs(tr[2]) > 2*abs(tr[0])))
@@ -404,15 +446,26 @@ SE3 SE3Tracker::trackFrame(
 				}
 
 				float error = callOptimized(calcWeightsAndResidual,(new_referenceToFrame));
+                auto diff=S_im_o_3DiffNorm(new_referenceToFrame,prevStepReferenceToFrame);
+                //if(incTry==1)
+                //{
+                //    
+                //}
+                
+                fmt::v7::print("diff {0} incTry {1} iteration {2} lvl {3} error {4} lambda {5} inc \n{6}\nreference to frame \n {7} \n",
+                                    diff,   incTry, iteration,  lvl,    error,  LM_lambda,  inc,
+                                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
 				numCalcResidualCalls[lvl]++;
-
+                bool canLimitIterBeSet=(lvl>=SE3TRACKING_MAX_LEVEL-2) ? ((globalLSCallNum%2) ==1) : true;
+                //globalLSCallNum++;
 
 				// accept inc?
-				if(error < lastErr && diff < optimiz_diff)
+				if(error < lastErr /*&& diff < optimiz_diff*/ && incTry>1)
 				{
+                    //prevErrorDrops++;
                     optimiz_diff=diff;
 					// accept inc
-					referenceToFrame = new_referenceToFrame;
+					prevStepReferenceToFrame=new_referenceToFrame;
 					if(useAffineLightningEstimation)
 					{
 						affineEstimation_a = affineEstimation_a_lastIt;
@@ -424,11 +477,16 @@ SE3 SE3Tracker::trackFrame(
 							lvl,iteration, sqrt(inc.dot(inc)), LM_lambda, lastErr, error);
 
 					// converged?
-					if(error / lastErr > settings.convergenceEps[lvl])
+                    bool break_this_iter=false;
+					if((((error / lastErr) > settings.convergenceEps[lvl]) /*|| (prevErrorDrops>2)*/) && incTry>1)
 					{
+                        if(canLimitIterBeSet)
+                        {
+                            iteration = settings.maxItsPerLvl[lvl];
+                        }
 						LOGF_IF(DEBUG, Conf().print.trackingIterationInfo,"(%d-%d): FINISHED pyramid level (last residual reduction too small).",
 								lvl,iteration);
-						iteration = settings.maxItsPerLvl[lvl];
+						break_this_iter=true;
 					}
 
 					last_residual = lastErr = error;
@@ -437,13 +495,21 @@ SE3 SE3Tracker::trackFrame(
 					//if(LM_lambda <= 0.2)
 					//	LM_lambda = 0;
 					//else
-						LM_lambda *= settings.lambdaSuccessFac;
-
-					break;
+                    //if((globalLSCallNum-1)%2==1)
+                    {
+                        referenceToFrame = new_referenceToFrame;
+                        LM_lambda *= settings.lambdaSuccessFac;
+                        if(break_this_iter)
+                        {
+                            break;
+                        }
+                        
+                    }
+					
 				}
 				else
 				{
-
+                    //prevErrorDrops=0;
 					LOGF_IF(DEBUG,Conf().print.trackingIterationInfo,"(%d-%d): REJECTED increment of %f with lambda %.1f, (residual: %f < %f).",
 							lvl,iteration, sqrt(inc.dot(inc)), LM_lambda, lastErr, error);
 
@@ -451,24 +517,30 @@ SE3 SE3Tracker::trackFrame(
 					{
 						LOGF_IF(DEBUG,Conf().print.trackingIterationInfo,"(%d-%d): FINISHED pyramid level (stepsize too small).",
 								lvl,iteration);
-
-						iteration = settings.maxItsPerLvl[lvl];
+                        if(canLimitIterBeSet)
+                        {
+						    iteration = settings.maxItsPerLvl[lvl];
+                        }
 						break;
 					}
-                    
-                    if(LM_lambda == 0)
+                    //if((globalLSCallNum-1) % 2 == 1)
                     {
-					    LM_lambda = 0.01;
-                    }
-					else
-                    {
-					    LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
-                    }
+
                     
+                        if(LM_lambda == 0)
+                        {
+					        LM_lambda = 0.01;
+                        }
+					    else
+                        {
+					        LM_lambda *= std::pow(settings.lambdaFailFac, incTry);
+                        }
+                    }
 					
 				}
 			}
-		}
+            globalLSCallNum++;
+        }
 	}
 
 
@@ -567,7 +639,7 @@ void SE3Tracker::calcResidualAndBuffers_debugStart()
 	if(plotTrackingIterationInfo || saveAllTrackingStagesInternal)
 	{
 		int other = saveAllTrackingStagesInternal ? 255 : 0;
-		fillCvMat(&_debugImages.debugImageResiduals,cv::Vec3b(other,other,255));
+		fillCvMat(&_debugImages.debugImageResiduals,cv::Vec3b(255,112,0));
 		fillCvMat(&_debugImages.debugImageWeights,cv::Vec3b(other,other,255));
 		fillCvMat(&_debugImages.debugImageOldImageSource,cv::Vec3b(other,other,255));
 		fillCvMat(&_debugImages.debugImageOldImageWarped,cv::Vec3b(other,other,255));
@@ -689,8 +761,11 @@ float SE3Tracker::calcResidualAndBuffers(
 		float c1 = affineEstimation_a * (*refColVar)[0] + affineEstimation_b;
 		float c2 = resInterp[2];
 		float residual = c1 - c2;
-
-		float weight = fabsf(residual) < 5.0f ? 1 : 5.0f / fabsf(residual);
+        //TODO: introduce to settings
+        float absResidual=fabsf(residual);
+        [[maybe_unused]]
+        constexpr static const float  residualMaxError=5.f;
+		float weight = absResidual < residualMaxError ? 1 : residualMaxError / absResidual;
 		sxx += c1*c1*weight;
 		syy += c2*c2*weight;
 		sx += c1*weight;
@@ -796,16 +871,17 @@ void SE3Tracker::calculateWarpUpdate(
 		float z = 1.0f / pz;
 		float z_sqr = 1.0f / (pz*pz);
 		Vector6 v;
-		v[0] = z*gx + 0;
-		v[1] = 0 +         z*gy;
-		v[2] = (-px * z_sqr) * gx +
-			  (-py * z_sqr) * gy;
-		v[3] = (-px * py * z_sqr) * gx +
+		v[0] = z*gx     +   0   ;        //dS/dx
+		v[1] = 0        +   z*gy; //ds/dy
+		v[2] = (-px * z_sqr) * gx + //ds/dx^2+ds/dy^2
+			   (-py * z_sqr) * gy  ;
+		v[3] = (-px * py * z_sqr) * gx +        //ds/dxdy^2
 			  (-(1.0 + py * py * z_sqr)) * gy;
-		v[4] = (1.0 + px * px * z_sqr) * gx +
-			  (px * py * z_sqr) * gy;
-		v[5] = (-py * z) * gx +
-			  (px * z) * gy;
+		v[4] =  (px * py * z_sqr) * gy+         //ds/dydx^2
+                (1.0 + px * px * z_sqr) * gx 
+			  ;
+		v[5] = -(py * z) * gx +
+			    (px * z) * gy;
 
 		// step 6: integrate into A and b:
 		ls.update(v.cast<double>(), r, *(buf_weight_p+i));

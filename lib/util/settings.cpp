@@ -58,8 +58,9 @@ bool plotTracking = false;
 
 float KFUsageWeight = 2;
 float KFDistWeight = 3;
-
-float minUseGrad = 5;
+//minimum value for grad to be used in optimization
+//TODO:should be introduced in settings
+float minUseGrad = 1.5;
 float cameraPixelNoise2 = 4*4;
 float depthSmoothingFactor = 1;
 
