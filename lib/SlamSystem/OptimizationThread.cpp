@@ -18,14 +18,17 @@ const auto optimizationDt = std::chrono::milliseconds(2000);
 OptimizationThread::OptimizationThread( SlamSystem &system, bool threaded )
 	: //_haveUnmergedOptimizationOffset( false ),
 		_system( system ),
-		_thread( threaded ? ActiveIdle::createActiveIdle( std::bind( &OptimizationThread::idleImpl, this ), optimizationDt ) : NULL  )
+		_thread( threaded ? ActiveIdle::createActiveIdle( std::bind( &OptimizationThread::idleImpl, this ), optimizationDt ).release() : NULL  )
 {
 	LOG(INFO) << "Started optimization thread";
 }
 
 OptimizationThread::~OptimizationThread()
 {
-	if( _thread ) delete _thread.release();
+	if( _thread ) 
+    {
+        _thread.reset();
+    }
 	LOG(INFO) << "Exited optimization thread";
 }
 
@@ -48,6 +51,33 @@ void OptimizationThread::newConstraintImpl( void )
 
 	//!!TODO.  Why does this happen in mapThread?
 	while(optimizationIteration(5, 0.02)) { ; } //_system._mapThread->doMergeOptimizationUpdate(); }
+}
+
+void OptimizationThread::doFinalOptimization( void )
+{ 
+    finalOptimizationComplete.reset();
+    auto thread= _thread;
+	if( thread ) 
+    {
+        _thread->send( std::bind(&OptimizationThread::finalOptimizationImpl, this) ); 
+    }
+    else
+    {
+        finalOptimizationImpl();
+    }
+}
+
+void OptimizationThread::doNewConstraint( void )
+{
+    auto thread = _thread;
+    if( thread ) 
+    {
+        _thread->send( std::bind(&OptimizationThread::newConstraintImpl, this) ); 
+    }
+    else
+    {
+        newConstraintImpl();
+    }
 }
 
 void OptimizationThread::finalOptimizationImpl( void )
