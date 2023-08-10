@@ -73,6 +73,15 @@ SlamSystem::SlamSystem( )
                                                                                                     Frame::SharedPtr{},
                                                                             args...);});
     }
+    if(plotTrackingIterationInfo)
+    {
+        _pSE3TrackerDebugImages.reset(new SE3TrackerDebugImages(Conf().slamImageSize));
+        //TrackingThread::Connect(*_trackingThread,&TrackingThread::_OnCalcResidualErrorCalculatedSignal,[](auto...){},&_trackingThread->_onSignalConnected);
+        TrackingThread::Connect(*_trackingThread,&TrackingThread::_OnCalcResidualStartedSignal,std::bind_front(&SlamSystem::OnSe3TrackerStarted,this),&_trackingThread->_onSignalConnected);
+        TrackingThread::Connect(*_trackingThread,&TrackingThread::_OnCalcResidualFinishedSignal,std::bind_front(&SlamSystem::OnSe3TrackerFinished,this),&_trackingThread->_onSignalConnected);
+        TrackingThread::Connect(*_trackingThread,&TrackingThread::_OnCalcResidualAndBuffersDebugStart,std::bind_front(&SlamSystem::OnSe3TrackerCalcResidualAndBuffersDebugStart,this),&_trackingThread->_onSignalConnected);
+        TrackingThread::Connect(*_trackingThread,&TrackingThread::_OnCalcResidualAndBuffersDebugFinish ,std::bind_front(&SlamSystem::OnSe3TrackerCalcResidualAndBuffersDebugFinish,this),&_trackingThread->_onSignalConnected);
+    }
 	timeLastUpdate.start();
 
 }
@@ -307,4 +316,65 @@ void SlamSystem::publishCurrentKeyframe( )
 	} else {
 		LOG(DEBUG) << "No currentKeyframe, unable to publish";
 	}
+}
+
+
+void SlamSystem::OnSe3TrackerStarted(cv::Mat*& pMatOutput,const cv::Size& sz,std::recursive_mutex& mtx)
+{
+    LOGF(WARNING,"cv::Mat* pMatOutput %p,const cv::Size& [%d %d],std::recursive_mutex& mtx %p",(void*)pMatOutput,sz.width,sz.height,(void*)&mtx);
+    std::scoped_lock lock(mtx);
+    if(pMatOutput==nullptr)
+    {
+        pMatOutput=new cv::Mat(sz,CV_8UC3,{0,0,0});
+    }
+}
+
+void SlamSystem::OnSe3TrackerFinished(cv::Mat*& pMatOutput,std::recursive_mutex& mtx)
+{
+    LOGF(WARNING,"cv::Mat* pMatOutput %p,std::recursive_mutex& mtx %p",(void*)pMatOutput,(void*)&mtx);
+    std::scoped_lock lock(mtx);
+    if(pMatOutput!=nullptr)
+    {
+        delete pMatOutput;
+        pMatOutput=nullptr;
+    }
+}
+
+void SlamSystem::OnSe3TrackerCalcResidualAndBuffersDebugStart(  const cv::Size& sz,   std::mutex& mtx,
+                                                        cv::Mat*&  pDebugImageOldImageSource,   cv::Mat*&  pDebugImageOldImageWarped,   
+                                                        cv::Mat*&  pDebugImageResiduals       )
+{
+    auto pSE3TrackerDebugImages=_pSE3TrackerDebugImages;
+    if(!pSE3TrackerDebugImages)
+    {
+        return;
+    }
+    std::scoped_lock lock(pSE3TrackerDebugImages->_mtx);
+    if(pDebugImageOldImageSource!=nullptr|| pDebugImageOldImageWarped!=nullptr || pDebugImageResiduals!=nullptr)
+    {
+        return;
+    }
+    if(sz.width!= pSE3TrackerDebugImages->_lastSize.width && sz.height!= pSE3TrackerDebugImages->_lastSize.height)
+    {
+        pSE3TrackerDebugImages.reset(new SE3TrackerDebugImages(sz));
+        _pSE3TrackerDebugImages=pSE3TrackerDebugImages;
+    }
+    pDebugImageOldImageSource=  & _pSE3TrackerDebugImages->_debugImageOldImageSource;
+    pDebugImageOldImageWarped=  & _pSE3TrackerDebugImages->_debugImageOldImageWarped;
+    pDebugImageResiduals=       & _pSE3TrackerDebugImages->_debugImageResiduals;
+}
+
+void SlamSystem::OnSe3TrackerCalcResidualAndBuffersDebugFinish( int     w                   ,
+                                                        int     loop                ,
+                                                        int     buf_warped_size     ,
+                                                        int     goodCount           ,
+                                                        int     badCount            ,
+                                                        float   ratio               )
+{
+    auto pSE3TrackerDebugImages=_pSE3TrackerDebugImages;
+    if(!pSE3TrackerDebugImages)
+    {
+        return;
+    }
+    pSE3TrackerDebugImages->calcResidualAndBuffers_debugFinish(w,loop,buf_warped_size,goodCount,badCount,ratio);
 }

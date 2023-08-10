@@ -60,7 +60,7 @@ float KFUsageWeight = 2;
 float KFDistWeight = 3;
 //minimum value for grad to be used in optimization
 //TODO:should be introduced in settings
-float minUseGrad = 2;
+float minUseGrad = 1;
 //dont know what is for,but if setted to zero trajecctory fails
 //TODO:should be introduced in settings
 float cameraPixelNoise2 = 4*4;

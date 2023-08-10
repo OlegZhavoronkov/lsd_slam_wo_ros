@@ -27,7 +27,7 @@
 #include "DataStructures/ImageSet.h"
 #include "Tracking/Relocalizer.h"
 #include "util/MovingAverage.h"
-
+#include "util/SE3TrackerSignals.h"
 namespace lsd_slam
 {
 
@@ -37,7 +37,8 @@ class SE3Tracker;
 
 typedef Eigen::Matrix<float, 7, 7> Matrix7x7;
 
-class TrackingThread {
+class TrackingThread :public util::SE3TrackerSignals
+{
 friend class IntegrationTest;
 public:
 
@@ -214,8 +215,18 @@ private:
 
 	//void optimizationThreadLoop();
 
+public:
+    OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
+    OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
+    OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
 
+    OnCalcResidualAndBuffersDebugStart  _OnCalcResidualAndBuffersDebugStart;
+    OnCalcResidualAndBuffersDebugFinish _OnCalcResidualAndBuffersDebugFinish;
 
+    OnSignalConnectedType               _onSignalConnected;
+private:
+    //util::SE3TrackerSignals::OnSignalConnectedType _onSignalConnected;
+    void OnSignalConnectedHandler(const util::SE3TrackerSignals* pSignals,const boost::signals2::signal_base*,bool connected);
 };
 
 }
