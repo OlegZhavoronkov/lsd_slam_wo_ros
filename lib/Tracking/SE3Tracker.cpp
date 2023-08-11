@@ -466,7 +466,7 @@ SE3 SE3Tracker::trackFrame(
                 {
                     _OnTrackingFinishedDisplayResiduals(    error,
                                                             new_referenceToFrame,
-                                                            se3FromSim3(frame->getCamToWorld()).cast<float>(),
+                                                            se3FromSim3(keyframe->getCamToWorld()).cast<float>(),
                                                             ([&]()->auto
                                                             {
                                                                 return std::vector<int>(numCalcResidualCalls,numCalcResidualCalls+PYRAMID_LEVELS);
@@ -572,7 +572,7 @@ SE3 SE3Tracker::trackFrame(
     {
         _OnTrackingFinishedDisplayResiduals(    last_residual,
                                                 referenceToFrame,
-                                                se3FromSim3(frame->getCamToWorld()).cast<float>(),
+                                                se3FromSim3(keyframe->getCamToWorld()).cast<float>(),
                                                 ([&]()->auto
                                                 {
                                                     return std::vector<int>(numCalcResidualCalls,numCalcResidualCalls+PYRAMID_LEVELS);
