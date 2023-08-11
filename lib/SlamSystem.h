@@ -150,8 +150,8 @@ private:
     std::unique_ptr<DepthMapDebugImages> _pDepthMapDebugImages;
     std::shared_ptr<SE3TrackerDebugImages> _pSE3TrackerDebugImages;
 private://signals
-    void OnSe3TrackerStarted(cv::Mat*& pMatOutput,const cv::Size&,std::recursive_mutex& mtx);
-    void OnSe3TrackerFinished(cv::Mat*& pMatOutput,std::recursive_mutex& mtx);
+    //void OnSe3TrackerStarted(cv::Mat*& pMatOutput,const cv::Size&,std::recursive_mutex& mtx);
+    //void OnSe3TrackerFinished(cv::Mat*& pMatOutput,std::recursive_mutex& mtx);
     void OnSe3TrackerCalcResidualAndBuffersDebugStart(  const cv::Size& sz,   std::mutex& mtx,
                                                         cv::Mat*&  pDebugImageOldImageSource,   cv::Mat*&  pDebugImageOldImageWarped,   
                                                         cv::Mat*&  pdebugImageResiduals       );
@@ -161,6 +161,8 @@ private://signals
                                                         int     goodCount           ,
                                                         int     badCount            ,
                                                         float   ratio               );
+    void OnSe3TrackerSetSecondFrame(const cv::Size& sz,const float* secondFrame,int id,int key_id);
+    void OnSe3TrackingFinishedDisplayResiduals(float residual,Sophus::SE3f refToFrame,Sophus::SE3f keyToWorld,const std::vector<int>& iterations);
 };
 
 }

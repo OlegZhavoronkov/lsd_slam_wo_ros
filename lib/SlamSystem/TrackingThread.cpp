@@ -67,12 +67,13 @@ void TrackingThread::OnSignalConnectedHandler(const util::SE3TrackerSignals* pSi
     util::SE3TrackerSignals* pThisRoot=static_cast<util::SE3TrackerSignals*>(this);
     if(pThisRoot==pSignals && connected)
     {
-        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualErrorCalculatedSignal,pToSignal,*_tracker)
-        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualFinishedSignal,pToSignal,*_tracker)
-        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualStartedSignal,pToSignal,*_tracker)
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualErrorCalculatedSignal,pToSignal,*_tracker)
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualFinishedSignal,pToSignal,*_tracker)
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualStartedSignal,pToSignal,*_tracker)
         CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualAndBuffersDebugStart,pToSignal,*_tracker)
         CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualAndBuffersDebugFinish,pToSignal,*_tracker)
-
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnSetSecondFrame,pToSignal,*_tracker)
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnTrackingFinishedDisplayResiduals,pToSignal,*_tracker)
     }
     
 }

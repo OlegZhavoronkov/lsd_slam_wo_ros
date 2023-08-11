@@ -3,7 +3,10 @@
 #include <boost/signals2/signal.hpp>
 #include <opencv2/core/mat.hpp>
 #include <mutex>
-
+//namespace Sophus
+//{
+//class SE3;
+//}
 namespace lsd_slam::util
 {
 
@@ -14,9 +17,9 @@ public:
     using OnSignalConnectedType=boost::signals2::signal<void(const SE3TrackerSignals* pOwnerOfSignal,const boost::signals2::signal_base* pToSignal,bool)>;
     
 //    explicit SE3TrackerSignals(OnSignalConnectedType* pOnConnectedSignal=nullptr);
-    using OnCalcResidualStartedSignal=boost::signals2::signal<void(cv::Mat*& /*pMatOutput*/,const cv::Size&,std::recursive_mutex& /*mtx*/)>;
-    using OnCalcResidualFinishedSignal=boost::signals2::signal<void(cv::Mat*& /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
-    using OnCalcResidualErrorCalculatedSignal=boost::signals2::signal<void(double /*error*/,int /*lvl*/,int /*iter*/)>;
+//    using OnCalcResidualStartedSignal=boost::signals2::signal<void(cv::Mat*& /*pMatOutput*/,const cv::Size&,std::recursive_mutex& /*mtx*/)>;
+//    using OnCalcResidualFinishedSignal=boost::signals2::signal<void(cv::Mat*& /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
+//    using OnCalcResidualErrorCalculatedSignal=boost::signals2::signal<void(double /*error*/,int /*lvl*/,int /*iter*/)>;
 
     using OnCalcResidualAndBuffersDebugStart=boost::signals2::signal<void(const cv::Size&,std::mutex&,
                                                                     cv::Mat*&  ,
@@ -28,6 +31,9 @@ public:
                                                                             int     /*goodCount      */     ,
                                                                             int     /*badCount       */     ,
                                                                             float   /*ratio          */     )>;
+    using OnSetSecondFrame=boost::signals2::signal<void(const cv::Size&,const float*,int,int)>;
+    
+    using OnTrackingFinishedDisplayResiduals=boost::signals2::signal<void(float,Sophus::SE3f,Sophus::SE3f,const std::vector<int>&)>;
 
     template<typename TOwner,typename SignalReturn,typename Invokable,typename...args> 
     static void Connect(TOwner& instance,boost::signals2::signal<SignalReturn(args...)> TOwner::*pToSignalMember,Invokable invokable,OnSignalConnectedType* pConnectedSignal=nullptr)

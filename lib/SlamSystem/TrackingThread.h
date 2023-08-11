@@ -216,13 +216,15 @@ private:
 	//void optimizationThreadLoop();
 
 public:
-    OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
-    OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
-    OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
+    //OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
+    //OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
+    //OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
 
     OnCalcResidualAndBuffersDebugStart  _OnCalcResidualAndBuffersDebugStart;
     OnCalcResidualAndBuffersDebugFinish _OnCalcResidualAndBuffersDebugFinish;
-
+    OnSetSecondFrame                    _OnSetSecondFrame;
+    OnTrackingFinishedDisplayResiduals  _OnTrackingFinishedDisplayResiduals;
+    
     OnSignalConnectedType               _onSignalConnected;
 private:
     //util::SE3TrackerSignals::OnSignalConnectedType _onSignalConnected;

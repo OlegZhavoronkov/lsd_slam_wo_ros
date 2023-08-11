@@ -22,7 +22,8 @@
 #include "util/SophusUtil.h"
 #include "opencv2/opencv.hpp"
 #include "DataStructures/Frame.h"
-
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #if defined(__linux__) || defined(__unix__) || defined(__ANDROID__) || defined(_POSIX_VERSION)
 #include <signal.h>
 #define USE_SIGNAL
@@ -189,6 +190,65 @@ template<> void DebugImage<float>(const std::string& debugMsg,const float* data,
     }
 }
 
+cv::Mat getTextMat(cv::Mat& mat,const std::string& desc1,int fontface,double scale,int thickness,const cv::Scalar& color)
+{
+    std::string desc=desc1;
+    std::vector<std::string> tokens;
+    boost::algorithm::replace_all(desc,"\t","    ");
+    boost::algorithm::split(    tokens,
+                                desc,
+                                [&](auto ch)->bool{return ch=='\n';},
+                                boost::algorithm::token_compress_on
+                                );
+    std::vector<cv::Point> points;
+    points.reserve(tokens.size());
+    size_t point_idx=0;
+    cv::Size text_region_size=cv::Size{};
+    int space=2;
+    int xBase=2;
+    for(auto& str:tokens)
+    {
+        int baseline=0;
+        auto newSize= cv::getTextSize(str.c_str(),fontface,scale,thickness,&baseline);
+        text_region_size=cv::Size(  std::max(text_region_size.width,newSize.width+xBase),
+                                    std::max(text_region_size.height+space+newSize.height,newSize.height));
+        //cv::Point point(xBase,text_region_size.height-baseline);
+        points.emplace_back(xBase,text_region_size.height-baseline);
+    }
+    cv::Size matSize(std::max(mat.cols,text_region_size.width),std::max(mat.rows,text_region_size.height));
+    cv::Mat* pMat=nullptr;
+    cv::Mat newMat;
+    if(matSize.width!=mat.cols || matSize.height!= mat.rows)
+    {
+        newMat=cv::Mat(matSize,CV_8UC3,{0,0,0});
+        pMat=& newMat;
+    }
+    else
+    {
+        mat.setTo(cv::Scalar{0,0,0});
+        pMat=&mat;
+    }
+    for(;point_idx<tokens.size();point_idx++)
+    {
+        const auto& p=points[point_idx];
+        const auto& str=tokens[point_idx];
+        cv::putText(*pMat,str.c_str(),p,fontface,scale,color,thickness,true);
+    }
+    return *pMat;
+    //int baseline=0;
+    //for(auto& str:{fmt::v7::format( "w {0}"               ,w              ),                                  
+    //               fmt::v7::format( "loop {0}"            ,loop           ),                  
+    //               fmt::v7::format( "buf_warped_size {0}" ,buf_warped_size),                              
+    //               fmt::v7::format( "goodCount {0}"       ,goodCount      ),                      
+    //               fmt::v7::format( "badCount {0}"        ,badCount       ),                      
+    //               fmt::v7::format( "ratio {0}"           ,ratio          ) }                  
+    //            )
+    //{
+    //    
+    //}
+    //return mat;
+}
+
 }
 
 void debugBreakOnConditon(const std::string& msg,bool condition)
@@ -203,3 +263,4 @@ void debugBreakOnConditon(const std::string& msg,bool condition)
 #endif
     }
 }
+

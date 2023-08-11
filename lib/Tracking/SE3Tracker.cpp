@@ -153,7 +153,7 @@ SE3 SE3Tracker::trackFrameOnPermaref(
 	_diverged = false;
 	_trackingWasGood = true;
 
-	callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, referenceToFrame, QUICK_KF_CHECK_LVL, false));
+	callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], nullptr, ref->numData[QUICK_KF_CHECK_LVL], frame, referenceToFrame, QUICK_KF_CHECK_LVL, false));
 	if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
 	{
         LOGF(WARNING,"diverged = true frame id %d ref frame id %d(buf_warped_size %d < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL)) %.2f",
@@ -196,7 +196,7 @@ SE3 SE3Tracker::trackFrameOnPermaref(
             auto diff=S_im_o_3DiffNorm(new_referenceToFrame,referenceToFrame);
             fmt::v7::print("diff {0} incTry {1} iteration {2} LM_lambda {3} inc {4}",diff,incTry,iteration,LM_lambda,inc);
 			// re-evaluate residual
-			callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], 0, ref->numData[QUICK_KF_CHECK_LVL], frame, new_referenceToFrame, QUICK_KF_CHECK_LVL, false));
+			callOptimized(calcResidualAndBuffers, (ref->posData[QUICK_KF_CHECK_LVL], ref->colorAndVarData[QUICK_KF_CHECK_LVL], nullptr, ref->numData[QUICK_KF_CHECK_LVL], frame, new_referenceToFrame, QUICK_KF_CHECK_LVL, false));
 			if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL))
 			{
                 LOGF(WARNING,"diverged = true frame id %d keyframe id %d,buf_warped_size %d < MIN_GOODPERALL_PIXEL_ABSMIN * (_imgSize.width>>QUICK_KF_CHECK_LVL)*(_imgSize.height>>QUICK_KF_CHECK_LVL) %.2f",
@@ -288,27 +288,31 @@ SE3 SE3Tracker::trackFrame(
 		saveAllTrackingStagesInternal = true;
 	}
 //TODO introduce signal for this
-	if (plotTrackingIterationInfo)
-	{
-		//const float* frameImage = frame->image();
-        //cv::Mat(_imgSize.height,_imgSize.width,CV_32FC1,const_cast<void*>(reinterpret_cast<const void*>(frameImage))).convertTo(_debugImages.debugImageSecondFrame,CV_8UC3);
-	}
-    std::recursive_mutex localMtx;
-    cv::Mat* pDebugMat=nullptr;
-    if(!_OnCalcResidualStartedSignal.empty())
+    if(!_OnSetSecondFrame.empty())
     {
-        _OnCalcResidualStartedSignal(pDebugMat,_imgSize.cvSize(),localMtx);
+        _OnSetSecondFrame(_imgSize.cvSize(),frame->image(),frame!=nullptr? frame->id():-1,keyframe!=nullptr ? keyframe->id():-1);
     }
+	//if (plotTrackingIterationInfo)
+	//{
+	//	//const float* frameImage = frame->image();
+    //    //cv::Mat(_imgSize.height,_imgSize.width,CV_32FC1,const_cast<void*>(reinterpret_cast<const void*>(frameImage))).convertTo(_debugImages.debugImageSecondFrame,CV_8UC3);
+	//}
+    //std::recursive_mutex localMtx;
+    //cv::Mat* pDebugMat=nullptr;
+    //if(!_OnCalcResidualStartedSignal.empty())
+    //{
+    //    _OnCalcResidualStartedSignal(pDebugMat,_imgSize.cvSize(),localMtx);
+    //}
 	// ============ track frame ============
 	Sophus::SE3f referenceToFrame = frameToReference_initialEstimate.inverse().cast<float>();
 	//LGS6 ls;
 
-	int numCalcResidualCalls[PYRAMID_LEVELS];
-	int numCalcWarpUpdateCalls[PYRAMID_LEVELS];
+	int numCalcResidualCalls[PYRAMID_LEVELS]={0};
+	int numCalcWarpUpdateCalls[PYRAMID_LEVELS]={0};
 
 	float last_residual = 0;
 	int lowestLvl;
-
+    //float errorForReporting=0.0f;
 	for(int lvl=SE3TRACKING_MAX_LEVEL-1; lvl >= SE3TRACKING_MIN_LEVEL; lvl-- )
 	{
 		numCalcResidualCalls[lvl] = 0;
@@ -319,7 +323,7 @@ SE3 SE3Tracker::trackFrame(
         LOGF(INFO,"Calculating initial residual on frame %d , level %d against reference frame %d  with  points %d",frame->id(),lvl,reference->frameID(),reference->numData[lvl]);
 		callOptimized(calcResidualAndBuffers, (reference->posData[lvl],
 			reference->colorAndVarData[lvl],
-			SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : 0,
+			SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : nullptr,
 			reference->numData[lvl],
 			frame, referenceToFrame, lvl,
 			(plotTracking && lvl == SE3TRACKING_MIN_LEVEL)));
@@ -427,7 +431,7 @@ SE3 SE3Tracker::trackFrame(
 
 				// re-evaluate residual
 				callOptimized(calcResidualAndBuffers, (reference->posData[lvl], reference->colorAndVarData[lvl],
-											SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : 0, reference->numData[lvl],
+											SE3TRACKING_MIN_LEVEL == lvl ? reference->pointPosInXYGrid[lvl] : nullptr, reference->numData[lvl],
 											frame, new_referenceToFrame, lvl, (plotTracking && lvl == SE3TRACKING_MIN_LEVEL)));
 
 				if(buf_warped_size < MIN_GOODPERALL_PIXEL_ABSMIN* (_imgSize.width>>lvl)*(_imgSize.height>>lvl))
@@ -458,6 +462,16 @@ SE3 SE3Tracker::trackFrame(
                 //                    ([&](auto fr)->auto{std::stringstream str1;str1<<fr;return str1.str();})(new_referenceToFrame));
 				numCalcResidualCalls[lvl]++;
                 bool canLimitIterBeSet=/*(lvl>=SE3TRACKING_MAX_LEVEL-2) ?*/ ((globalLSCallNum%2) ==1) /*: true*/;
+                if(!_OnTrackingFinishedDisplayResiduals.empty())
+                {
+                    _OnTrackingFinishedDisplayResiduals(    error,
+                                                            new_referenceToFrame,
+                                                            se3FromSim3(frame->getCamToWorld()).cast<float>(),
+                                                            ([&]()->auto
+                                                            {
+                                                                return std::vector<int>(numCalcResidualCalls,numCalcResidualCalls+PYRAMID_LEVELS);
+                                                            })());
+                }
                 //globalLSCallNum++;
 
 				// accept inc?
@@ -499,7 +513,7 @@ SE3 SE3Tracker::trackFrame(
                     //if((globalLSCallNum-1)%2==1)
                     {
                         referenceToFrame = new_referenceToFrame;
-                        if(LM_lambda<0.01)
+                        if(LM_lambda<LM_lambdaStart)
                         {
                             LM_lambda=0;
                         }
@@ -537,7 +551,7 @@ SE3 SE3Tracker::trackFrame(
                     
                         if(LM_lambda == 0)
                         {
-					        LM_lambda = 0.01;
+					        LM_lambda = LM_lambdaStart;
                         }
 					    else
                         {
@@ -554,6 +568,16 @@ SE3 SE3Tracker::trackFrame(
 //TODO:signal
 	//if(plotTracking)
 	//	Util::displayImage("TrackingResidual", _debugImages.debugImageResiduals, false);
+    if(!_OnTrackingFinishedDisplayResiduals.empty())
+    {
+        _OnTrackingFinishedDisplayResiduals(    last_residual,
+                                                referenceToFrame,
+                                                se3FromSim3(frame->getCamToWorld()).cast<float>(),
+                                                ([&]()->auto
+                                                {
+                                                    return std::vector<int>(numCalcResidualCalls,numCalcResidualCalls+PYRAMID_LEVELS);
+                                                })());
+    }
 
 
 	if(Conf().print.trackingIterationInfo)
@@ -592,10 +616,10 @@ SE3 SE3Tracker::trackFrame(
 	frame->pose->setThisToParent_raw( sim3FromSE3(toSophus(referenceToFrame.inverse()),1) );
     //LOGF(WARNING,"pose setting for frame %d quat norm is %f ",frame->id(),sqrt(frame->pose->_thisToParent_raw.quaternion().squaredNorm()));
 	frame->setTrackingParent( keyframe );
-    if(!_OnCalcResidualFinishedSignal.empty())
-    {
-        _OnCalcResidualFinishedSignal(pDebugMat,localMtx);
-    }
+//    if(!_OnCalcResidualFinishedSignal.empty())
+//    {
+//        _OnCalcResidualFinishedSignal(pDebugMat,localMtx);
+//    }
 	return toSophus(referenceToFrame.inverse());
 }
 
@@ -706,7 +730,7 @@ void SE3Tracker::calcResidualAndBuffers_debugFinish(int w,int loop,int buf_warpe
 float SE3Tracker::calcResidualAndBuffers(
 		const Eigen::Vector3f* refPoint,
 		const Eigen::Vector2f* refColVar,
-		int* idxBuf,
+		const int* idxBufArg,
 		int refNum,
 		const std::shared_ptr<Frame> &frame,
 		const Sophus::SE3f& referenceToFrame,
@@ -746,7 +770,7 @@ float SE3Tracker::calcResidualAndBuffers(
 
 	float sumResUnweighted = 0;
 
-	bool* isGoodOutBuffer = idxBuf != 0 ? frame->refPixelWasGood() : 0;
+	bool* isGoodOutBuffer = idxBufArg != nullptr ? frame->refPixelWasGood() : nullptr;
 
 	int goodCount = 0;
 	int badCount = 0;
@@ -765,21 +789,26 @@ float SE3Tracker::calcResidualAndBuffers(
 	int loop = 0;
     const auto* pRefPointInitial=refPoint;
     const auto* pRefColVarInitial=refColVar;
-    auto* pIdxBufInitial=idxBuf;
-	for(;refPoint<refPoint_max; refPoint++, refColVar++, idxBuf++, loop++)
+    //const auto* pIdxBufInitial=idxBufArg;
+    auto* pIdxBuff=idxBufArg;
+    size_t IdxBuffIdx=0;
+	for(;refPoint<refPoint_max; refPoint++, refColVar++, IdxBuffIdx++ /*pIdxBuff++*/, loop++)
 	{
 
 
 		Eigen::Vector3f Wxp = rotMat * (*refPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
-        
+        //int idxBuffi= *pIdxBuff;
 
 		// step 1a: coordinates have to be in image:
 		// (inverse test to exclude NANs)
 		if(!(u_new > 1 && v_new > 1 && u_new < w-2 && v_new < h-2))
 		{
-			if(isGoodOutBuffer != 0) isGoodOutBuffer[*idxBuf] = false;
+			if(isGoodOutBuffer != nullptr)
+            {
+                isGoodOutBuffer[pIdxBuff[IdxBuffIdx]] = false;
+            }
 
 //			LOG_IF(DEBUG, loop < 50) << "Ref point: " << (*refPoint)[0] << " " << (*refPoint)[1] << " " << (*refPoint)[2];
 //			LOG_IF(DEBUG, loop < 50) << "Wxp :" << Wxp[0] << " " << Wxp[1] << " " << Wxp[2] << " maps to " << u_new << " " << v_new;
@@ -806,7 +835,7 @@ float SE3Tracker::calcResidualAndBuffers(
 
 		if(isGoodOutBuffer != nullptr)
         {
-            isGoodOutBuffer[*idxBuf] = isGood;
+            isGoodOutBuffer[pIdxBuff[IdxBuffIdx]] = isGood;
         }
 			
 
@@ -850,7 +879,7 @@ float SE3Tracker::calcResidualAndBuffers(
         DebugPlotTrackingAndResidualInfo(   _imgSize.width, KLvl,   
                                             pDebugImageOldImageSource , pDebugImageOldImageWarped,pdebugImageResiduals,
                                             w,h,
-                                            pRefPointInitial,   pRefColVarInitial,  pIdxBufInitial,
+                                            pRefPointInitial,   pRefColVarInitial,  idxBufArg,
                                             refPoint_max,   rotMat, transVec,
                                             isGoodOutBuffer,frame_gradients);
     }
@@ -927,7 +956,7 @@ void SE3Tracker::DebugPlotTrackingAndResidualInfo(const int width,const Eigen::M
                                             const int hThisLvl,
                                             const Eigen::Vector3f* pRefPoint,
 		                                    const Eigen::Vector2f* refColVar,
-                                            int* idxBuf,
+                                            const int* pIdxBuf,
                                             const Eigen::Vector3f* refPoint_max,
                                             const Eigen::Matrix3f& rotMat,
                                             const Eigen::Vector3f& transVec,
@@ -938,9 +967,11 @@ void SE3Tracker::DebugPlotTrackingAndResidualInfo(const int width,const Eigen::M
 	float fy_l = KLvl(1,1);
 	float cx_l = KLvl(0,2);
 	float cy_l = KLvl(1,2);
-    int idx=0;
-    for(;pRefPoint<refPoint_max; pRefPoint++, refColVar++, idxBuf++)
+    size_t idxBuff=0;
+    size_t warpIdx=0;
+    for(;pRefPoint<refPoint_max; pRefPoint++, refColVar++, idxBuff++)
 	{
+        //int idxBuf= *pIdxBuf;
 		Eigen::Vector3f Wxp = rotMat * (*pRefPoint) + transVec;
 		float u_new = (Wxp[0]/Wxp[2])*fx_l + cx_l;
 		float v_new = (Wxp[1]/Wxp[2])*fy_l + cy_l;
@@ -949,28 +980,30 @@ void SE3Tracker::DebugPlotTrackingAndResidualInfo(const int width,const Eigen::M
             continue;
 		}
 		Eigen::Vector3f resInterp = getInterpolatedElement43(frame_gradients, u_new, v_new, wThisLvl);
-        float residualOld=*(buf_warped_residual+idx);
-        bool isGoodOld=isGoodOutBuffer != nullptr ? isGoodOutBuffer[*idxBuf] :false;
-
-        idx++;
+        float residualOld=*(buf_warped_residual+warpIdx);
+        bool isGoodOld=((isGoodOutBuffer != nullptr) && (pIdxBuf!=nullptr)) ? isGoodOutBuffer[pIdxBuf[idxBuff]] :true;
+        warpIdx++;
+        
         Eigen::Vector3f point = KLvl * (*pRefPoint);
         int x = point[0] / point[2] + 0.5f;
         int y = point[1] / point[2] + 0.5f;
 
-        if(plotTrackingIterationInfo)
-        {
-            setPixelInCvMat(pDebugImageOldImageSource,getGrayCvPixel((float)resInterp[2]),u_new+0.5,v_new+0.5,(width/wThisLvl));
-            setPixelInCvMat(pDebugImageOldImageWarped,getGrayCvPixel((float)resInterp[2]),x,y,(width/wThisLvl));
-        }
+        //if(plotTrackingIterationInfo)
+        //{
+        setPixelInCvMat(pDebugImageOldImageSource,getGrayCvPixel((float)resInterp[2]),u_new+0.5,v_new+0.5,(width/wThisLvl));
+        setPixelInCvMat(pDebugImageOldImageWarped,getGrayCvPixel((float)resInterp[2]),x,y,(width/wThisLvl));
+        //}
         if(isGoodOld)
         {
             setPixelInCvMat(pdebugImageResiduals,getGrayCvPixel(residualOld+128),x,y,(width/wThisLvl));
         }
         else
         {
-            setPixelInCvMat(pdebugImageResiduals,cv::Vec3b(0,0,255),x,y,(width/wThisLvl));
+            setPixelInCvMat(pdebugImageResiduals,cv::Vec3b(255,0,255),x,y,(width/wThisLvl));
         }
 	}
+    cv::imshow("debug 1",*pdebugImageResiduals);
+    cv::waitKey(1);
 }
 
 }

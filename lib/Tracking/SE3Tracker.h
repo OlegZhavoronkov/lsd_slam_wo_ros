@@ -20,13 +20,13 @@
 
 #pragma once
 #include <opencv2/core/core.hpp>
-#include "util/SE3TrackerSignals.h"
+
 #include "util/DenseDepthTrackerSettings.h"
 #include "util/EigenCoreInclude.h"
 #include "util/SophusUtil.h"
 #include "util/Configuration.h"
 #include "Tracking/LGSX.h"
-
+#include "util/SE3TrackerSignals.h"
 
 namespace lsd_slam
 {
@@ -116,7 +116,7 @@ private:
 	float calcResidualAndBuffers(
 			const Eigen::Vector3f* refPoint,
 			const Eigen::Vector2f* refColVar,
-			int* idxBuf,
+			const int* idxBufArg,
 			int refNum,
 			const std::shared_ptr<Frame> &frame,
 			const Sophus::SE3f& referenceToFrame,
@@ -165,12 +165,14 @@ private:
 	float affineEstimation_a_lastIt;
 	float affineEstimation_b_lastIt;
 public:
-    OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
-    OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
-    OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
+    //OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
+    //OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
+    //OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
 
     OnCalcResidualAndBuffersDebugStart  _OnCalcResidualAndBuffersDebugStart;
     OnCalcResidualAndBuffersDebugFinish  _OnCalcResidualAndBuffersDebugFinish;
+    OnSetSecondFrame _OnSetSecondFrame;
+    OnTrackingFinishedDisplayResiduals _OnTrackingFinishedDisplayResiduals;
 private:
     void DebugPlotTrackingAndResidualInfo(const int width,const Eigen::Matrix3f& KLvl,
                                             cv::Mat* pDebugImageOldImageSource,
@@ -180,7 +182,7 @@ private:
                                             const int hThisLvl,
                                             const Eigen::Vector3f* pRefPoint,
 		                                    const Eigen::Vector2f* refColVar,
-                                            int* idxBuf,
+                                            const int* pIdxBuf,
                                             const Eigen::Vector3f* refPoint_max,
                                             const Eigen::Matrix3f& rotMat,
                                             const Eigen::Vector3f& transVec,
