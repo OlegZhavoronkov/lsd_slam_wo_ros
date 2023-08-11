@@ -23,9 +23,9 @@ public:
 	ConstraintSearchThread( SlamSystem &system, bool threaded );
 	~ConstraintSearchThread();
 
-	void doFullReConstraintSearch( void )
-	{ fullReConstraintSearchComplete.reset();
-		if( _thread ) _thread->send( std::bind( &ConstraintSearchThread::fullReconstraintSearchImpl, this )); }
+	void doFullReConstraintSearch( void );
+//	{ fullReConstraintSearchComplete.reset();
+//		if( _thread ) _thread->send( std::bind( &ConstraintSearchThread::fullReconstraintSearchImpl, this )); }
 
 	// Note in non-threaded mode, this does nothing!
 	void doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe );
@@ -60,7 +60,7 @@ private:
 	//=== Internal functions ====
 	int findConstraintsForNewKeyFrames(const KeyFrame::SharedPtr &newKeyFrame, bool forceParent, bool useFABMAP, float closeCandidatesTH);
 
-	std::unique_ptr<active_object::ActiveIdle> _thread;
+	std::shared_ptr<active_object::ActiveIdle> _thread;
 
 	float tryTrackSim3(
 			const KeyFrame::SharedPtr &kfA,

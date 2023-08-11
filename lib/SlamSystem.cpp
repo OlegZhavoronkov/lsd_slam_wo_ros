@@ -140,6 +140,9 @@ void SlamSystem::finalize()
 void SlamSystem::nextImage( unsigned int id, const cv::Mat &img, const libvideoio::Camera &cam )
 {
 	nextImageSet( std::make_shared<ImageSet>(id, img, cam) );
+    _constraintThread->doFullReConstraintSearch();
+    _optThread->doFinalOptimization();
+	//_constraintThread->fullReConstraintSearchComplete.wait();
 }
 
 
