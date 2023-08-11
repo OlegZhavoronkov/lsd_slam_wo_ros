@@ -1,6 +1,8 @@
 
 set(GUI_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/OpenCV/ImageDisplay_OpenCV.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/mesh/MeshOutputWrapper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/mesh/MeshOutputWrapper.h
 )
 
 # Set source files
