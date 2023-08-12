@@ -202,3 +202,5 @@ option( LSDSLAM_BUILD_TOOLS ON )
 #
 #  fips_finish()
 #endif()
+set(SHARED_LIB ON)
+add_subdirectory(thirdparty/tinyply)

@@ -1,8 +1,6 @@
 
 set(GUI_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/OpenCV/ImageDisplay_OpenCV.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/mesh/MeshOutputWrapper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/IOWrapper/mesh/MeshOutputWrapper.h
 )
 
 # Set source files
@@ -68,5 +66,5 @@ target_link_libraries(lsdslam
     videoio
     ${G2O_LIBRARIES} 
     )
-
+add_subdirectory(PlyOutputWrapper)
 #fips_end_module()

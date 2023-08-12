@@ -1002,8 +1002,6 @@ void SE3Tracker::DebugPlotTrackingAndResidualInfo(const int width,const Eigen::M
             setPixelInCvMat(pdebugImageResiduals,cv::Vec3b(255,0,255),x,y,(width/wThisLvl));
         }
 	}
-    cv::imshow("debug 1",*pdebugImageResiduals);
-    cv::waitKey(1);
 }
 
 }

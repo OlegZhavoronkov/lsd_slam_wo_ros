@@ -85,6 +85,21 @@ cv::Mat getDepthRainbowPlot(const float* idepth, const float* idepthVar, const f
 	}
 	else
 		fillCvMat(&res,cv::Vec3b(255,170,168));
+    float min_val=std::numeric_limits<float>::max();
+    float max_val=std::numeric_limits<float>::min();
+    for(int i=0;i<width;i++)
+    {
+		for(int j=0;j<height;j++)
+		{
+			float id = idepth[i + j*width];
+
+			if(id >=0 && idepthVar[i + j*width] >= 0)
+            {
+                min_val = id < min_val ? id :min_val;
+                max_val = id > max_val ? id :max_val;
+            }
+        }
+    }
 
 	for(int i=0;i<width;i++)
 		for(int j=0;j<height;j++)
@@ -93,11 +108,11 @@ cv::Mat getDepthRainbowPlot(const float* idepth, const float* idepthVar, const f
 
 			if(id >=0 && idepthVar[i + j*width] >= 0)
 			{
-
+                float id1= 3*(id-min_val)/(max_val-min_val);
 				// rainbow between 0 and 4
-				float r = (0-id) * 255 / 1.0; if(r < 0) r = -r;
-				float g = (1-id) * 255 / 1.0; if(g < 0) g = -g;
-				float b = (2-id) * 255 / 1.0; if(b < 0) b = -b;
+				float r = (0-id1) * 255 / 1.0; if(r < 0) r = -r;
+				float g = (1-id1) * 255 / 1.0; if(g < 0) g = -g;
+				float b = (2-id1) * 255 / 1.0; if(b < 0) b = -b;
 
 				uchar rc = r < 0 ? 0 : (r > 255 ? 255 : r);
 				uchar gc = g < 0 ? 0 : (g > 255 ? 255 : g);

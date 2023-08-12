@@ -40,6 +40,7 @@
 #include "App/InputThread.h"
 #include <boost/program_options.hpp>
 #include <libvideoio/Undistorter.h>
+#include <PlyOutputWrapper/MeshOutputWrapper.h>
 #include <filesystem>
 using namespace lsd_slam;
 namespace fs=std::filesystem;
@@ -97,6 +98,8 @@ int main( int argc, char** argv )
   CHECK( (undistorter->getCamera().fx) > 0 && (undistorter->getCamera().fy > 0) ) << "Camera focal length is zero";
 
 	std::shared_ptr<SlamSystem> system( new SlamSystem() );
+    std::shared_ptr<lsd_slam::OutputIOWrapper> pPlyOutputWrapper(static_cast<lsd_slam::OutputIOWrapper*>( new lsd_slam::PlyOutputWrapper::MeshOutputWrapper("sample.ply")));
+    system->addOutputWrapper(pPlyOutputWrapper);
     std::string folder=inFiles[0];
     CHECK(fs::is_directory(folder));
     std::list<std::string> files;

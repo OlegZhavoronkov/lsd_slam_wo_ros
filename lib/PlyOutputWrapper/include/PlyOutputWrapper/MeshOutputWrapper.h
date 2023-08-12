@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
 #include "IOWrapper/OutputIOWrapper.h"
-namespace lsd_slam
+namespace lsd_slam::PlyOutputWrapper
 {
 
-class MeshOutputWrapper:OutputIOWrapper
+class MeshOutputWrapper:public OutputIOWrapper
 {
+public:
     MeshOutputWrapper()=delete;
     MeshOutputWrapper(const std::string& path);
     virtual void publishPose( const Sophus::Sim3f &pose ) override{};
@@ -30,10 +31,17 @@ class MeshOutputWrapper:OutputIOWrapper
 
 	virtual void updateFrameNumber( int ) override{};
 	virtual void updateLiveImage( const cv::Mat &img ) override{};
+
+    struct IPlyWrapper
+    {
+        virtual ~IPlyWrapper()=0;
+        virtual void DumpToStream()=0;
+    };
 private:
     std::string _path;
-    void CreateFile();
-    int _lastKFId;
+    std::shared_ptr<IPlyWrapper> CreateFile();
+    int _lastKFId,_prevDumpedKF;
+    std::shared_ptr<IPlyWrapper> _pPly;
 };
 
 }
