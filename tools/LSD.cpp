@@ -58,12 +58,14 @@ int main( int argc, char** argv )
   bool verbose;
   std::vector<std::string> inFiles;
   size_t startIdx=0;
+  std::string ply_for_output;
   opt_desc.add_options()
     ("help,h", "Help")
     ("calib,c", bpo::value<decltype(calibFile)>(&calibFile)->required()->notifier(ExistingFile), "Calibration file")
     ("verbose,v", bpo::value<decltype(verbose)>(&verbose)->implicit_value(true)->default_value(false), "Print DEBUG output to console")
     ("input,i", bpo::value<decltype(inFiles)>(&inFiles)->multitoken()->composing(), "Input files or directories")
-    ("start_from,sf",bpo::value<decltype(startIdx)>(&startIdx)->default_value(0),"Start idx in sequence");
+    ("start_from,sf",bpo::value<decltype(startIdx)>(&startIdx)->default_value(0),"Start idx in sequence")
+    ("ply",bpo::value<decltype(ply_for_output)>(&ply_for_output)->default_value(std::string{}),"path to ply");
     try
     {
         bpo::variables_map vm;
@@ -98,8 +100,14 @@ int main( int argc, char** argv )
   CHECK( (undistorter->getCamera().fx) > 0 && (undistorter->getCamera().fy > 0) ) << "Camera focal length is zero";
 
 	std::shared_ptr<SlamSystem> system( new SlamSystem() );
-    std::shared_ptr<lsd_slam::OutputIOWrapper> pPlyOutputWrapper(static_cast<lsd_slam::OutputIOWrapper*>( new lsd_slam::PlyOutputWrapper::MeshOutputWrapper("sample.ply")));
-    system->addOutputWrapper(pPlyOutputWrapper);
+    {
+        if(!ply_for_output.empty())
+        {
+            std::shared_ptr<lsd_slam::OutputIOWrapper> pPlyOutputWrapper(static_cast<lsd_slam::OutputIOWrapper*>( new lsd_slam::PlyOutputWrapper::MeshOutputWrapper(ply_for_output)));
+            system->addOutputWrapper(pPlyOutputWrapper);
+        }
+    }
+    
     std::string folder=inFiles[0];
     CHECK(fs::is_directory(folder));
     std::list<std::string> files;
