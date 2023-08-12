@@ -54,7 +54,7 @@ namespace lsd_slam {
             _debugImageStereoLines=0.7*lineImage+tempKeyFrame;
             if(!desc.empty())
             {
-                cv::putText(_debugImageStereoLines,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+                cv::putText(_debugImageStereoLines,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,64,64});
             }
         }
         
@@ -67,7 +67,7 @@ namespace lsd_slam {
     hypotesis.copyTo(_debugImageHypothesisHandling);
     if(!desc.empty())
     {
-        cv::putText(_debugImageHypothesisHandling,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,0,0});
+        cv::putText(_debugImageHypothesisHandling,desc,cv::Point(10,20),cv::FONT_HERSHEY_COMPLEX,1,{255,64,64});
     }
     
   }

@@ -25,6 +25,8 @@ set(lsdslam_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/Tracking/SE3Tracker.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Tracking/SE3Tracker_SSE.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Tracking/SE3Tracker_NEON.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Tracking/SE3TrackerDebugImages.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Tracking/SE3TrackerDebugImages.h
   ${CMAKE_CURRENT_SOURCE_DIR}/GlobalMapping/FabMap.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/GlobalMapping/KeyFrameGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/GlobalMapping/g2oTypeSim3Sophus.cpp
@@ -64,5 +66,5 @@ target_link_libraries(lsdslam
     videoio
     ${G2O_LIBRARIES} 
     )
-
+add_subdirectory(PlyOutputWrapper)
 #fips_end_module()

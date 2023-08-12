@@ -55,16 +55,30 @@ public:
 
 	void doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set)
 	{
-	    if( _thread )
-				_thread->send( std::bind( &MappingThread::mapSetImpl, this, kf, set ));
-			else
-				mapSetImpl(kf, set);
+        auto thread= _thread;
+	    if( thread )
+        {
+			thread->send( std::bind( &MappingThread::mapSetImpl, this, kf, set ));
+        }
+		else
+        {
+            mapSetImpl(kf, set);
+        }
+				
 	}
 
 	void doMergeOptimizationUpdate( void )
 	{
 		optimizationUpdateMerged.reset();
-		if( _thread ) _thread->send( std::bind( &MappingThread::mergeOptimizationOffsetImpl, this ));
+        auto thread= _thread;
+		if( thread ) 
+        {
+            _thread->send( std::bind( &MappingThread::mergeOptimizationOffsetImpl, this ));
+        }
+        else
+        {
+            mergeOptimizationOffsetImpl();
+        }
 	}
 
 	// Create the first (uninitialized) keyframe

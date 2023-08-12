@@ -24,12 +24,11 @@ public:
 	~OptimizationThread();
 
 	// == Public interfaces to kick off events ==
-	void doNewConstraint( void )
-	{ if( _thread ) _thread->send( std::bind(&OptimizationThread::newConstraintImpl, this) ); }
+	void doNewConstraint( void );
+	
 
-	void doFinalOptimization( void )
-	{ finalOptimizationComplete.reset();
-		if( _thread ) _thread->send( std::bind(&OptimizationThread::finalOptimizationImpl, this) ); }
+	void doFinalOptimization( void );
+	
 
 
 	ThreadSynchronizer finalOptimizationComplete;
@@ -64,7 +63,7 @@ private:
 
 	SlamSystem &_system;
 
-	std::unique_ptr<active_object::ActiveIdle> _thread;
+	std::shared_ptr<active_object::ActiveIdle> _thread;
 
 };
 

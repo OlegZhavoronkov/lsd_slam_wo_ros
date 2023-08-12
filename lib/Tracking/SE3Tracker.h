@@ -20,13 +20,13 @@
 
 #pragma once
 #include <opencv2/core/core.hpp>
-#include <boost/signals2.hpp>
+
 #include "util/DenseDepthTrackerSettings.h"
 #include "util/EigenCoreInclude.h"
 #include "util/SophusUtil.h"
 #include "util/Configuration.h"
 #include "Tracking/LGSX.h"
-
+#include "util/SE3TrackerSignals.h"
 
 namespace lsd_slam
 {
@@ -38,22 +38,8 @@ class Frame;
 class KeyFrame;
 
 
-struct SE3TrackerDebugImages {
-	SE3TrackerDebugImages() = delete;
-	SE3TrackerDebugImages( const SE3TrackerDebugImages & ) = delete;
 
-	SE3TrackerDebugImages( const ImageSize &imgSize );
-
-	// debug images
-	cv::Mat debugImageWeights;
-	cv::Mat debugImageResiduals;
-	cv::Mat debugImageSecondFrame;
-	cv::Mat debugImageOldImageWarped;
-	cv::Mat debugImageOldImageSource;
-
-};
-
-class SE3Tracker
+class SE3Tracker:public util::SE3TrackerSignals
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -120,7 +106,7 @@ private:
 
 	int buf_warped_size;
 
-	SE3TrackerDebugImages _debugImages;
+	//SE3TrackerDebugImages _debugImages;
 
 
 	void calculateWarpUpdate(LGS6D &ls);
@@ -130,7 +116,7 @@ private:
 	float calcResidualAndBuffers(
 			const Eigen::Vector3f* refPoint,
 			const Eigen::Vector2f* refColVar,
-			int* idxBuf,
+			const int* idxBufArg,
 			int refNum,
 			const std::shared_ptr<Frame> &frame,
 			const Sophus::SE3f& referenceToFrame,
@@ -165,9 +151,11 @@ private:
 			int level,
 			bool plotResidual = false);
 #endif
-
-	void calcResidualAndBuffers_debugStart();
-	void calcResidualAndBuffers_debugFinish(int w);
+    using CalcResidualInitStruct=std::tuple<    cv::Mat*  ,  /*pDebugImageOldImageSource*/
+                                                cv::Mat*  ,  /*pDebugImageOldImageWarped*/
+                                                cv::Mat*    /*pdebugImageResiduals,*/       >;
+	CalcResidualInitStruct calcResidualAndBuffers_debugStart(std::mutex& mtx);
+	void calcResidualAndBuffers_debugFinish(int w,int loop,int buf_warped_size,int goodCount ,int badCount,float ratio);
 
 
 	// used for image saving
@@ -177,9 +165,30 @@ private:
 	float affineEstimation_a_lastIt;
 	float affineEstimation_b_lastIt;
 public:
-    using OnCalcResidualStarted=boost::signals2::signal<void(cv::Mat* /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
-    using OnCalcResidualFinished=boost::signals2::signal<void(cv::Mat* /*pMatOutput*/,std::recursive_mutex& /*mtx*/)>;
-    using OnCalcResidualErrorCalculated=boost::signals2::signal<void(double /*error*/,int /*lvl*/,int /*iter*/)>;
+    //OnCalcResidualStartedSignal         _OnCalcResidualStartedSignal        ;
+    //OnCalcResidualFinishedSignal        _OnCalcResidualFinishedSignal       ;
+    //OnCalcResidualErrorCalculatedSignal _OnCalcResidualErrorCalculatedSignal;
+
+    OnCalcResidualAndBuffersDebugStart  _OnCalcResidualAndBuffersDebugStart;
+    OnCalcResidualAndBuffersDebugFinish  _OnCalcResidualAndBuffersDebugFinish;
+    OnSetSecondFrame _OnSetSecondFrame;
+    OnTrackingFinishedDisplayResiduals _OnTrackingFinishedDisplayResiduals;
+private:
+    void DebugPlotTrackingAndResidualInfo(const int width,const Eigen::Matrix3f& KLvl,
+                                            cv::Mat* pDebugImageOldImageSource,
+                                            cv::Mat* pDebugImageOldImageWarped,
+                                            cv::Mat* pdebugImageResiduals,
+                                            const int wThisLvl,
+                                            const int hThisLvl,
+                                            const Eigen::Vector3f* pRefPoint,
+		                                    const Eigen::Vector2f* refColVar,
+                                            const int* pIdxBuf,
+                                            const Eigen::Vector3f* refPoint_max,
+                                            const Eigen::Matrix3f& rotMat,
+                                            const Eigen::Vector3f& transVec,
+                                            bool* isGoodOutBuffer,
+                                            const Eigen::Vector4f* frame_gradients);
+    std::mutex _CalcResidualAndBuffersDebugSignalMtx;
 };
 
 

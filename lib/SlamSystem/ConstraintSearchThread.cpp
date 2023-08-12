@@ -23,13 +23,16 @@ ConstraintSearchThread::ConstraintSearchThread( SlamSystem &system, bool threade
 		// newKF(  nullptr  ),
 		// candidateTrackingReference(  new TrackingReference()  ),
 		_failedToRetrack( 0 ),
-		_thread( threaded ? ActiveIdle::createActiveIdle( std::bind( &ConstraintSearchThread::idleImpl, this ), std::chrono::milliseconds(500)) : NULL )
+		_thread( threaded ? ActiveIdle::createActiveIdle( std::bind( &ConstraintSearchThread::idleImpl, this ), std::chrono::milliseconds(500)).release() : NULL )
 {
 }
 
 ConstraintSearchThread::~ConstraintSearchThread( void )
 {
-	if( _thread) delete _thread.release();
+	if( _thread)
+    {
+        _thread.reset();
+    }
 }
 
 void ConstraintSearchThread::doCheckNewKeyFrame( const KeyFrame::SharedPtr &keyframe )
@@ -816,5 +819,18 @@ void ConstraintSearchThread::testConstraint(
 	e2_out->robustKernel->setDelta(kernelDelta);
 }
 
+void ConstraintSearchThread::doFullReConstraintSearch( void )
+	{ 
+        fullReConstraintSearchComplete.reset();
+        auto thread=_thread;
+		if( thread )
+        {
+            thread->send( std::bind( &ConstraintSearchThread::fullReconstraintSearchImpl, this )); 
+        }
+        else
+        {
+            fullReconstraintSearchImpl();
+        } 
+    }
 
 }

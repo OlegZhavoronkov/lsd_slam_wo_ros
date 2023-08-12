@@ -62,6 +62,22 @@ using namespace lsd_slam;
 
 using active_object::Active;
 
+void TrackingThread::OnSignalConnectedHandler(const util::SE3TrackerSignals* pSignals,const boost::signals2::signal_base* pToSignal,bool connected)
+{
+    util::SE3TrackerSignals* pThisRoot=static_cast<util::SE3TrackerSignals*>(this);
+    if(pThisRoot==pSignals && connected)
+    {
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualErrorCalculatedSignal,pToSignal,*_tracker)
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualFinishedSignal,pToSignal,*_tracker)
+        //CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualStartedSignal,pToSignal,*_tracker)
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualAndBuffersDebugStart,pToSignal,*_tracker)
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnCalcResidualAndBuffersDebugFinish,pToSignal,*_tracker)
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnSetSecondFrame,pToSignal,*_tracker)
+        CHECK_CONNECT_THIS_CHAIN_TO_SAME_NAME(_OnTrackingFinishedDisplayResiduals,pToSignal,*_tracker)
+    }
+    
+}
+
 TrackingThread::TrackingThread( SlamSystem &system, bool threaded )
 : _system( system ),
 	_perf(),
@@ -72,11 +88,12 @@ TrackingThread::TrackingThread( SlamSystem &system, bool threaded )
 	_latestGoodPoseCamToWorld(),
 	_thread( threaded ? Active::createActive() : NULL )
 {
-	// Do not use more than 4 levels for odometry tracking
+    _onSignalConnected.connect([this](auto...args){this->OnSignalConnectedHandler(args...);});
 	for (int level = 4; level < PYRAMID_LEVELS; ++level)
 		_tracker->settings.maxItsPerLvl[level] = 0;
 
 	lastTrackingClosenessScore = 0;
+    //Connect(*const_cast<TrackingThread*>(this),&TrackingThread::_OnCalcResidualErrorCalculatedSignal,[&](auto.../*args*/)->auto{},&_onSignalConnected);
 }
 
 

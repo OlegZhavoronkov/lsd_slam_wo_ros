@@ -16,3 +16,6 @@
 [submodule "thirdparty/libbinlogger"]
 	path = thirdparty/libbinlogger
 	url = https://github.com/apl-ocean-engineering/libbinlogger.git
+[submodule "thirdparty/tinyply"]
+	path = thirdparty/tinyply
+	url = https://github.com/ddiakopoulos/tinyply.git

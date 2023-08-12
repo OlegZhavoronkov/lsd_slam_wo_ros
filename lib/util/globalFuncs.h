@@ -141,6 +141,8 @@ template<typename dataType> void DebugImage(const std::string& debugMsg,const da
 
 #define QUICK_DEBUG_DATA(p,h,w) DebugImage((std::string(__PRETTY_FUNCTION__)+std::string(" : ")+std::string(__FILE__)+std::string(" : ")+std::to_string(__LINE__)),p,h,w)
 
+cv::Mat getTextMat(cv::Mat& mat,const std::string& desc,int fontface,double scale,int thickness,const cv::Scalar& color);
+
 }
 
 

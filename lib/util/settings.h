@@ -231,7 +231,7 @@ extern float relocalizationTH;
 extern float minUseGrad;
 extern float cameraPixelNoise2;
 extern float depthSmoothingFactor;
-
+extern double LM_lambdaStart;
 extern bool useFabMap;
 // extern bool doSlam;
 // extern bool doMapping;
