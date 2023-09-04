@@ -1302,7 +1302,8 @@ void DepthMap::regularizeDepthMap(bool removeOcclusions, int validityTH)
 template <bool removeOcclusions>
 void DepthMap::regularizeDepthMapRow(int validityTH, int yMin, int yMax,
                                      RunningStats *stats) {
-  const int regularize_radius = 2;
+//TODO should be introduced in settings,set to 0 breaks tracking
+  const int regularize_radius = 1;
 
   const float regDistVar = REG_DIST_VAR;
 

@@ -5,7 +5,7 @@ import re
 import matplotlib.pyplot as plt
 regexp= '^.*[\[](?P<a>.*) (?P<b>.*) (?P<c>.*)[\]]'
 data:np.array=np.array([])
-file = open('/home/skylark/dev/src/lotos/skylark_lsd_slam/lsd_slam_wo_ros/build/tools/coords2.txt')
+file = open('/home/skylark/dev/src/lotos/skylark_lsd_slam/lsd_slam_wo_ros/build/tools/coords3.txt')
 #with os.open('//home//skylark//dev//src//lotos//track_to.txt',flags=os.O_RDONLY) as file:
 
 for l in file.readlines():
@@ -52,8 +52,8 @@ ax.plot3D(x,y,z)
 # Make legend, set axes limits and labels
 ax.legend()
 ax.set_xlim(-1, 1)
-ax.set_ylim(-1, 1)
-ax.set_zlim(-1, 1)
+ax.set_ylim(-3, 1)
+ax.set_zlim(-0.25, 0.25)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')

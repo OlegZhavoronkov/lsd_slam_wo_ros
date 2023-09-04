@@ -147,7 +147,8 @@ const int PYRAMID_DIVISOR=(0x1<<PYRAMID_LEVELS);
 // distance factor for regularization.
 // is used as assumed inverse depth variance between neighbouring pixel.
 // basically determines the amount of spacial smoothing (small -> more smoothing).
-#define REG_DIST_VAR (0.075f*0.075f*depthSmoothingFactor*depthSmoothingFactor)
+//TODO should be introduced in settings
+#define REG_DIST_VAR (1.0f*1.0f*depthSmoothingFactor*depthSmoothingFactor)
 
 // define how strict the merge-processes etc. are.
 // are multiplied onto the difference, so the larger, the more restrictive.

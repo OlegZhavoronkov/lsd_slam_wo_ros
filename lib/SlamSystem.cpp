@@ -316,8 +316,13 @@ void SlamSystem::publishKeyframe( const Frame::SharedPtr &frame ) {
 void SlamSystem::publishCurrentKeyframe( )
 {
 	if( currentKeyFrame() ) {
-        cv::imshow("depth",getDepthRainbowPlot(currentKeyFrame()->frame().get(),0));
-        cv::waitKey(1);
+        for(int i=0;i<4;i++)
+        {
+            cv::imshow(("depth"+std::to_string(i)).c_str(),getDepthRainbowPlot(currentKeyFrame()->frame().get(),i));
+            cv::waitKey(1);
+        }
+        
+        
 		OUTPUT_FOR_EACH( publishKeyframe( currentKeyFrame()->frame() ) )
 		OUTPUT_FOR_EACH( publishPointCloud( currentKeyFrame()->frame() ) )
 	} else {

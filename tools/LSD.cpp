@@ -91,7 +91,7 @@ int main( int argc, char** argv )
   Conf().setSlamImageSize( undistorter->outputImageSize() );
   // Conf().camera     = args.undistorter->getCamera();
   lsd_slam::plotTrackingIterationInfo=true;
-  //lsd_slam::plotSim3TrackingIterationInfo=true;
+  lsd_slam::plotSim3TrackingIterationInfo=true;
   lsd_slam::plotStereoImages=true;
   //lsd_slam::plotTracking=true;
 
@@ -126,7 +126,7 @@ int main( int argc, char** argv )
     size_t curr_idx=0;
     for(const auto& p : files)
     {
-        if(curr_idx++ > startIdx)
+        if(curr_idx++ > startIdx /*&& curr_idx%2 == 0*/)
         {
             vec_of_files.emplace_back(p);
         }
