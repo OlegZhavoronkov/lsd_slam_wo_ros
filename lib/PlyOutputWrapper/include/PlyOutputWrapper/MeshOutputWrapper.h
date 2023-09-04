@@ -42,6 +42,7 @@ private:
     std::shared_ptr<IPlyWrapper> CreateFile();
     int _lastKFId,_prevDumpedKF;
     std::shared_ptr<IPlyWrapper> _pPly;
+    std::string _folder;
 };
 
 }

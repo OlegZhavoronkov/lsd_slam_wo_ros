@@ -1,7 +1,8 @@
 #include <PlyOutputWrapper/MeshOutputWrapper.h>
 #include <tinyply.h>
 #include <fmt/format.h>
-
+#include <algorithm>
+#include <filesystem>
 namespace lsd_slam::PlyOutputWrapper
 {
 
@@ -46,13 +47,13 @@ public:
         }
         std::vector<float> new_x;
         new_x.reserve(_x.size()+pointsNum);
-        std::copy(_x.begin(),_x.end(),new_x.begin());
+        std::copy(_x.begin(),_x.end(), std::back_insert_iterator( new_x ));
         std::vector<float> new_y;
         new_y.reserve(_y.size()+pointsNum);
-        std::copy(_y.begin(),_y.end(),new_y.begin());
+        std::copy(_y.begin(),_y.end(), std::back_insert_iterator( new_y));
         std::vector<float> new_z;
         new_z.reserve(_z.size()+pointsNum);
-        std::copy(_z.begin(),_z.end(),new_z.begin());
+        std::copy(_z.begin(),_z.end(),std::back_insert_iterator( new_z));
         for(size_t idx =0;idx<pointsNum;idx+=3)
         {
             const float* pPoint= &(data.at(idx));
@@ -74,7 +75,8 @@ MeshOutputWrapper::IPlyWrapper::~IPlyWrapper()=default;
 MeshOutputWrapper::MeshOutputWrapper(const std::string& path)
     :   _path(path),
         _lastKFId(-1),
-        _prevDumpedKF(0)
+        _prevDumpedKF(0),
+        _folder(std::filesystem::path(path).remove_filename().string())
 {
 
 }
@@ -90,11 +92,17 @@ void MeshOutputWrapper::publishKeyframeGraph( const std::shared_ptr<KeyFrameGrap
     //{
     //    Eigen::Vector3f point;
     //};
+    const int level=1;
+    const float global_scale=100;
     if(graph->_keyFrames.empty())
     {
         return;
     }
     auto KFId=(*(graph->_keyFrames.rbegin()))->id();
+    //if(KFId <90)
+    //{
+    //    return;
+    //}
     if(KFId<=_lastKFId)
     {
         return;
@@ -112,29 +120,31 @@ void MeshOutputWrapper::publishKeyframeGraph( const std::shared_ptr<KeyFrameGrap
             auto frame=keyf->frame();
              //calculate PointCloud
             
-            float param[4]{frame->fx(0), frame->fy(0), frame->cx(0), frame->cy(0)};
+            float param[4]{frame->fx(level), frame->fy(level), frame->cx(level), frame->cy(level)};
             float fxi = 1/param[0];
             float fyi = 1/param[1];
             float cxi = -param[2] / param[0];
             float cyi = -param[3] / param[1]; //inverse cam param
-            auto frame_size = frame->imgSize(0).cvSize();
+            auto frame_size = frame->imgSize(level).cvSize();
             int h = frame_size.height;
             int w = frame_size.width;
             auto camToWorld = frame->pose->getCamToWorld();
+            //auto newCamToWorld=se3FromSim3(camToWorld);
+            auto translation= camToWorld.translation().cast<float>().eval();
             float my_scaledTH = 4e-3, my_scale = camToWorld.scale(), my_absTH = 4e-2;
             int my_minNearSupport = 7;
-            const float* idepth = frame->idepth(0);
-            const float* idepthVar = frame->idepthVar(0);
+            const float* idepth = frame->idepth(level);
+            const float* idepthVar = frame->idepthVar(level);
     
             //go through all points
             int new_sz = 0;
             pts.reserve(3*w * h);
-	        
+	        int appron=std::min(h/2,boost::numeric_cast<int>(0.6f*h));
 
 
-	
+
         	//int nocolor = 0, oob = 0;
-            for (int y = 1; y + 1 < h; ++y)
+            for (int y = (h/2)-appron; y + 1 < (h/2)+appron; ++y)
             {
                 for (int x = 1; x + 1 < w; ++x)
                 {
@@ -179,11 +189,16 @@ void MeshOutputWrapper::publishKeyframeGraph( const std::shared_ptr<KeyFrameGrap
                     }
                     //coord of point relative to the KF
                     
-                    Eigen::Vector3f point = (camToWorld* Eigen::Vector3d(x * fxi + cxi, y * fyi + cyi, 1.f) * depth).cast<float>();
+                    Eigen::Vector3f point = (camToWorld* (Eigen::Vector3d(x * fxi + cxi, y * fyi + cyi, 1.f) * ((depth))*global_scale )).cast<float>();
                     pts.emplace_back(point.x());pts.emplace_back(point.y());pts.emplace_back(point.z());
                     new_sz+=3;
                     points_num++;
                 }
+            }
+            {
+                    RealPlyWriter local_writer(std::filesystem::path( _folder)/ std::filesystem::path( fmt::v7::format("{0}_subcloud.ply",KFId) ) );
+                    local_writer.AddVerticesBuffer(points_num,pts);
+                    local_writer.DumpToStream();
             }
             pts.resize(new_sz);
             auto localPly=_pPly;
@@ -191,6 +206,8 @@ void MeshOutputWrapper::publishKeyframeGraph( const std::shared_ptr<KeyFrameGrap
             {
                 RealPlyWriter* pRealPly=static_cast<RealPlyWriter*>(localPly.get());
                 pRealPly->AddVerticesBuffer(points_num,pts);
+                translation *= global_scale;
+                pRealPly->AddVerticesBuffer(1,{translation.x(),translation.y(),translation.z()});
                 if((_lastKFId-_prevDumpedKF)>20)
                 {
                     pRealPly->DumpToStream();
