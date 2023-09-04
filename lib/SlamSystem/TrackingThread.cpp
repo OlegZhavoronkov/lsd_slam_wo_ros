@@ -228,9 +228,9 @@ void TrackingThread::trackSetImplInternal( const std::shared_ptr<ImageSet> &set 
 	  {
 	    LOG(INFO) << "Telling mapping thread to make " << set->refFrame()->id() << " the new keyframe.";
 
-			_newKeyFramePending = true;
+		_newKeyFramePending = true;
 	    _system.mapThread()->doCreateNewKeyFrame( _currentKeyFrame, set->refFrame() );
-
+        _system.mapThread()->pushDoIteration();
 	    LOGF_IF( INFO, Conf().print.keyframeSelectionInfo,
 	                                    "SELECT KEYFRAME %d on %d! dist %.3f + usage %.3f = %.3f > 1\n",set->refFrame()->id(),set->refFrame()->trackingParent()->id(), dist.dot(dist), _tracker->pointUsage, _system.trackableKeyFrameSearch()->getRefFrameScore(dist.dot(dist), _tracker->pointUsage));
 	  }
@@ -297,4 +297,28 @@ void TrackingThread::takeRelocalizeResult( const RelocalizerResult &result  )
                 //}
 	}
 
+}
+
+void TrackingThread::doTrackSet( const std::shared_ptr<ImageSet> &set ) 
+{
+    if( _thread ) 
+    {
+    	_thread->send( std::bind( &TrackingThread::trackSetImpl, this, set ));
+    } 
+    else 
+    {
+    	trackSetImpl( set );
+    }
+}
+
+void TrackingThread::doUseNewKeyFrame( const std::shared_ptr<KeyFrame> &kf ) 
+{
+    if( _thread ) 
+    {
+        _thread->send( std::bind( &TrackingThread::useNewKeyFrameImpl, this, kf ));
+    } 
+    else 
+    {
+        useNewKeyFrameImpl( kf );
+    }
 }

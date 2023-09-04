@@ -51,21 +51,9 @@ public:
 	~TrackingThread();
 
 	//== Calls into the thread ==
-  void doTrackSet( const std::shared_ptr<ImageSet> &set ) {
-		if( _thread ) {
-			_thread->send( std::bind( &TrackingThread::trackSetImpl, this, set ));
-		} else {
-			trackSetImpl( set );
-		}
-	}
+    void doTrackSet( const std::shared_ptr<ImageSet> &set );
 
-	void doUseNewKeyFrame( const std::shared_ptr<KeyFrame> &kf ) {
-		if( _thread ) {
-			_thread->send( std::bind( &TrackingThread::useNewKeyFrameImpl, this, kf ));
-		} else {
-			useNewKeyFrameImpl( kf );
-		}
-	}
+    void doUseNewKeyFrame( const std::shared_ptr<KeyFrame> &kf );
 
 
 	KeyFrame::SharedPtr &currentKeyFrame(void) { return _currentKeyFrame; }
@@ -106,7 +94,7 @@ private:
 	// Frame::SharedPtr _trackingReferenceFrameSharedPT;	// only used in odometry-mode, to keep a keyframe alive until it is deleted. ONLY accessed whithin currentKeyFrameMutex lock.
 
 	bool _trackingIsGood;
-	bool _newKeyFramePending;
+	std::atomic_bool _newKeyFramePending;
 
 	KeyFrame::SharedPtr _currentKeyFrame;
 
