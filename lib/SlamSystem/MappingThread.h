@@ -32,15 +32,7 @@ public:
 	~MappingThread();
 
 	//=== Callbacks into the thread ===
-	// void pushDoIteration()
-	// {
-	//   //if( _thread ) _thread->send( std::bind( &MappingThread::doMappingIteration, this ));
-	//   if( _thread ) {
-	// 		_thread->send( std::bind( &MappingThread::doMappingIterationSet, this ));
-	// 	} else {
-	// 		doMappingIterationSet();
-	// 	}
-	// }
+    void pushDoIteration();
         /* REDUNDANT
 	void pushUnmappedTrackedFrame( const Frame::SharedPtr &frame )
 	{
@@ -53,51 +45,15 @@ public:
 	}
         */
 
-	void doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set)
-	{
-        auto thread= _thread;
-	    if( thread )
-        {
-			thread->send( std::bind( &MappingThread::mapSetImpl, this, kf, set ));
-        }
-		else
-        {
-            mapSetImpl(kf, set);
-        }
-				
-	}
+	void doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set);
 
-	void doMergeOptimizationUpdate( void )
-	{
-		optimizationUpdateMerged.reset();
-        auto thread= _thread;
-		if( thread ) 
-        {
-            _thread->send( std::bind( &MappingThread::mergeOptimizationOffsetImpl, this ));
-        }
-        else
-        {
-            mergeOptimizationOffsetImpl();
-        }
-	}
+	void doMergeOptimizationUpdate( void );
 
 	// Create the first (uninitialized) keyframe
 	void createFirstKeyFrame( const Frame::SharedPtr &frame );
 
 	// Create subsequent keyframes by depth map propagation
-	void doCreateNewKeyFrame( const KeyFrame::SharedPtr &keyframe, const Frame::SharedPtr &frame )
-	{
-        auto thread=_thread;
-		if( thread )
-        {
-			thread->send( std::bind( &MappingThread::createNewKeyFrameImpl, this, keyframe, frame ));
-        }
-		else
-        {
-			createNewKeyFrameImpl( keyframe, frame );
-        }
-
-	}
+	void doCreateNewKeyFrame( const KeyFrame::SharedPtr &keyframe, const Frame::SharedPtr &frame );
 
 	// Used during re-localization
 	Relocalizer relocalizer;
@@ -128,7 +84,7 @@ private:
 	void discardCurrentKeyframe();
 
 	void debugDisplayDepthMap();
-
+    bool doMappingIteration();
 
 	std::shared_ptr<active_object::Active> _thread;
 public:

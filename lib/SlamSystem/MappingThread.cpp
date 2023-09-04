@@ -57,6 +57,18 @@ void MappingThread::mapSetImpl( const KeyFrame::SharedPtr &kf, const ImageSet::S
 	_system.publishCurrentKeyframe();
 }
 
+void MappingThread::doCreateNewKeyFrame( const KeyFrame::SharedPtr &keyframe, const Frame::SharedPtr &frame )
+{
+    auto thread=_thread;
+	if( thread )
+    {
+		thread->send( std::bind( &MappingThread::createNewKeyFrameImpl, this, keyframe, frame ));
+    }
+	else
+    {
+		createNewKeyFrameImpl( keyframe, frame );
+    }
+}
 
 void MappingThread::createFirstKeyFrame( const Frame::SharedPtr &frame )
 {
@@ -121,10 +133,61 @@ void MappingThread::mergeOptimizationOffsetImpl()
 	optimizationUpdateMerged.notify();
 }
 
+void MappingThread::doMapSet( const KeyFrame::SharedPtr &kf, const ImageSet::SharedPtr &set)
+{
+    auto thread= _thread;
+    if( thread )
+    {
+		thread->send( std::bind( &MappingThread::mapSetImpl, this, kf, set ));
+    }
+	else
+    {
+        mapSetImpl(kf, set);
+    }
+			
+}
+
+void MappingThread::doMergeOptimizationUpdate(  )
+{
+	optimizationUpdateMerged.reset();
+    auto thread= _thread;
+	if( thread ) 
+    {
+        _thread->send( std::bind( &MappingThread::mergeOptimizationOffsetImpl, this ));
+    }
+    else
+    {
+        mergeOptimizationOffsetImpl();
+    }
+}
+
+
+void MappingThread::pushDoIteration()
+{
+  
+    if( _thread ) 
+    {
+		_thread->send( std::bind( &MappingThread::doMappingIteration, this ));
+	}
+    else 
+    {
+		doMappingIteration();
+	}
+}
+
+bool MappingThread::doMappingIteration()
+{
+    auto& kg= *(_system.keyFrameGraph());
+    std::unique_lock lock(kg.keyframesAllMutex);
+    auto currentKF=_system.currentKeyFrame();
+    kg.keyframesAll.push_back(currentKF);
+    LOGF(WARNING,"keyframegraph contains %zu frames",kg.keyframesAll.size());
+    return true;
+}
 
 //==== Actual meat ====
 
-/* REDUNDANT
+/*
 bool MappingThread::doMappingIteration()
 {
 
@@ -160,7 +223,7 @@ bool MappingThread::doMappingIteration()
         bool didSomething = true;
 
 	// set mappingFrame
-	if( _system.trackingThread->trackingIsGood() )
+	if( _system.trackingThread()->trackingIsGood() )
 	{
 		// TODO:  Don't know under what circumstances doMapping = false
 		// if(!doMapping)
@@ -234,116 +297,7 @@ bool MappingThread::doMappingIteration()
 	return didSomething;
 }
 */
-//
-// bool MappingThread::doMappingIterationSet()
-// {
-//
-//         // If there's no keyframe, then give up
-//         if( !(bool)_system.currentKeyFrame() ) {
-//                 LOG(INFO) << "Nothing to map: no keyframe";
-//                 return false;
-//         }
-//
-//                 // TODO:  Don't know what circumstances cause this to happens
-//         // if(!doMapping && currentKeyFrame()->idxInKeyframes < 0)
-//         // {
-//         // 	if(currentKeyFrame()->numMappedOnThisTotal >= MIN_NUM_MAPPED)
-//         // 		finishCurrentKeyframe();
-//         // 	else
-//         // 		discardCurrentKeyframe();
-//         //
-//         // 	map->invalidate();
-//         // 	LOGF(INFO, "Finished KF %d as Mapping got disabled!\n",currentKeyFrame()->id());
-//         //
-//         // 	changeKeyframe(true, true, 1.0f);
-//         // }
-//
-//         //callbackMergeOptimizationOffset();
-//         //addTimingSamples();
-//
-//         // if(dumpMap)
-//         // {
-//         // 	keyFrameGraph()->dumpMap(packagePath+"/save");
-//         // 	dumpMap = false;
-//         // }
-//
-//         bool didSomething = true;
-//
-//         // set mappingFrame
-//         if( _system.trackingThread->trackingIsGood() )
-//         {
-//                 // TODO:  Don't know under what circumstances doMapping = false
-//                 // if(!doMapping)
-//                 // {
-//                 // 	//printf("tryToChange refframe, lastScore %f!\n", lastTrackingClosenessScore);
-//                 // 	if(_system.trackingThread->lastTrackingClosenessScore > 1)
-//                 // 		changeKeyframe(true, false, _system.trackingThread->lastTrackingClosenessScore * 0.75);
-//                 //
-//                 // 	if (displayDepthMap || depthMapScreenshotFlag)
-//                 // 		debugDisplayDepthMap();
-//                 //
-//                 // 	return false;
-//                 // }
-//
-//                 std::shared_ptr< ImageSet > set( _newImageSet.const_ref() );
-//                 if( set ) {
-//                         LOG(INFO) << "Set " << set->id() << " as new key frame";
-//                         finishCurrentKeyframe();
-//                         _system.changeKeyframe(set->refFrame(), false, true, 1.0f);
-//
-//                         _newImageSet().reset();
-//                 } else {
-//                          didSomething = updateImageSet();
-//                 }
-//
-//                 _system.updateDisplayDepthMap();
-//
-//                 LOG(DEBUG) << "Tracking is good, updating image set frame, " << (didSomething ? "DID" : "DIDN'T") << " do something";
-//         }
-//
-//         //TODO have not seen this entered before?
-//
-//         else
-//         {
-//                 LOG(INFO) << "Tracking is bad";
-//
-//                 // invalidate map if it was valid.
-//                 if(_system.depthMap()->isValid())
-//                 {
-//                         if( _system.currentKeyFrame()->numMappedOnThisTotal >= MIN_NUM_MAPPED)
-//                                 finishCurrentKeyframe();
-//                         else
-//                                 discardCurrentKeyframe();
-//
-//                         _system.depthMap()->invalidate();
-//                 }
-//
-//                 // start relocalizer if it isnt running already
-//                 if(!relocalizer.isRunning)
-//                         relocalizer.start(_system.keyFrameGraph()->keyframesAll);
-//
-//                 // did we find a frame to relocalize with?
-//                 if(relocalizer.waitResult(50)) {
-//
-//                                                 // Frame* keyframe;
-//                                                 // int succFrameID;
-//                                                 // SE3 succFrameToKF_init;
-//                                                 // std::shared_ptr<Frame> succFrame;
-//                                                 //
-//                                                 // relocalizer.stop();
-//                                                 // relocalizer.getResult(keyframe, succFrame, succFrameID, succFrameToKF_init);
-//
-//                         relocalizer.stop();
-//                         RelocalizerResult result( relocalizer.getResult() );
-//
-//                         _system.loadNewCurrentKeyframe(result.keyframe);
-//
-//                         _system.trackingThread->takeRelocalizeResult( result, _newImageSet.const_ref() );
-//                 }
-//         }
-//
-//         return didSomething;
-// }
+
 
 
 
