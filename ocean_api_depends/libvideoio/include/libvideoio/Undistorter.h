@@ -24,7 +24,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
-
 #include "nlohmann/json.hpp"
 #include "g3log/g3log.hpp"
 
@@ -297,17 +296,12 @@ public:
    * outputWidth outputHeight
    */
   ImageCropper( int width, int height, int offsetX = 0, int offsetY = 0,
-                const std::shared_ptr<Undistorter> & wrap  = nullptr )
-                : Undistorter(wrap),
-                 _offsetX(offsetX), _offsetY(offsetY),
-                 _width(width),      _height(height)
-                {;}
+                const std::shared_ptr<Undistorter> & wrap  = nullptr );
 
   /**
    * Destructor.
    */
-  virtual ~ImageCropper()
-  {;}
+  virtual ~ImageCropper()=default;
 
   ImageCropper(const ImageCropper&) = delete;
   ImageCropper& operator=(const ImageCropper&) = delete;
@@ -315,85 +309,47 @@ public:
   /**
    * Undistorts the given image and returns the result image.
    */
-  virtual void undistort(const cv::Mat &image, cv::OutputArray result) const
-  {
-    cv::Mat intermediate(image);
-    if( _wrapped ) {
-      _wrapped->undistort( image, intermediate );
-    }
-    if(image.cols> _width && image.rows>_height)
-    {
-        cv::Mat roi( intermediate, cv::Rect( _offsetX, _offsetY, _width, _height ) );
-        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
-    // cv::imshow("roi",roi);
-    // cv::waitKey(10);
-        result.assign( roi );
-    }
-    else
-    {
-        cv::Mat copy;
-        cv::resize( intermediate,copy ,cv::Size(_width,_height),0.0,0.0,cv::INTER_LINEAR);
-        LOG(WARNING) << "Cropping to " << _width << " x " << _height;
-    // cv::imshow("roi",roi);
-    // cv::waitKey(10);
-        result.assign( copy );
-    }
-    
-  }
+  virtual void undistort(const cv::Mat &image, cv::OutputArray result) const;
 
   /**
    * Returns the intrinsic parameter matrix of the undistorted images.
    */
   //const cv::Mat getK() const;
 
-  virtual const cv::Mat getK() const {
-    if( _wrapped ) return _wrapped->getK();
-
-    return cv::Mat::eye(3,3, CV_32F );
-  }
+  virtual const cv::Mat getK() const;
 
 
   /**
    * Returns the intrinsic parameter matrix of the original images,
    */
-  const cv::Mat getOriginalK() const { return getK(); }
+  const cv::Mat getOriginalK() const ;
 
-  virtual ImageSize outputImageSize( void ) const
-  { return ImageSize( _width, _height ); };
+  virtual ImageSize outputImageSize( void ) const;
 
-  virtual ImageSize inputImageSize( void ) const
-    { if( _wrapped ) return _wrapped->outputImageSize();
-      return ImageSize( _width, _height ); }
+  virtual ImageSize inputImageSize( void ) const;
 
   /**
    * Returns the width of the input images in pixels.
    */
-  int getInputWidth() const {
-    if( _wrapped ) return _wrapped->getInputWidth();
-
-    return _width;
-  }
+  int getInputWidth() const ;
 
   /**
    * Returns the height of the input images in pixels.
    */
-  int getInputHeight() const {
-    if( _wrapped ) return _wrapped->getInputHeight();
-    return _width;
-  }
+  int getInputHeight() const ;
 
 
   /**
    * Returns if the undistorter was initialized successfully.
    */
-  bool isValid() const { return true; }
+  bool isValid() const ;
 
 private:
 
 
   int _offsetX, _offsetY;
   int _width, _height;
-
+    cv::Mat _K;
 };
 
 

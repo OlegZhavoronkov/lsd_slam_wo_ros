@@ -13,6 +13,7 @@ set(VIDEOIO_SOURCE_FILES)
     ${CMAKE_CURRENT_SOURCE_DIR}/undistorter/PTAMUndistorterFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/undistorter/ROSUndistorterFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/undistorter/UndistorterFactory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/undistorter/Undistorter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}//util/FileUtils.cpp
     #${CMAKE_CURRENT_SOURCE_DIR}//util/old/UndistorterLogger.cpp
     #${CMAKE_CURRENT_SOURCE_DIR}//util/old/UndistorterPTAM.cpp    
